@@ -68,8 +68,8 @@ module multiply_acc_tb;
 
     reg                             rst;
 
-    reg     [IMG_WIDTH-1:0]         ma;
-    reg     [KER_WIDTH-1:0]         mb;
+    reg     [IMG_WIDTH-1:0]         img;
+    reg     [KER_WIDTH-1:0]         ker;
     reg                             val;
 
     wire    [IMG_WIDTH+KER_WIDTH:0] result;
@@ -87,8 +87,8 @@ module multiply_acc_tb;
         .rst    (rst),
 
         .val    (val),
-        .ma     (ma),
-        .mb     (mb),
+        .img    (img),
+        .ker    (ker),
 
         .result (result)
     );
@@ -105,8 +105,8 @@ module multiply_acc_tb;
 
             "\t%b\t%d\t%d",
             val,
-            $signed(ma),
-            $signed(mb),
+            $signed(img),
+            $signed(ker),
 
             "\t%d",
             $signed(result),
@@ -119,7 +119,7 @@ module multiply_acc_tb;
 
             "\tval",
             "\tma",
-            "\tmb",
+            "\tker",
 
             "\t\tresult",
 
@@ -137,8 +137,8 @@ module multiply_acc_tb;
         rst = 0;
 
         val = 1'b0;
-        ma  = 'b0;
-        mb  = 'b0;
+        img = 'b0;
+        ker = 'b0;
         //end init
 
 `ifdef TB_VERBOSE
@@ -156,18 +156,18 @@ module multiply_acc_tb;
     $display("test continuous stream");
 `endif
 
-        ma <= 1'b1;
+        img <= 1'b1;
         @(negedge clk);
         repeat (10) begin
             val <= 1'b1;
-            ma  <= ma * -'b1;
-            mb  <= mb +  'b1;
+            img <= img * -'b1;
+            ker <= ker +  'b1;
             @(negedge clk);
         end
 
         val <= 1'b0;
-        ma  <=  'b0;
-        mb  <=  'b0;
+        img <=  'b0;
+        ker <=  'b0;
         repeat (10) @(negedge clk);
 
 
@@ -177,8 +177,8 @@ module multiply_acc_tb;
 
         repeat (5) begin
             val <= 1'b1;
-            ma  <=  'b1;
-            mb  <= mb + 'b1;
+            img <=  'b1;
+            ker <= ker + 'b1;
             @(negedge clk);
         end
 
@@ -186,8 +186,8 @@ module multiply_acc_tb;
         repeat (10) @(negedge clk);
 
         val <= 1'b1;
-        ma  <=  'b1;
-        mb  <= mb + 'b1;
+        img <=  'b1;
+        ker <= ker + 'b1;
         @(negedge clk);
 
         val  <= 1'b0;
@@ -195,8 +195,8 @@ module multiply_acc_tb;
 
         repeat (5) begin
             val <= 1'b1;
-            ma  <=  'b1;
-            mb  <= mb + 'b1;
+            img <=  'b1;
+            ker <= ker + 'b1;
             @(negedge clk);
         end
 
@@ -205,8 +205,8 @@ module multiply_acc_tb;
 
         repeat (20) begin
             val <= 1'b1;
-            ma  <=  'b1;
-            mb  <= mb + 'b1;
+            img <=  'b1;
+            ker <= ker + 'b1;
             @(negedge clk);
         end
 

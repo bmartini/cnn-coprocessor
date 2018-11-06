@@ -10,8 +10,8 @@ module multiply_acc
     input                               clk,
     input                               rst,
 
-    input      [IMG_WIDTH-1:0]          ma,
-    input      [KER_WIDTH-1:0]          mb,
+    input      [IMG_WIDTH-1:0]          img,
+    input      [KER_WIDTH-1:0]          ker,
     input                               val,
 
     output reg [IMG_WIDTH+KER_WIDTH:0]  result
@@ -39,22 +39,22 @@ module multiply_acc
     endfunction
 
 
-    reg  [IMG_WIDTH-1:0]            ma_rr;
-    reg  [IMG_WIDTH-1:0]            ma_r;
+    reg  [IMG_WIDTH-1:0]            img_rr;
+    reg  [IMG_WIDTH-1:0]            img_r;
 
-    reg  [KER_WIDTH-1:0]            mb_rr;
-    reg  [KER_WIDTH-1:0]            mb_r;
+    reg  [KER_WIDTH-1:0]            ker_rr;
+    reg  [KER_WIDTH-1:0]            ker_r;
 
     reg  [IMG_WIDTH+KER_WIDTH-1:0]  product;
     reg  [IMG_WIDTH+KER_WIDTH:0]    result_i;
 
 
     always @(posedge clk) begin
-        ma_r    <= 'b0;
-        mb_r    <= mb;
+        img_r   <= 'b0;
+        ker_r   <= ker;
 
         if (val) begin
-            ma_r    <= ma;
+            img_r   <= img;
         end
     end
 
@@ -65,16 +65,16 @@ module multiply_acc
     always @(posedge clk)
 `endif
         if (rst) begin
-            ma_rr       <= 'b0;
-            mb_rr       <= 'b0;
+            img_rr      <= 'b0;
+            ker_rr      <= 'b0;
             product     <= 'b0;
             result_i    <= 'b0;
             result      <= 'b0;
         end
         else begin
-            ma_rr       <= ma_r;
-            mb_rr       <= mb_r;
-            product     <= multiply(ma_rr,    mb_rr);
+            img_rr      <= img_r;
+            ker_rr      <= ker_r;
+            product     <= multiply(img_rr,   ker_rr);
             result_i    <= addition(result_i, product);
             result      <= result_i;
         end

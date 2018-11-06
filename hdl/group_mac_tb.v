@@ -114,8 +114,8 @@ module group_mac_tb;
      */
     reg                                                 rst = 0;
 
-    reg signed  [GROUP_NB*IMG_WIDTH-1:0]                ma;
-    reg signed  [GROUP_NB*KER_WIDTH-1:0]                mb;
+    reg signed  [GROUP_NB*IMG_WIDTH-1:0]                img;
+    reg signed  [GROUP_NB*KER_WIDTH-1:0]                ker;
     reg                                                 val;
 
     wire signed [GROUP_NB*(IMG_WIDTH+KER_WIDTH+1)-1:0]  result;
@@ -133,8 +133,8 @@ module group_mac_tb;
         .clk    (clk),
         .rst    (rst),
 
-        .ma     (ma),
-        .mb     (mb),
+        .img    (img),
+        .ker    (ker),
         .val    (val),
 
         .result (result)
@@ -151,13 +151,13 @@ module group_mac_tb;
             $time, rst,
 
             "\t%x\t%x\t%b",
-            ma,
-            mb,
+            img,
+            ker,
             val,
 
             //"\t%f\t%f",
-            //img_f2r(ma),
-            //ker_f2r(mb),
+            //img_f2r(img),
+            //ker_f2r(ker),
 
             "\t%f\t%f\t%f\t%f",
             data_lf2r(result[3*(IMG_WIDTH+KER_WIDTH+1) +: (IMG_WIDTH+KER_WIDTH+1)]),
@@ -191,8 +191,8 @@ module group_mac_tb;
 
     initial begin
         // init values
-        ma  = 'b0;
-        mb  = 'b0;
+        img = 'b0;
+        ker = 'b0;
         val = 1'b0;
         //end init
 
@@ -214,40 +214,40 @@ module group_mac_tb;
         if (GROUP_NB == 1) begin
 
             repeat(19) begin
-                ma  <= img_r2f(1) + ma;
-                mb  <= ker_r2f(0.5);
+                img <= img_r2f(1) + img;
+                ker <= ker_r2f(0.5);
                 val <= 1'b1;
                 @(negedge clk);
             end
 
-            ma  <= img_r2f(1) + ma;
-            mb  <= ker_r2f(0.5);
+            img <= img_r2f(1) + img;
+            ker <= ker_r2f(0.5);
             val <= 1'b1;
             @(negedge clk);
         end
         else if (GROUP_NB == 4) begin
 
-            ma  <= {img_r2f(  4), img_r2f(  3), img_r2f(  2), img_r2f(  1)};
-            mb  <= {ker_r2f(0.5), ker_r2f(0.5), ker_r2f(0.5), ker_r2f(0.5)};
+            img <= {img_r2f(  4), img_r2f(  3), img_r2f(  2), img_r2f(  1)};
+            ker <= {ker_r2f(0.5), ker_r2f(0.5), ker_r2f(0.5), ker_r2f(0.5)};
             val <= 1'b1;
             @(negedge clk);
 
-            ma  <= {img_r2f( 8), img_r2f( 7), img_r2f( 6), img_r2f( 5)};
+            img <= {img_r2f( 8), img_r2f( 7), img_r2f( 6), img_r2f( 5)};
             @(negedge clk);
 
-            ma  <= {img_r2f(12), img_r2f(11), img_r2f(10), img_r2f( 9)};
+            img <= {img_r2f(12), img_r2f(11), img_r2f(10), img_r2f( 9)};
             @(negedge clk);
 
-            ma  <= {img_r2f(16), img_r2f(15), img_r2f(14), img_r2f(13)};
+            img <= {img_r2f(16), img_r2f(15), img_r2f(14), img_r2f(13)};
             @(negedge clk);
 
-            ma  <= {img_r2f(20), img_r2f(19), img_r2f(18), img_r2f(17)};
+            img <= {img_r2f(20), img_r2f(19), img_r2f(18), img_r2f(17)};
             val <= 1'b1;
             @(negedge clk);
         end
 
-        ma  <= 'b0;
-        mb  <= 'b0;
+        img <= 'b0;
+        ker <= 'b0;
         val <= 1'b0;
         repeat(20) @(negedge clk);
 

@@ -26,8 +26,8 @@ module group_mac
    (input                                               clk,
     input                                               rst,
 
-    input       [GROUP_NB*IMG_WIDTH-1:0]                ma,
-    input       [GROUP_NB*KER_WIDTH-1:0]                mb,
+    input       [GROUP_NB*IMG_WIDTH-1:0]                img,
+    input       [GROUP_NB*KER_WIDTH-1:0]                ker,
     input                                               val,
 
     output      [GROUP_NB*(IMG_WIDTH+KER_WIDTH+1)-1:0]  result
@@ -44,8 +44,8 @@ module group_mac
      */
     genvar i;
 
-    reg  [GROUP_NB*IMG_WIDTH-1:0]   ma_r;
-    reg  [GROUP_NB*KER_WIDTH-1:0]   mb_r;
+    reg  [GROUP_NB*IMG_WIDTH-1:0]   img_r;
+    reg  [GROUP_NB*KER_WIDTH-1:0]   ker_r;
     reg                             val_r;
 
 
@@ -60,8 +60,8 @@ module group_mac
 
 
     always @(posedge clk) begin
-        ma_r <= ma;
-        mb_r <= mb;
+        img_r <= img;
+        ker_r <= ker;
     end
 
 
@@ -75,8 +75,8 @@ module group_mac
                 .clk    (clk),
                 .rst    (rst),
 
-                .ma     (ma_r[i*IMG_WIDTH +: IMG_WIDTH]),
-                .mb     (mb_r[i*KER_WIDTH +: KER_WIDTH]),
+                .img    (img_r[i*IMG_WIDTH +: IMG_WIDTH]),
+                .ker    (ker_r[i*KER_WIDTH +: KER_WIDTH]),
                 .val    (val_r),
 
                 .result (result[i*(IMG_WIDTH+KER_WIDTH+1) +: (IMG_WIDTH+KER_WIDTH+1)])
