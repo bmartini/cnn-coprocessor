@@ -24,12 +24,19 @@
 
 module layers
   #(parameter
+    CFG_DWIDTH  = 32,
+    CFG_AWIDTH  = 5,
+
     DEPTH_NB    = 16,
     GROUP_NB    = 4,
     IMG_WIDTH   = 16,
     KER_WIDTH   = 16)
    (input                                           clk,
     input                                           rst,
+
+    input       [CFG_DWIDTH-1:0]                    cfg_data,
+    input       [CFG_AWIDTH-1:0]                    cfg_addr,
+    input                                           cfg_valid,
 
     input       [GROUP_NB*KER_WIDTH*DEPTH_NB-1:0]   kernel,
     output reg                                      kernel_rdy,
@@ -49,7 +56,9 @@ module layers
      * Local parameters
      */
 
-    localparam NUM_WIDTH    = (IMG_WIDTH+KER_WIDTH+1);
+`include "cfg_parameters.vh"
+
+    localparam NUM_WIDTH = (IMG_WIDTH+KER_WIDTH+1);
 
     localparam
         UP_RESET    = 0,
@@ -129,7 +138,13 @@ module layers
      */
 
 
-    assign image_rdy = up_state[UP_READY];
+    always @(posedge clk)
+        if (cfg_valid & (cfg_addr == CFG_LAYERS)) begin
+            bypass  <= cfg_data[24];
+            pool_nb <= cfg_data[23:16];
+            shift   <= cfg_data[15: 8];
+            head    <= cfg_data[ 7: 0];
+        end
 
 
     always @(posedge clk)
@@ -228,6 +243,7 @@ module layers
     end
 
 
+    assign image_rdy = up_state[UP_READY];
 
 
     // register incoming data

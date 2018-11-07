@@ -50,6 +50,11 @@ module layers_tb;
      * Local parameters
      */
 
+`include "cfg_parameters.vh"
+
+    localparam CFG_DWIDTH   = 32;
+    localparam CFG_AWIDTH   = 5;
+
     localparam DEPTH_NB     = 1;
     localparam GROUP_NB     = 4;
     localparam IMG_WIDTH    = 16;
@@ -67,6 +72,10 @@ module layers_tb;
      *  signals, registers and wires
      */
     reg                                     rst;
+
+    reg  [CFG_DWIDTH-1:0]                   cfg_data;
+    reg  [CFG_AWIDTH-1:0]                   cfg_addr;
+    reg                                     cfg_valid;
 
     reg  [GROUP_NB*KER_WIDTH*DEPTH_NB-1:0]  kernel;
     wire                                    kernel_rdy;
@@ -94,6 +103,10 @@ module layers_tb;
         .clk        (clk),
         .rst        (rst),
 
+        .cfg_data   (cfg_data),
+        .cfg_addr   (cfg_addr),
+        .cfg_valid  (cfg_valid),
+
         .kernel     (kernel),
         .kernel_rdy (kernel_rdy),
 
@@ -116,6 +129,9 @@ module layers_tb;
         $display(
             "%d\t%d",
             $time, rst,
+
+            "\tcfg %x",
+            cfg_data,
 
             "\tker: %x %b",
             kernel,
@@ -177,6 +193,10 @@ module layers_tb;
         // init values
         rst = 0;
 
+        cfg_data    = 'b0;
+        cfg_addr    = 'b0;
+        cfg_valid   = 1'b0;
+
         kernel      = 'b0;
 
         image       = 'b0;
@@ -194,7 +214,22 @@ module layers_tb;
         rst <= 1'b1;
         repeat(6) @(negedge clk);
         rst <= 1'b0;
+        repeat(5) @(negedge clk);
+
+`ifdef TB_VERBOSE
+    $display("send config");
+`endif
+
+        // {bypass, pool_nb, shift, head}
+        cfg_data    = {8'd0, 8'd1, 8'd0, 8'd15};
+        cfg_addr    = CFG_LAYERS;
+        cfg_valid   = 1'b1;
         @(negedge clk);
+        cfg_data    = 'b0;
+        cfg_addr    = 'b0;
+        cfg_valid   = 1'b0;
+        @(negedge clk);
+
 
 `ifdef TB_VERBOSE
     $display("send data");
