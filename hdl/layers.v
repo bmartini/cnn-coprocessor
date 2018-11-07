@@ -19,6 +19,7 @@
 `include "group_add.v"
 `include "pool.v"
 `include "relu.v"
+`include "rescale.v"
 
 
 module layers
@@ -38,7 +39,7 @@ module layers
     input                                           image_val,
     output                                          image_rdy,
 
-    output      [IMG_WIDTH*DEPTH_NB-1:0]            result,
+    output reg  [IMG_WIDTH*DEPTH_NB-1:0]            result,
     output                                          result_val,
     input                                           result_rdy
 );
@@ -61,7 +62,8 @@ module layers
         DN_READY    = 1,
         DN_ADD      = 2,
         DN_POOL     = 3,
-        DN_CLEAR    = 4;
+        DN_OPS      = 4,
+        DN_CLEAR    = 5;
 
 
     /**
@@ -72,35 +74,45 @@ module layers
     reg  [3:0]                              up_state;
     reg  [3:0]                              up_state_nx;
 
-    reg  [4:0]                              dn_state;
-    reg  [4:0]                              dn_state_nx;
+    reg  [5:0]                              dn_state;
+    reg  [5:0]                              dn_state_nx;
 
     (* KEEP = "TRUE" *) reg  [DEPTH_NB-1:0] mac_rst;
     (* KEEP = "TRUE" *) reg  [DEPTH_NB-1:0] pool_rst;
 
-    wire                                    bypass = 1'b0;
-    reg  [7:0]                              pool_cnt;
-    reg  [7:0]                              pool_nb = 1;
+    reg  [7:0]                              shift = 8'd0;
+    reg  [7:0]                              head = 8'd15;
 
-    reg                                     image_valid_1p;
-    reg                                     image_valid_2p;
-    reg                                     image_valid_3p;
-    reg                                     image_valid_4p;
-    reg                                     image_valid_5p;
+    reg                                     bypass = 1'b0;
+    reg  [7:0]                              pool_nb = 8'd1;
+    reg  [7:0]                              pool_cnt;
+
+    reg                                     mac_valid_1p;
+    reg                                     mac_valid_2p;
+    reg                                     mac_valid_3p;
+    reg                                     mac_valid_4p;
+    reg                                     mac_valid_5p;
     reg                                     mac_valid;
 
-    reg                                     hold_valid;
-    reg                                     hold_valid_1p;
-    reg                                     hold_valid_2p;
-    reg                                     hold_valid_3p;
-
-    reg                                     add_valid;
-    reg                                     add_valid_1p;
-    reg                                     add_valid_2p;
-    reg                                     add_valid_3p;
     reg                                     add_valid_4p;
-    reg                                     add_valid_5p;
+    reg                                     add_valid_3p;
+    reg                                     add_valid_2p;
+    reg                                     add_valid_1p;
+    reg                                     add_valid;
+
+    reg                                     pool_valid_3p;
+    reg                                     pool_valid_2p;
+    reg                                     pool_valid_1p;
+    reg                                     pool_valid;
+
+    reg                                     relu_valid_2p;
+    reg                                     relu_valid_1p;
     reg                                     relu_valid;
+
+    reg                                     rescale_valid_3p;
+    reg                                     rescale_valid_2p;
+    reg                                     rescale_valid_1p;
+    reg                                     rescale_valid;
 
     reg  [GROUP_NB*IMG_WIDTH-1:0]           image_1p;
     wire [DEPTH_NB*NUM_WIDTH*GROUP_NB-1:0]  mac_data;
@@ -193,13 +205,18 @@ module layers
                     dn_state_nx[DN_READY] = 1'b1;
                 end
                 else if (pool_cnt == pool_nb) begin
-                    dn_state_nx[DN_CLEAR] = 1'b1;
+                    dn_state_nx[DN_OPS] = 1'b1;
                 end
                 else dn_state_nx[DN_POOL] = 1'b1;
             end
-
+            dn_state[DN_OPS] : begin
+                if (rescale_valid) begin
+                    dn_state_nx[DN_CLEAR] = 1'b1;
+                end
+                else dn_state_nx[DN_OPS] = 1'b1;
+            end
             dn_state[DN_CLEAR] : begin
-                if (result_val && result_rdy) begin
+                if (result_rdy) begin
                     dn_state_nx[DN_RESET] = 1'b1;
                 end
                 else dn_state_nx[DN_CLEAR] = 1'b1;
@@ -219,25 +236,31 @@ module layers
 
 
     always @(posedge clk) begin
-        image_valid_1p  <= image_val & image_last;
-        image_valid_2p  <= image_valid_1p;
-        image_valid_3p  <= image_valid_2p;
-        image_valid_4p  <= image_valid_3p;
-        image_valid_5p  <= image_valid_4p;
-        mac_valid       <= image_valid_5p;
+        mac_valid_5p        <= image_val & image_last;
+        mac_valid_4p        <= mac_valid_5p;
+        mac_valid_3p        <= mac_valid_4p;
+        mac_valid_2p        <= mac_valid_3p;
+        mac_valid_1p        <= mac_valid_2p;
+        mac_valid           <= mac_valid_1p;
 
-        hold_valid      <= up_state[UP_CLEAR] & dn_state[DN_READY];
-        hold_valid_1p   <= hold_valid;
-        hold_valid_2p   <= hold_valid_1p;
-        hold_valid_3p   <= hold_valid_2p;
-        add_valid       <= hold_valid_3p;
+        add_valid_4p        <= up_state[UP_CLEAR] & dn_state[DN_READY];
+        add_valid_3p        <= add_valid_4p;
+        add_valid_2p        <= add_valid_3p;
+        add_valid_1p        <= add_valid_2p;
+        add_valid           <= add_valid_1p;
 
-        add_valid_1p    <= add_valid;
-        add_valid_2p    <= add_valid_1p;
-        add_valid_3p    <= add_valid_2p;
-        add_valid_4p    <= add_valid_3p;
-        add_valid_5p    <= add_valid_4p;
-        relu_valid      <= add_valid_5p;
+        pool_valid_3p       <= add_valid;
+        pool_valid_2p       <= pool_valid_3p;
+        pool_valid_1p       <= pool_valid_2p;
+        pool_valid          <= pool_valid_1p;
+
+        relu_valid_1p       <= pool_valid;
+        relu_valid          <= relu_valid_1p;
+
+        rescale_valid_3p    <= relu_valid;
+        rescale_valid_2p    <= rescale_valid_3p;
+        rescale_valid_1p    <= rescale_valid_2p;
+        rescale_valid       <= rescale_valid_1p;
     end
 
 
@@ -255,6 +278,15 @@ module layers
             pool_cnt <= pool_cnt + 8'b1;
         end
     end
+
+
+    always @(posedge clk)
+        if (rescale_valid) begin
+            result <= rescale_data;
+        end
+
+
+    assign result_val = dn_state[DN_CLEAR];
 
 
     // operation modules
@@ -320,9 +352,18 @@ module layers
             );
 
 
+            rescale #(
+                .NUM_WIDTH  (NUM_WIDTH),
+                .IMG_WIDTH  (IMG_WIDTH))
+            rescale_ (
+                .clk        (clk),
 
+                .shift      (shift),
+                .head       (head),
 
-
+                .up_data    (relu_data[i*NUM_WIDTH +: NUM_WIDTH]),
+                .dn_data    (rescale_data[i*IMG_WIDTH +: IMG_WIDTH])
+            );
 
 
         end

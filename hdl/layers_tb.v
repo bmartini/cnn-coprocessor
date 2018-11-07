@@ -127,10 +127,10 @@ module layers_tb;
             image_val,
             image_rdy,
 
-//            "\tres: %x %b %b",
-//            result,
-//            result_val,
-//            result_rdy,
+            "\tres: %x %b %b",
+            result,
+            result_val,
+            result_rdy,
 
             "\tstate <up: %b dn: %b>",
             uut.up_state,
@@ -140,17 +140,21 @@ module layers_tb;
 //            uut.mac_valid,
 //            uut.mac_data,
 
-            "\tadd: %b\t%x",
-            uut.add_valid,
-            uut.add_data,
+//            "\tadd: %b\t%x",
+//            uut.add_valid,
+//            uut.add_data,
 
-            "\tpool: %b %x",
-            uut.add_valid_4p,
-            uut.pool_data,
+//            "\tpool: %b %x",
+//            uut.pool_valid,
+//            uut.pool_data,
 
-            "\trelu: %b %x",
-            uut.relu_valid,
-            uut.relu_data,
+//            "\trelu: %b %x",
+//            uut.relu_valid,
+//            uut.relu_data,
+
+//            "\trescale: %b %x",
+//            uut.rescale_valid,
+//            uut.rescale_data,
 
 
         );
@@ -240,8 +244,12 @@ module layers_tb;
         image_last  <= 1'b0;
         @(negedge clk);
 
-
         repeat(30) @(negedge clk);
+        result_rdy  <= 1'b1;
+        @(negedge clk);
+        result_rdy  <= 1'b0;
+
+        repeat(10) @(negedge clk);
 
 
 `ifdef TB_VERBOSE
