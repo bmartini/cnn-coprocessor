@@ -96,11 +96,12 @@ module layers
     reg  [7:0]                              pool_nb = 8'd1;
     reg  [7:0]                              pool_cnt;
 
-    reg                                     mac_valid_1p;
-    reg                                     mac_valid_2p;
-    reg                                     mac_valid_3p;
-    reg                                     mac_valid_4p;
+    reg                                     mac_valid_6p;
     reg                                     mac_valid_5p;
+    reg                                     mac_valid_4p;
+    reg                                     mac_valid_3p;
+    reg                                     mac_valid_2p;
+    reg                                     mac_valid_1p;
     reg                                     mac_valid;
 
     reg                                     add_valid_4p;
@@ -251,8 +252,14 @@ module layers
         image_1p <= image;
 
 
+    always @(posedge clk)
+        if (rst)    kernel_rdy <= 1'b0;
+        else        kernel_rdy <= image_val & image_rdy;
+
+
     always @(posedge clk) begin
-        mac_valid_5p        <= image_val & image_last;
+        mac_valid_6p        <= image_val & image_rdy & image_last;
+        mac_valid_5p        <= mac_valid_6p;
         mac_valid_4p        <= mac_valid_5p;
         mac_valid_3p        <= mac_valid_4p;
         mac_valid_2p        <= mac_valid_3p;
@@ -325,9 +332,9 @@ module layers
                 .clk    (clk),
                 .rst    (mac_rst[i]),
 
-                .img    (image),
+                .img    (image_1p),
                 .ker    (kernel),
-                .val    (image_val),
+                .val    (kernel_rdy),
 
                 .result (mac_data[i*NUM_WIDTH*GROUP_NB +: NUM_WIDTH*GROUP_NB])
             );

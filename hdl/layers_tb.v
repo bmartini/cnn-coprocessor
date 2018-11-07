@@ -127,7 +127,7 @@ module layers_tb;
 
     task display_signals;
         $display(
-            "%d\t%d",
+            "%d %d",
             $time, rst,
 
             "\tcfg %x",
@@ -241,10 +241,15 @@ module layers_tb;
         image       <= {16'd4, 16'd3, 16'd2, 16'd1};
         image_val   <= 1'b1;
         @(negedge clk);
+        kernel      <= {16'd1, 16'd1, 16'd1, 16'd1};
+        image       <= 'b0;
+        image_val   <= 1'b0;
+        @(negedge clk);
         kernel      <= 'b0;
         image       <= 'b0;
         image_val   <= 1'b0;
         repeat(2) @(negedge clk);
+
         kernel      <= {16'd1, 16'd1, 16'd1, 16'd1};
         //image       <= {16'd4, 16'd3, 16'd2, 16'd1};
         //image       <= {16'd8, 16'd7, 16'd6, 16'd5};
@@ -252,32 +257,41 @@ module layers_tb;
         image_val   <= 1'b1;
         image_last  <= 1'b1;
         @(negedge clk);
+        kernel      <= {16'd1, 16'd1, 16'd1, 16'd1};
+        //image       <= {16'd4, 16'd3, 16'd2, 16'd1};
+        //image       <= {16'd8, 16'd7, 16'd6, 16'd5};
+        image       <= 'b0;
+        image_val   <= 1'b0;
+        image_last  <= 1'b0;
+        @(negedge clk);
         kernel      <= 'b0;
         image       <= 'b0;
         image_val   <= 1'b0;
         image_last  <= 1'b0;
 
         @(posedge image_rdy);
-
         @(negedge clk);
+
         kernel      <= {16'd1, 16'd1, 16'd1, 16'd1};
         image       <= {16'd4, 16'd3, 16'd2, 16'd1};
         image_val   <= 1'b1;
         @(negedge clk);
-        kernel      <= 'b0;
-        image       <= 'b0;
-        image_val   <= 1'b0;
-        repeat(2) @(negedge clk);
         kernel      <= {16'd1, 16'd1, 16'd1, 16'd1};
         image       <= {16'd4, 16'd3, 16'd2, 16'd1};
         image_val   <= 1'b1;
         image_last  <= 1'b1;
         @(negedge clk);
-        kernel      <= 'b0;
+        kernel      <= {16'd1, 16'd1, 16'd1, 16'd1};
         image       <= 'b0;
         image_val   <= 1'b0;
         image_last  <= 1'b0;
         @(negedge clk);
+        kernel      <= 'b0;
+        image       <= 'b0;
+        image_val   <= 1'b0;
+        image_last  <= 1'b0;
+        repeat(2) @(negedge clk);
+
 
         repeat(30) @(negedge clk);
         result_rdy  <= 1'b1;
