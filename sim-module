@@ -12,30 +12,30 @@ then
 fi
 
 
-# create sim work directory
-test -d sim && rm -rf sim
-mkdir -p sim/src
+# create uut work directory
+test -d uut && rm -rf uut
+mkdir -p uut/src
 
-# copy verilog code files from hdl directory into sim work dir
+# copy verilog code files from hdl directory into uut work dir
 for FILE in $(find ./hdl/* -name "*.v" -type f -print)
 do
-	cp -n $FILE ./sim/src/ || { echo "ERROR duplicate filename ${FILE}" ; exit 1; }
+	cp -n $FILE ./uut/src/ || { echo "ERROR duplicate filename ${FILE}" ; exit 1; }
 done
 
-# copy verilog header files from hdl directory into sim work dir
-for FILE in $(find ./hdl/*/ -name "*.vh" -type f -print)
+# copy verilog header files from hdl directory into uut work dir
+for FILE in $(find ./hdl/* -name "*.vh" -type f -print)
 do
-	cp -n $FILE ./sim/src/ || { echo "ERROR duplicate filename ${FILE}" ; exit 1; }
+	cp -n $FILE ./uut/src/ || { echo "ERROR duplicate filename ${FILE}" ; exit 1; }
 done
 
-# copy SystemVerilog code files from hdl directory into sim work dir
-for FILE in $(find ./hdl/*/ -name "*.sv" -type f -print)
+# copy SystemVerilog code files from hdl directory into uut work dir
+for FILE in $(find ./hdl/* -name "*.sv" -type f -print)
 do
-	cp -n $FILE ./sim/src/ || { echo "ERROR duplicate filename ${FILE}" ; exit 1; }
+	cp -n $FILE ./uut/src/ || { echo "ERROR duplicate filename ${FILE}" ; exit 1; }
 done
 
 # cd into the working dir
-cd sim/src
+cd uut/src
 
 # UUT should contain the name of the unit under test
 if [ -f $1_tb.v ]
