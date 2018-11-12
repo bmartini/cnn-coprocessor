@@ -60,6 +60,46 @@ module layers_tb;
     localparam IMG_WIDTH    = 16;
     localparam KER_WIDTH    = 16;
 
+    localparam IMG_POINT    = 8;
+    localparam KER_POINT    = 12;
+
+
+    // signed fixed point ker representation to real
+    function real ker_f2r;
+        input signed [KER_WIDTH-1:0] value;
+
+        begin
+            ker_f2r = value / ((1<<KER_POINT) * 1.0);
+        end
+    endfunction
+
+    // real to signed fixed point ker representation
+    function signed [KER_WIDTH-1:0] ker_r2f;
+        input real value;
+
+        begin
+            ker_r2f = value * (1<<KER_POINT);
+        end
+    endfunction
+
+    // signed fixed point img representation to real
+    function real img_f2r;
+        input signed [IMG_WIDTH-1:0] value;
+
+        begin
+            img_f2r = value / ((1<<IMG_POINT) * 1.0);
+        end
+    endfunction
+
+    // real to signed fixed point img representation
+    function signed [IMG_WIDTH-1:0] img_r2f;
+        input real value;
+
+        begin
+            img_r2f = value * (1<<IMG_POINT);
+        end
+    endfunction
+
 
 `ifdef TB_VERBOSE
     initial begin
@@ -72,6 +112,9 @@ module layers_tb;
      *  signals, registers and wires
      */
     reg                                     rst;
+
+    reg  [7:0]                              shift;
+    reg  [7:0]                              head;
 
     reg  [CFG_DWIDTH-1:0]                   cfg_data;
     reg  [CFG_AWIDTH-1:0]                   cfg_addr;
@@ -133,18 +176,24 @@ module layers_tb;
             "\tcfg %x",
             cfg_data,
 
-            "\tker: %x %b",
-            kernel,
+            "\tker: %f %f %f %f %b",
+            ker_f2r(kernel[3*KER_WIDTH +: KER_WIDTH]),
+            ker_f2r(kernel[2*KER_WIDTH +: KER_WIDTH]),
+            ker_f2r(kernel[1*KER_WIDTH +: KER_WIDTH]),
+            ker_f2r(kernel[0*KER_WIDTH +: KER_WIDTH]),
             kernel_rdy,
 
-            "\timg: %x %b %b %b",
-            image,
+            "\timg: %f %f %f %f %b %b %b",
+            img_f2r(image[3*IMG_WIDTH +: IMG_WIDTH]),
+            img_f2r(image[2*IMG_WIDTH +: IMG_WIDTH]),
+            img_f2r(image[1*IMG_WIDTH +: IMG_WIDTH]),
+            img_f2r(image[0*IMG_WIDTH +: IMG_WIDTH]),
             image_last,
             image_val,
             image_rdy,
 
-            "\tres: %x %b %b",
-            result,
+            "\tres: %f %b %b",
+            img_f2r(result),
             result_val,
             result_rdy,
 
@@ -193,6 +242,9 @@ module layers_tb;
         // init values
         rst = 0;
 
+        shift       = KER_POINT;
+        head        = IMG_WIDTH+KER_POINT-1;
+
         cfg_data    = 'b0;
         cfg_addr    = 'b0;
         cfg_valid   = 1'b0;
@@ -221,7 +273,7 @@ module layers_tb;
 `endif
 
         // {bypass, pool_nb, shift, head}
-        cfg_data    = {8'd0, 8'd1, 8'd0, 8'd15};
+        cfg_data    = {8'd0, 8'd1, shift, head};
         cfg_addr    = CFG_LAYERS;
         cfg_valid   = 1'b1;
         @(negedge clk);
@@ -237,11 +289,11 @@ module layers_tb;
 
         repeat(10) @(negedge clk);
 
-        kernel      <= {16'd1, 16'd1, 16'd1, 16'd1};
-        image       <= {16'd4, 16'd3, 16'd2, 16'd1};
+        kernel      <= {ker_r2f(16'd1), ker_r2f(16'd1), ker_r2f(16'd1), ker_r2f(16'd1)};
+        image       <= {img_r2f(16'd4), img_r2f(16'd3), img_r2f(16'd2), img_r2f(16'd1)};
         image_val   <= 1'b1;
         @(negedge clk);
-        kernel      <= {16'd1, 16'd1, 16'd1, 16'd1};
+        kernel      <= {ker_r2f(16'd1), ker_r2f(16'd1), ker_r2f(16'd1), ker_r2f(16'd1)};
         image       <= 'b0;
         image_val   <= 1'b0;
         @(negedge clk);
@@ -250,16 +302,14 @@ module layers_tb;
         image_val   <= 1'b0;
         repeat(2) @(negedge clk);
 
-        kernel      <= {16'd1, 16'd1, 16'd1, 16'd1};
-        //image       <= {16'd4, 16'd3, 16'd2, 16'd1};
-        //image       <= {16'd8, 16'd7, 16'd6, 16'd5};
-        image       <= {-16'd8, -16'd7, -16'd6, -16'd5};
+        kernel      <= {ker_r2f(16'd1), ker_r2f(16'd1), ker_r2f(16'd1), ker_r2f(16'd1)};
+        //image       <= {img_r2f(16'd4), img_r2f(16'd3), img_r2f(16'd2), img_r2f(16'd1)};
+        //image       <= {img_r2f(16'd8), img_r2f(16'd7), img_r2f(16'd6), img_r2f(16'd5)};
+        image       <= {img_r2f(-16'd8), img_r2f(-16'd7), img_r2f(-16'd6), img_r2f(-16'd5)};
         image_val   <= 1'b1;
         image_last  <= 1'b1;
         @(negedge clk);
-        kernel      <= {16'd1, 16'd1, 16'd1, 16'd1};
-        //image       <= {16'd4, 16'd3, 16'd2, 16'd1};
-        //image       <= {16'd8, 16'd7, 16'd6, 16'd5};
+        kernel      <= {ker_r2f(16'd1), ker_r2f(16'd1), ker_r2f(16'd1), ker_r2f(16'd1)};
         image       <= 'b0;
         image_val   <= 1'b0;
         image_last  <= 1'b0;
@@ -272,16 +322,16 @@ module layers_tb;
         @(posedge image_rdy);
         @(negedge clk);
 
-        kernel      <= {16'd1, 16'd1, 16'd1, 16'd1};
-        image       <= {16'd4, 16'd3, 16'd2, 16'd1};
+        kernel      <= {ker_r2f(16'd1), ker_r2f(16'd1), ker_r2f(16'd1), ker_r2f(16'd1)};
+        image       <= {img_r2f(16'd4), img_r2f(16'd3), img_r2f(16'd2), img_r2f(16'd1)};
         image_val   <= 1'b1;
         @(negedge clk);
-        kernel      <= {16'd1, 16'd1, 16'd1, 16'd1};
-        image       <= {16'd4, 16'd3, 16'd2, 16'd1};
+        kernel      <= {ker_r2f(16'd1), ker_r2f(16'd1), ker_r2f(16'd1), ker_r2f(16'd1)};
+        image       <= {img_r2f(16'd4), img_r2f(16'd3), img_r2f(16'd2), img_r2f(16'd1)};
         image_val   <= 1'b1;
         image_last  <= 1'b1;
         @(negedge clk);
-        kernel      <= {16'd1, 16'd1, 16'd1, 16'd1};
+        kernel      <= {ker_r2f(16'd1), ker_r2f(16'd1), ker_r2f(16'd1), ker_r2f(16'd1)};
         image       <= 'b0;
         image_val   <= 1'b0;
         image_last  <= 1'b0;

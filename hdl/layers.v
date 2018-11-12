@@ -89,11 +89,11 @@ module layers
     (* KEEP = "TRUE" *) reg  [DEPTH_NB-1:0] mac_rst;
     (* KEEP = "TRUE" *) reg  [DEPTH_NB-1:0] pool_rst;
 
-    reg  [7:0]                              shift = 8'd0;
-    reg  [7:0]                              head = 8'd15;
+    reg  [7:0]                              shift;
+    reg  [7:0]                              head;
 
-    reg                                     bypass = 1'b0;
-    reg  [7:0]                              pool_nb = 8'd1;
+    reg                                     bypass;
+    reg  [7:0]                              pool_nb;
     reg  [7:0]                              pool_cnt;
 
     reg                                     mac_valid_6p;
