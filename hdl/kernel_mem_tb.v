@@ -52,6 +52,7 @@ module kernel_mem_tb;
 
     localparam GROUP_NB     = 4;
     localparam KER_WIDTH    = 16;
+    localparam DEPTH_NB     = 1;
 
     localparam MEM_AWIDTH   = 8;
     localparam MEM_DEPTH    = 8;
@@ -67,19 +68,19 @@ module kernel_mem_tb;
     /**
      *  signals, registers and wires
      */
-    reg                             rst;
+    reg                                     rst;
 
-    reg  [MEM_AWIDTH-1:0]           wr_cfg_end;
-    reg                             wr_cfg_set;
-    reg  [GROUP_NB*KER_WIDTH-1:0]   wr_data;
-    reg                             wr_data_val;
-    wire                            wr_data_rdy;
+    reg  [MEM_AWIDTH-1:0]                   wr_cfg_end;
+    reg                                     wr_cfg_set;
+    reg  [GROUP_NB*KER_WIDTH*DEPTH_NB-1:0]  wr_data;
+    reg                                     wr_data_val;
+    wire                                    wr_data_rdy;
 
-    reg  [MEM_AWIDTH-1:0]           rd_cfg_start;
-    reg  [MEM_AWIDTH-1:0]           rd_cfg_end;
-    reg                             rd_cfg_set;
-    wire [GROUP_NB*KER_WIDTH-1:0]   rd_data;
-    reg                             rd_data_pop;
+    reg  [MEM_AWIDTH-1:0]                   rd_cfg_start;
+    reg  [MEM_AWIDTH-1:0]                   rd_cfg_end;
+    reg                                     rd_cfg_set;
+    wire [GROUP_NB*KER_WIDTH*DEPTH_NB-1:0]  rd_data;
+    reg                                     rd_data_pop;
 
 
     /**
@@ -89,6 +90,7 @@ module kernel_mem_tb;
     kernel_mem #(
         .GROUP_NB   (GROUP_NB),
         .KER_WIDTH  (KER_WIDTH),
+        .DEPTH_NB   (DEPTH_NB),
 
         .MEM_AWIDTH (MEM_AWIDTH),
         .MEM_DEPTH  (MEM_DEPTH))

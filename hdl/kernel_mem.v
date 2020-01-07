@@ -3,8 +3,8 @@
  *  kernel_mem
  *
  * Description:
- *  The kernel_mem module a memory that stores the kernel data for one
- *  convolution group.
+ *  The kernel_mem module has a memory that stores the kernel data for all the
+ *  convolution groups.
  *
  * Created:
  *  Sun Nov 11 17:28:24 PST 2018
@@ -21,25 +21,26 @@ module kernel_mem
   #(parameter
     GROUP_NB    = 4,
     KER_WIDTH   = 16,
+    DEPTH_NB    = 16,
 
     MEM_AWIDTH  = 16,
     MEM_DEPTH   = 1<<MEM_AWIDTH)
-   (input                                   clk,
-    input                                   rst,
+   (input                                           clk,
+    input                                           rst,
 
-    input       [MEM_AWIDTH-1:0]            wr_cfg_end,
-    input                                   wr_cfg_set,
+    input       [MEM_AWIDTH-1:0]                    wr_cfg_end,
+    input                                           wr_cfg_set,
 
-    input       [GROUP_NB*KER_WIDTH-1:0]    wr_data,
-    input                                   wr_data_val,
-    output                                  wr_data_rdy,
+    input       [GROUP_NB*KER_WIDTH*DEPTH_NB-1:0]   wr_data,
+    input                                           wr_data_val,
+    output                                          wr_data_rdy,
 
-    input       [MEM_AWIDTH-1:0]            rd_cfg_start,
-    input       [MEM_AWIDTH-1:0]            rd_cfg_end,
-    input                                   rd_cfg_set,
+    input       [MEM_AWIDTH-1:0]                    rd_cfg_start,
+    input       [MEM_AWIDTH-1:0]                    rd_cfg_end,
+    input                                           rd_cfg_set,
 
-    output reg  [GROUP_NB*KER_WIDTH-1:0]    rd_data,
-    input                                   rd_data_pop
+    output reg  [GROUP_NB*KER_WIDTH*DEPTH_NB-1:0]   rd_data,
+    input                                           rd_data_pop
 );
 
 
@@ -53,16 +54,16 @@ module kernel_mem
      * Internal signals
      */
 
-    reg  [GROUP_NB*KER_WIDTH-1:0]   mem [0:MEM_DEPTH-1];
+    reg  [GROUP_NB*KER_WIDTH*DEPTH_NB-1:0]  mem [0:MEM_DEPTH-1];
 
-    reg                             wr_ptr_wrap;
-    reg  [MEM_AWIDTH-1:0]           wr_ptr;
-    reg                             wr_end_wrap;
-    reg  [MEM_AWIDTH-1:0]           wr_end;
+    reg                     wr_ptr_wrap;
+    reg  [MEM_AWIDTH-1:0]   wr_ptr;
+    reg                     wr_end_wrap;
+    reg  [MEM_AWIDTH-1:0]   wr_end;
 
-    reg  [MEM_AWIDTH-1:0]           rd_ptr;
-    reg  [MEM_AWIDTH-1:0]           rd_start;
-    reg  [MEM_AWIDTH-1:0]           rd_end;
+    reg  [MEM_AWIDTH-1:0]   rd_ptr;
+    reg  [MEM_AWIDTH-1:0]   rd_start;
+    reg  [MEM_AWIDTH-1:0]   rd_end;
 
 
     /**
