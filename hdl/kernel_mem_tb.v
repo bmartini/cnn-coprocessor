@@ -54,6 +54,7 @@ module kernel_mem_tb;
     localparam KER_WIDTH    = 16;
 
     localparam MEM_AWIDTH   = 8;
+    localparam MEM_DEPTH    = 8;
 
 
 `ifdef TB_VERBOSE
@@ -68,8 +69,8 @@ module kernel_mem_tb;
      */
     reg                             rst;
 
-    reg  [MEM_AWIDTH-1:0]           wr_addr;
-    reg                             wr_addr_set;
+    reg  [MEM_AWIDTH-1:0]           wr_cfg_end;
+    reg                             wr_cfg_set;
     reg  [GROUP_NB*KER_WIDTH-1:0]   wr_data;
     reg                             wr_data_val;
     wire                            wr_data_rdy;
@@ -88,14 +89,15 @@ module kernel_mem_tb;
         .GROUP_NB   (GROUP_NB),
         .KER_WIDTH  (KER_WIDTH),
 
-        .MEM_AWIDTH (MEM_AWIDTH))
+        .MEM_AWIDTH (MEM_AWIDTH),
+        .MEM_DEPTH  (MEM_DEPTH))
     uut (
         .clk            (clk),
         .rst            (rst),
 
 
-        .wr_addr        (wr_addr),
-        .wr_addr_set    (wr_addr_set),
+        .wr_cfg_end     (wr_cfg_end),
+        .wr_cfg_set     (wr_cfg_set),
         .wr_data        (wr_data),
         .wr_data_val    (wr_data_val),
         .wr_data_rdy    (wr_data_rdy),
@@ -117,11 +119,17 @@ module kernel_mem_tb;
             $time, rst,
 
             "\twr <addr: %d, set: %b, data: %d, val: %b, rdy: %b>",
-            wr_addr,
-            wr_addr_set,
+            wr_cfg_end,
+            wr_cfg_set,
             wr_data,
             wr_data_val,
             wr_data_rdy,
+
+//            "\tuut.wr <end: %d, end_w: %b, ptr: %d, ptr_w: %b>",
+//            uut.wr_end,
+//            uut.wr_end_wrap,
+//            uut.wr_ptr,
+//            uut.wr_ptr_wrap,
 
             "\trd <addr: %d, set: %b, data: %d, pop: %b>",
             rd_addr,
@@ -149,8 +157,8 @@ module kernel_mem_tb;
         // init values
         rst = 0;
 
-        wr_addr     <= 'b0;
-        wr_addr_set <= 1'b0;
+        wr_cfg_end  <= 'b0;
+        wr_cfg_set  <= 1'b0;
         wr_data     <= 'b0;
         wr_data_val <= 1'b0;
 
@@ -165,19 +173,36 @@ module kernel_mem_tb;
 
         repeat(6) @(negedge clk);
         rst         <= 1'b1;
-        wr_addr_set <= 1'b1;
-        rd_addr_set <= 1'b1;
         repeat(6) @(negedge clk);
         rst         <= 1'b0;
-        wr_addr_set <= 1'b0;
-        rd_addr_set <= 1'b0;
         repeat(5) @(negedge clk);
 
 
+`ifdef TB_VERBOSE
+    $display("write data to fill mem");
+`endif
+
+        repeat(5) @(negedge clk);
+
+        repeat(10) begin
+            wr_data     <= wr_data + 1;
+            wr_data_val <= 1'b1;
+            @(negedge clk);
+        end
+        //wr_data     <= 'b0;
+        wr_data_val <= 1'b0;
+        repeat(5) @(negedge clk);
+
 
 `ifdef TB_VERBOSE
-    $display("write data");
+    $display("reset write end to allow for overwrite");
 `endif
+
+        @(negedge clk);
+        wr_cfg_set <= 1'b1;
+        @(negedge clk);
+        wr_cfg_set <= 1'b0;
+        @(negedge clk);
 
         repeat(5) @(negedge clk);
 
@@ -195,13 +220,22 @@ module kernel_mem_tb;
     $display("read data");
 `endif
 
+
+        @(negedge clk);
+        rd_addr     <= 'b0;
+        rd_addr_set <= 1'b1;
+        @(negedge clk);
+        rd_addr_set <= 1'b0;
+        @(negedge clk);
+
+
         rd_data_pop <= 1'b1;
         @(negedge clk);
         rd_data_pop <= 1'b0;
         @(negedge clk);
 
         rd_data_pop <= 1'b1;
-        repeat(9) @(negedge clk);
+        repeat(7) @(negedge clk);
         rd_data_pop <= 1'b0;
         repeat(10) @(negedge clk);
 

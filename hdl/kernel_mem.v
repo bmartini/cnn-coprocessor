@@ -27,8 +27,9 @@ module kernel_mem
    (input                                   clk,
     input                                   rst,
 
-    input       [MEM_AWIDTH-1:0]            wr_addr,
-    input                                   wr_addr_set,
+    input       [MEM_AWIDTH-1:0]            wr_cfg_end,
+    input                                   wr_cfg_set,
+
     input       [GROUP_NB*KER_WIDTH-1:0]    wr_data,
     input                                   wr_data_val,
     output                                  wr_data_rdy,
@@ -52,12 +53,11 @@ module kernel_mem
 
     reg  [GROUP_NB*KER_WIDTH-1:0]   mem [0:MEM_DEPTH-1];
 
-    reg                             restart;
-    reg                             ready;
-    wire                            ready_nx;
-
+    reg                             wr_ptr_wrap;
     reg  [MEM_AWIDTH-1:0]           wr_ptr;
-    wire [MEM_AWIDTH-1:0]           wr_ptr_nx;
+    reg                             wr_end_wrap;
+    reg  [MEM_AWIDTH-1:0]           wr_end;
+
     reg  [MEM_AWIDTH-1:0]           rd_ptr;
     wire [MEM_AWIDTH-1:0]           rd_ptr_nx;
 
@@ -67,32 +67,43 @@ module kernel_mem
      */
 
 
-    assign wr_data_rdy  = restart || ready;
-
-    assign ready_nx     = (wr_ptr_nx != rd_addr);
-
-    always @(posedge clk)
-        if (rst)    ready   <= 1'b0;
-        else        ready   <= ready_nx;
+    // write to memory
+    assign wr_data_rdy = ~((wr_ptr_wrap != wr_end_wrap) && (wr_ptr == wr_end));
 
 
     always @(posedge clk)
-        if (rst) restart <= 1'b1;
-        else if (wr_data_val & wr_data_rdy) begin
-            restart <= 1'b0;
+        if (rst) begin
+            wr_end      <= 'b0;
+            wr_end_wrap <= 1'b0;
+        end
+        else if (wr_cfg_set) begin
+            wr_end <= wr_cfg_end;
+
+            if (wr_end >= wr_cfg_end) begin
+                wr_end_wrap <= ~wr_end_wrap;
+            end
         end
 
 
-    // write to memory
-    assign wr_ptr_nx = wr_ptr + {{MEM_AWIDTH-1{1'b0}}, (wr_data_val & wr_data_rdy)};
+    always @(posedge clk)
+        if (rst) begin
+            wr_ptr      <= 'b0;
+            wr_ptr_wrap <= 1'b0;
+        end
+        else if (wr_data_val & wr_data_rdy) begin
+            wr_ptr <= wr_ptr + {{MEM_AWIDTH-1{1'b0}}, 1'b1};
+
+            if (wr_ptr == (MEM_DEPTH-1)) begin
+                wr_ptr      <= 'b0;
+                wr_ptr_wrap <= ~wr_ptr_wrap;
+            end
+        end
+
 
     always @(posedge clk)
-        if (wr_addr_set)    wr_ptr <= wr_addr;
-        else                wr_ptr <= wr_ptr_nx;
-
-
-    always @(posedge clk)
-        if (wr_data_val & wr_data_rdy) mem[wr_ptr] <= wr_data;
+        if (wr_data_val & wr_data_rdy) begin
+            mem[wr_ptr] <= wr_data;
+        end
 
 
     // read from memory
