@@ -75,8 +75,9 @@ module kernel_mem_tb;
     reg                             wr_data_val;
     wire                            wr_data_rdy;
 
-    reg  [MEM_AWIDTH-1:0]           rd_addr;
-    reg                             rd_addr_set;
+    reg  [MEM_AWIDTH-1:0]           rd_cfg_start;
+    reg  [MEM_AWIDTH-1:0]           rd_cfg_end;
+    reg                             rd_cfg_set;
     wire [GROUP_NB*KER_WIDTH-1:0]   rd_data;
     reg                             rd_data_pop;
 
@@ -102,8 +103,9 @@ module kernel_mem_tb;
         .wr_data_val    (wr_data_val),
         .wr_data_rdy    (wr_data_rdy),
 
-        .rd_addr        (rd_addr),
-        .rd_addr_set    (rd_addr_set),
+        .rd_cfg_start   (rd_cfg_start),
+        .rd_cfg_end     (rd_cfg_end),
+        .rd_cfg_set     (rd_cfg_set),
         .rd_data        (rd_data),
         .rd_data_pop    (rd_data_pop)
     );
@@ -118,22 +120,17 @@ module kernel_mem_tb;
             "%d %d",
             $time, rst,
 
-            "\twr <addr: %d, set: %b, data: %d, val: %b, rdy: %b>",
+            "\twr <cfg: %d, set: %b, data: %d, val: %b, rdy: %b>",
             wr_cfg_end,
             wr_cfg_set,
             wr_data,
             wr_data_val,
             wr_data_rdy,
 
-//            "\tuut.wr <end: %d, end_w: %b, ptr: %d, ptr_w: %b>",
-//            uut.wr_end,
-//            uut.wr_end_wrap,
-//            uut.wr_ptr,
-//            uut.wr_ptr_wrap,
-
-            "\trd <addr: %d, set: %b, data: %d, pop: %b>",
-            rd_addr,
-            rd_addr_set,
+            "\trd <cfg: s %d, e %d, set: %b, data: %d, pop: %b>",
+            rd_cfg_start,
+            rd_cfg_end,
+            rd_cfg_set,
             rd_data,
             rd_data_pop,
 
@@ -162,9 +159,10 @@ module kernel_mem_tb;
         wr_data     <= 'b0;
         wr_data_val <= 1'b0;
 
-        rd_addr     <= 'b0;
-        rd_addr_set <= 1'b0;
-        rd_data_pop <= 1'b0;
+        rd_cfg_start    <= 'b0;
+        rd_cfg_end      <= 'b0;
+        rd_cfg_set      <= 1'b0;
+        rd_data_pop     <= 1'b0;
         //end init
 
 `ifdef TB_VERBOSE
@@ -217,15 +215,18 @@ module kernel_mem_tb;
 
 
 `ifdef TB_VERBOSE
-    $display("read data");
+    $display("read data section of memory");
 `endif
 
 
         @(negedge clk);
-        rd_addr     <= 'b0;
-        rd_addr_set <= 1'b1;
+        rd_cfg_start    <= 8'd0;
+        rd_cfg_end      <= 8'd4;
+        rd_cfg_set      <= 1'b1;
         @(negedge clk);
-        rd_addr_set <= 1'b0;
+        rd_cfg_start    <= 'b0;
+        rd_cfg_end      <= 'b0;
+        rd_cfg_set      <= 1'b0;
         @(negedge clk);
 
 
@@ -235,7 +236,29 @@ module kernel_mem_tb;
         @(negedge clk);
 
         rd_data_pop <= 1'b1;
-        repeat(7) @(negedge clk);
+        repeat(9) @(negedge clk);
+        rd_data_pop <= 1'b0;
+        repeat(10) @(negedge clk);
+
+
+`ifdef TB_VERBOSE
+    $display("read data section of memory with wrap over end of memory");
+`endif
+
+
+        @(negedge clk);
+        rd_cfg_start    <= 8'd5;
+        rd_cfg_end      <= 8'd1;
+        rd_cfg_set      <= 1'b1;
+        @(negedge clk);
+        rd_cfg_start    <= 'b0;
+        rd_cfg_end      <= 'b0;
+        rd_cfg_set      <= 1'b0;
+        @(negedge clk);
+
+
+        rd_data_pop <= 1'b1;
+        repeat(10) @(negedge clk);
         rd_data_pop <= 1'b0;
         repeat(10) @(negedge clk);
 

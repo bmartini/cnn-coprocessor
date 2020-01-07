@@ -34,8 +34,10 @@ module kernel_mem
     input                                   wr_data_val,
     output                                  wr_data_rdy,
 
-    input       [MEM_AWIDTH-1:0]            rd_addr,
-    input                                   rd_addr_set,
+    input       [MEM_AWIDTH-1:0]            rd_cfg_start,
+    input       [MEM_AWIDTH-1:0]            rd_cfg_end,
+    input                                   rd_cfg_set,
+
     output reg  [GROUP_NB*KER_WIDTH-1:0]    rd_data,
     input                                   rd_data_pop
 );
@@ -59,7 +61,8 @@ module kernel_mem
     reg  [MEM_AWIDTH-1:0]           wr_end;
 
     reg  [MEM_AWIDTH-1:0]           rd_ptr;
-    wire [MEM_AWIDTH-1:0]           rd_ptr_nx;
+    reg  [MEM_AWIDTH-1:0]           rd_start;
+    reg  [MEM_AWIDTH-1:0]           rd_end;
 
 
     /**
@@ -107,15 +110,39 @@ module kernel_mem
 
 
     // read from memory
-    assign rd_ptr_nx = rd_ptr + {{MEM_AWIDTH-1{1'b0}}, rd_data_pop};
+    always @(posedge clk)
+        if (rst) begin
+            rd_start    <= 'b0;
+            rd_end      <= 'b0;
+        end
+        else if (rd_cfg_set) begin
+            rd_start    <= rd_cfg_start;
+            rd_end      <= rd_cfg_end;
+        end
+
 
     always @(posedge clk)
-        if (rd_addr_set)    rd_ptr <= rd_addr;
-        else                rd_ptr <= rd_ptr_nx;
+        if (rd_cfg_set) begin
+            rd_ptr <= rd_cfg_start;
+        end
+        else if (rd_data_pop) begin
+            rd_ptr <= rd_ptr + {{MEM_AWIDTH-1{1'b0}}, 1'b1};
+
+            if (rd_ptr == (MEM_DEPTH-1)) begin
+                rd_ptr <= 'b0;
+            end
+
+            if (rd_ptr == rd_end) begin
+                // the 'rd_ptr' == 'rd_end' takes precedence over end of memory
+                rd_ptr <= rd_start;
+            end
+        end
 
 
     always @(posedge clk)
-        if (rd_data_pop) rd_data <= mem[rd_ptr];
+        if (rd_data_pop) begin
+            rd_data <= mem[rd_ptr];
+        end
 
 
 
