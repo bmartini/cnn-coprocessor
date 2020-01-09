@@ -99,7 +99,7 @@ module kernel_mem
         else if (wr_data_val & wr_data_rdy) begin
             wr_ptr <= wr_ptr + {{MEM_AWIDTH-1{1'b0}}, 1'b1};
 
-            if (wr_ptr == (MEM_DEPTH-1)) begin
+            if (wr_ptr == (MEM_DEPTH[MEM_AWIDTH-1:0]-1)) begin
                 wr_ptr      <= 'b0;
                 wr_ptr_wrap <= ~wr_ptr_wrap;
             end
@@ -143,7 +143,7 @@ module kernel_mem
         else if (rd_data_pop) begin
             rd_ptr <= rd_ptr + {{MEM_AWIDTH-1{1'b0}}, 1'b1};
 
-            if (rd_ptr == (MEM_DEPTH-1)) begin
+            if (rd_ptr == (MEM_DEPTH[MEM_AWIDTH-1:0]-1)) begin
                 rd_ptr <= 'b0;
             end
 
