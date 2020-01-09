@@ -86,7 +86,7 @@ module kernel_tb;
     reg                                     str_ker_val;
     wire                                    str_ker_rdy;
 
-    wire [GROUP_NB*KER_WIDTH*DEPTH_NB-1:0]  kernel;
+    wire [GROUP_NB*KER_WIDTH*DEPTH_NB-1:0]  kernel_bus;
     reg                                     kernel_rdy;
 
 
@@ -118,7 +118,7 @@ module kernel_tb;
         .str_ker_val    (str_ker_val),
         .str_ker_rdy    (str_ker_rdy),
 
-        .kernel         (kernel),
+        .kernel_bus     (kernel_bus),
         .kernel_rdy     (kernel_rdy)
     );
 
@@ -151,7 +151,7 @@ module kernel_tb;
             str_ker_rdy,
 
             "\tker: %x %b",
-            kernel,
+            kernel_bus,
             kernel_rdy,
 
         );
