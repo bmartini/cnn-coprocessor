@@ -122,6 +122,11 @@ module kernel
     );
 
 
+
+    assign wr_data_rdy = 1'b1;
+
+
+
 //    kernel_mem #(
 //        .GROUP_NB   (GROUP_NB),
 //        .KER_WIDTH  (KER_WIDTH),

@@ -55,7 +55,7 @@ module kernel_tb;
     localparam CFG_DWIDTH      = 32;
     localparam CFG_AWIDTH      = 5;
 
-    localparam STR_KER_WIDTH   = 64;
+    localparam STR_KER_WIDTH   = 16;
 
     localparam GROUP_NB        = 4;
     localparam KER_WIDTH       = 16;
@@ -82,7 +82,8 @@ module kernel_tb;
     reg  [CFG_AWIDTH-1:0]                   cfg_addr;
     reg                                     cfg_valid;
 
-    reg  [GROUP_NB*KER_WIDTH*DEPTH_NB-1:0]  str_ker;
+    reg  [STR_KER_WIDTH-1:0]                str_cnt;
+    reg  [STR_KER_WIDTH-1:0]                str_ker;
     reg                                     str_ker_val;
     wire                                    str_ker_rdy;
 
@@ -140,10 +141,15 @@ module kernel_tb;
             uut.wr_cfg_end,
             uut.wr_cfg_set,
 
-//            "\tstr %x %b %b",
-//            str_ker,
-//            str_ker_val,
-//            str_ker_rdy,
+            "\tstr %x %b %b",
+            str_ker,
+            str_ker_val,
+            str_ker_rdy,
+
+            "\tstr %x %b %b",
+            uut.wr_data,
+            uut.wr_data_val,
+            uut.wr_data_rdy,
 
             "\tker: %x %b",
             kernel,
@@ -172,6 +178,7 @@ module kernel_tb;
         cfg_addr    = 'b0;
         cfg_valid   = 1'b0;
 
+        str_cnt     = 'b0;
         str_ker     = 'b0;
         str_ker_val = 1'b0;
 
@@ -193,19 +200,29 @@ module kernel_tb;
 `endif
 
         // send write end value
-        cfg_data    = 32'd7;
-        cfg_addr    = CFG_KER_WR;
-        cfg_valid   = 1'b1;
+        cfg_data    <= 32'd7;
+        cfg_addr    <= CFG_KER_WR;
+        cfg_valid   <= 1'b1;
         @(negedge clk);
-        cfg_data    = 'b0;
-        cfg_addr    = 'b0;
-        cfg_valid   = 1'b0;
+        cfg_data    <= 'b0;
+        cfg_addr    <= 'b0;
+        cfg_valid   <= 1'b0;
         repeat(2) @(negedge clk);
 
 
 `ifdef TB_VERBOSE
     $display("stream kernal data");
 `endif
+
+        repeat(4*8) begin
+            str_ker     <= str_ker + 16'd1;
+            str_ker_val <= 1'b1;
+            @(negedge clk);
+        end
+
+        str_ker     <= 16'd0;
+        str_ker_val <= 1'b0;
+        @(negedge clk);
 
 
 
