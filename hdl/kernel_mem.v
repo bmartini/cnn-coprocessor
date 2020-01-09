@@ -40,7 +40,7 @@ module kernel_mem
     input                                           rd_cfg_set,
 
     output reg  [GROUP_NB*KER_WIDTH*DEPTH_NB-1:0]   rd_data,
-    input                                           rd_data_pop
+    input                                           rd_data_rdy
 );
 
 
@@ -61,6 +61,8 @@ module kernel_mem
     reg                     wr_end_wrap;
     reg  [MEM_AWIDTH-1:0]   wr_end;
 
+    wire                    rd_data_pop;
+    reg                     rd_data_1st;
     reg  [MEM_AWIDTH-1:0]   rd_ptr;
     reg  [MEM_AWIDTH-1:0]   rd_start;
     reg  [MEM_AWIDTH-1:0]   rd_end;
@@ -111,6 +113,18 @@ module kernel_mem
 
 
     // read from memory
+    assign rd_data_pop = rd_data_1st | rd_data_rdy;
+
+
+    always @(posedge clk) begin
+        rd_data_1st <= 1'b0;
+
+        if (rd_cfg_set) begin
+            rd_data_1st <= 1'b1;
+        end
+    end
+
+
     always @(posedge clk)
         if (rst) begin
             rd_start    <= 'b0;
@@ -144,8 +158,6 @@ module kernel_mem
         if (rd_data_pop) begin
             rd_data <= mem[rd_ptr];
         end
-
-
 
 
 endmodule

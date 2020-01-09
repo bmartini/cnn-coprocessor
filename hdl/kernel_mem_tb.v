@@ -80,7 +80,7 @@ module kernel_mem_tb;
     reg  [MEM_AWIDTH-1:0]                   rd_cfg_end;
     reg                                     rd_cfg_set;
     wire [GROUP_NB*KER_WIDTH*DEPTH_NB-1:0]  rd_data;
-    reg                                     rd_data_pop;
+    reg                                     rd_data_rdy;
 
 
     /**
@@ -109,7 +109,7 @@ module kernel_mem_tb;
         .rd_cfg_end     (rd_cfg_end),
         .rd_cfg_set     (rd_cfg_set),
         .rd_data        (rd_data),
-        .rd_data_pop    (rd_data_pop)
+        .rd_data_rdy    (rd_data_rdy)
     );
 
 
@@ -129,12 +129,12 @@ module kernel_mem_tb;
             wr_data_val,
             wr_data_rdy,
 
-            "\trd <cfg: s %d, e %d, set: %b, data: %d, pop: %b>",
+            "\trd <cfg: s %d, e %d, set: %b, data: %d, rdy: %b>",
             rd_cfg_start,
             rd_cfg_end,
             rd_cfg_set,
             rd_data,
-            rd_data_pop,
+            rd_data_rdy,
 
         );
 
@@ -164,7 +164,7 @@ module kernel_mem_tb;
         rd_cfg_start    <= 'b0;
         rd_cfg_end      <= 'b0;
         rd_cfg_set      <= 1'b0;
-        rd_data_pop     <= 1'b0;
+        rd_data_rdy     <= 1'b0;
         //end init
 
 `ifdef TB_VERBOSE
@@ -235,17 +235,17 @@ module kernel_mem_tb;
         rd_cfg_start    <= 'b0;
         rd_cfg_end      <= 'b0;
         rd_cfg_set      <= 1'b0;
-        @(negedge clk);
+        repeat(4) @(negedge clk);
 
 
-        rd_data_pop <= 1'b1;
+        rd_data_rdy <= 1'b1;
         @(negedge clk);
-        rd_data_pop <= 1'b0;
+        rd_data_rdy <= 1'b0;
         @(negedge clk);
 
-        rd_data_pop <= 1'b1;
+        rd_data_rdy <= 1'b1;
         repeat(9) @(negedge clk);
-        rd_data_pop <= 1'b0;
+        rd_data_rdy <= 1'b0;
         repeat(10) @(negedge clk);
 
 
@@ -265,9 +265,9 @@ module kernel_mem_tb;
         @(negedge clk);
 
 
-        rd_data_pop <= 1'b1;
+        rd_data_rdy <= 1'b1;
         repeat(10) @(negedge clk);
-        rd_data_pop <= 1'b0;
+        rd_data_rdy <= 1'b0;
         repeat(10) @(negedge clk);
 
 `ifdef TB_VERBOSE
