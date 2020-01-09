@@ -70,7 +70,7 @@ module kernel
     reg  [MEM_AWIDTH-1:0]                   rd_cfg_end;
     reg                                     rd_cfg_set;
     wire [GROUP_NB*KER_WIDTH*DEPTH_NB-1:0]  rd_data;
-    reg                                     rd_data_pop;
+    wire                                    rd_data_pop;
 
 
     /**
@@ -123,35 +123,33 @@ module kernel
 
 
 
-    assign wr_data_rdy = 1'b1;
+    kernel_mem #(
+        .GROUP_NB   (GROUP_NB),
+        .KER_WIDTH  (KER_WIDTH),
+        .DEPTH_NB   (DEPTH_NB),
+
+        .MEM_AWIDTH (MEM_AWIDTH),
+        .MEM_DEPTH  (MEM_DEPTH))
+    kernel_mem_ (
+        .clk            (clk),
+        .rst            (rst),
 
 
+        .wr_cfg_end     (wr_cfg_end),
+        .wr_cfg_set     (wr_cfg_set),
+        .wr_data        (wr_data),
+        .wr_data_val    (wr_data_val),
+        .wr_data_rdy    (wr_data_rdy),
 
-//    kernel_mem #(
-//        .GROUP_NB   (GROUP_NB),
-//        .KER_WIDTH  (KER_WIDTH),
-//        .DEPTH_NB   (DEPTH_NB),
-//
-//        .MEM_AWIDTH (MEM_AWIDTH),
-//        .MEM_DEPTH  (MEM_DEPTH))
-//    kernel_mem_ (
-//        .clk            (clk),
-//        .rst            (rst),
-//
-//
-//        .wr_cfg_end     (wr_cfg_end),
-//        .wr_cfg_set     (wr_cfg_set),
-//        .wr_data        (wr_data),
-//        .wr_data_val    (wr_data_val),
-//        .wr_data_rdy    (wr_data_rdy),
-//
-//        .rd_cfg_start   (rd_cfg_start),
-//        .rd_cfg_end     (rd_cfg_end),
-//        .rd_cfg_set     (rd_cfg_set),
-//        .rd_data        (rd_data),
-//        .rd_data_pop    (rd_data_pop)
-//    );
+        .rd_cfg_start   (rd_cfg_start),
+        .rd_cfg_end     (rd_cfg_end),
+        .rd_cfg_set     (rd_cfg_set),
+        .rd_data        (rd_data),
+        .rd_data_pop    (rd_data_pop)
+    );
 
+
+    assign rd_data_pop = 1'b0;
 
 
 endmodule

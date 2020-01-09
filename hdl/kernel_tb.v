@@ -82,7 +82,6 @@ module kernel_tb;
     reg  [CFG_AWIDTH-1:0]                   cfg_addr;
     reg                                     cfg_valid;
 
-    reg  [STR_KER_WIDTH-1:0]                str_cnt;
     reg  [STR_KER_WIDTH-1:0]                str_ker;
     reg                                     str_ker_val;
     wire                                    str_ker_rdy;
@@ -151,9 +150,17 @@ module kernel_tb;
             uut.wr_data_val,
             uut.wr_data_rdy,
 
-            "\tker: %x %b",
-            kernel,
-            kernel_rdy,
+
+            "\t<mem wr> rdy: %b, ptr_wrap: %b, end_wrap: %b, wr_ptr:  %d, wr_end: %d",
+            uut.kernel_mem_.wr_data_rdy,
+            uut.kernel_mem_.wr_ptr_wrap,
+            uut.kernel_mem_.wr_end_wrap,
+            uut.kernel_mem_.wr_ptr,
+            uut.kernel_mem_.wr_end,
+
+//            "\tker: %x %b",
+//            kernel,
+//            kernel_rdy,
         );
 
     endtask // display_signals
@@ -178,7 +185,6 @@ module kernel_tb;
         cfg_addr    = 'b0;
         cfg_valid   = 1'b0;
 
-        str_cnt     = 'b0;
         str_ker     = 'b0;
         str_ker_val = 1'b0;
 
@@ -200,7 +206,7 @@ module kernel_tb;
 `endif
 
         // send write end value
-        cfg_data    <= 32'd7;
+        cfg_data    <= 32'd0;
         cfg_addr    <= CFG_KER_WR;
         cfg_valid   <= 1'b1;
         @(negedge clk);
@@ -214,6 +220,7 @@ module kernel_tb;
     $display("stream kernal data");
 `endif
 
+        //repeat(4*9) begin
         repeat(4*8) begin
             str_ker     <= str_ker + 16'd1;
             str_ker_val <= 1'b1;
