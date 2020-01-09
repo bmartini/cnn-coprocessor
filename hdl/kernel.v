@@ -95,8 +95,8 @@ module kernel
         rd_cfg_set      <= 1'b0;
 
         if (cfg_valid & (cfg_addr == CFG_KER_RD)) begin
-            rd_cfg_start    <= cfg_data[0  +: MEM_AWIDTH];
-            rd_cfg_end      <= cfg_data[15 +: MEM_AWIDTH];
+            rd_cfg_start    <= cfg_data[0            +: MEM_AWIDTH];
+            rd_cfg_end      <= cfg_data[CFG_DWIDTH/2 +: MEM_AWIDTH];
             rd_cfg_set      <= 1'b1;
         end
     end
