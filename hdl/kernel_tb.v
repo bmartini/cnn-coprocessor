@@ -136,31 +136,24 @@ module kernel_tb;
             cfg_data,
             cfg_valid,
 
-            "\twr_cfg %x %b",
-            uut.wr_cfg_end,
+            "\t<wr_cfg %b> end: %d",
             uut.wr_cfg_set,
+            uut.wr_cfg_end,
+
+            "\t<rd_cfg %b> s: %d, e: %d",
+            uut.rd_cfg_set,
+            uut.rd_cfg_start,
+            uut.rd_cfg_end,
 
             "\tstr %x %b %b",
             str_ker,
             str_ker_val,
             str_ker_rdy,
 
-            "\tstr %x %b %b",
-            uut.wr_data,
-            uut.wr_data_val,
-            uut.wr_data_rdy,
+            "\tker: %x %b",
+            kernel,
+            kernel_rdy,
 
-
-            "\t<mem wr> rdy: %b, ptr_wrap: %b, end_wrap: %b, wr_ptr:  %d, wr_end: %d",
-            uut.kernel_mem_.wr_data_rdy,
-            uut.kernel_mem_.wr_ptr_wrap,
-            uut.kernel_mem_.wr_end_wrap,
-            uut.kernel_mem_.wr_ptr,
-            uut.kernel_mem_.wr_end,
-
-//            "\tker: %x %b",
-//            kernel,
-//            kernel_rdy,
         );
 
     endtask // display_signals
@@ -202,7 +195,7 @@ module kernel_tb;
         repeat(5) @(negedge clk);
 
 `ifdef TB_VERBOSE
-    $display("send config");
+    $display("send wr config");
 `endif
 
         // send write end value
@@ -220,7 +213,6 @@ module kernel_tb;
     $display("stream kernal data");
 `endif
 
-        //repeat(4*9) begin
         repeat(4*8) begin
             str_ker     <= str_ker + 16'd1;
             str_ker_val <= 1'b1;
@@ -229,6 +221,72 @@ module kernel_tb;
 
         str_ker     <= 16'd0;
         str_ker_val <= 1'b0;
+        @(negedge clk);
+
+
+`ifdef TB_VERBOSE
+    $display("send rd config");
+`endif
+
+        // send write end value
+        cfg_data    <= {16'd5, 16'd1}; // {end, start}
+        cfg_addr    <= CFG_KER_RD;
+        cfg_valid   <= 1'b1;
+        @(negedge clk);
+        cfg_data    <= 'b0;
+        cfg_addr    <= 'b0;
+        cfg_valid   <= 1'b0;
+        repeat(2) @(negedge clk);
+
+
+        kernel_rdy <= 1'b1;
+        repeat(4) @(negedge clk);
+        kernel_rdy <= 1'b0;
+        @(negedge clk);
+        kernel_rdy <= 1'b1;
+        @(negedge clk);
+        kernel_rdy <= 1'b0;
+        @(negedge clk);
+
+
+
+        kernel_rdy <= 1'b1;
+        repeat(5) @(negedge clk);
+        kernel_rdy <= 1'b0;
+        @(negedge clk);
+
+
+
+
+`ifdef TB_VERBOSE
+    $display("send rd config to different region");
+`endif
+
+        // send write end value
+        cfg_data    <= {16'd1, 16'd6}; // {end, start}
+        cfg_addr    <= CFG_KER_RD;
+        cfg_valid   <= 1'b1;
+        @(negedge clk);
+        cfg_data    <= 'b0;
+        cfg_addr    <= 'b0;
+        cfg_valid   <= 1'b0;
+        repeat(2) @(negedge clk);
+
+
+        kernel_rdy <= 1'b1;
+        repeat(4) @(negedge clk);
+        kernel_rdy <= 1'b0;
+        @(negedge clk);
+        kernel_rdy <= 1'b1;
+        @(negedge clk);
+        kernel_rdy <= 1'b0;
+        @(negedge clk);
+
+
+
+        kernel_rdy <= 1'b1;
+        repeat(5) @(negedge clk);
+        kernel_rdy <= 1'b0;
         @(negedge clk);
 
 

@@ -69,8 +69,6 @@ module kernel
     reg  [MEM_AWIDTH-1:0]                   rd_cfg_start;
     reg  [MEM_AWIDTH-1:0]                   rd_cfg_end;
     reg                                     rd_cfg_set;
-    wire [GROUP_NB*KER_WIDTH*DEPTH_NB-1:0]  rd_data;
-    wire                                    rd_data_pop;
 
 
     /**
@@ -144,12 +142,10 @@ module kernel
         .rd_cfg_start   (rd_cfg_start),
         .rd_cfg_end     (rd_cfg_end),
         .rd_cfg_set     (rd_cfg_set),
-        .rd_data        (rd_data),
-        .rd_data_pop    (rd_data_pop)
+        .rd_data        (kernel),
+        .rd_data_rdy    (kernel_rdy)
     );
 
-
-    assign rd_data_pop = 1'b0;
 
 
 endmodule
