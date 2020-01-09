@@ -78,7 +78,7 @@ module kernel_mem
     always @(posedge clk)
         if (rst) begin
             wr_end      <= 'b0;
-            wr_end_wrap <= 1'b0;
+            wr_end_wrap <= 1'b1;
         end
         else if (wr_cfg_set) begin
             wr_end <= wr_cfg_end;

@@ -182,6 +182,12 @@ module kernel_mem_tb;
     $display("write data to fill mem");
 `endif
 
+        @(negedge clk);
+        wr_cfg_set <= 1'b1;
+        @(negedge clk);
+        wr_cfg_set <= 1'b0;
+        @(negedge clk);
+
         repeat(5) @(negedge clk);
 
         repeat(10) begin
