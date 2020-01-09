@@ -41,7 +41,7 @@ module layers
     input       [GROUP_NB*KER_WIDTH*DEPTH_NB-1:0]   kernel_bus,
     output reg                                      kernel_rdy,
 
-    input       [GROUP_NB*IMG_WIDTH-1:0]            image,
+    input       [GROUP_NB*IMG_WIDTH-1:0]            image_bus,
     input                                           image_last,
     input                                           image_val,
     output                                          image_rdy,
@@ -249,7 +249,7 @@ module layers
 
     // register incoming data
     always @(posedge clk)
-        image_1p <= image;
+        image_1p <= image_bus;
 
 
     always @(posedge clk)

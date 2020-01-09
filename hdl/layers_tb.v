@@ -123,7 +123,7 @@ module layers_tb;
     reg  [GROUP_NB*KER_WIDTH*DEPTH_NB-1:0]  kernel_bus;
     wire                                    kernel_rdy;
 
-    reg  [GROUP_NB*IMG_WIDTH-1:0]           image;
+    reg  [GROUP_NB*IMG_WIDTH-1:0]           image_bus;
     reg                                     image_last;
     reg                                     image_val;
     wire                                    image_rdy;
@@ -153,7 +153,7 @@ module layers_tb;
         .kernel_bus (kernel_bus),
         .kernel_rdy (kernel_rdy),
 
-        .image      (image),
+        .image_bus  (image_bus),
         .image_last (image_last),
         .image_val  (image_val),
         .image_rdy  (image_rdy),
@@ -184,10 +184,10 @@ module layers_tb;
             kernel_rdy,
 
             "\timg: %f %f %f %f %b %b %b",
-            img_f2r(image[3*IMG_WIDTH +: IMG_WIDTH]),
-            img_f2r(image[2*IMG_WIDTH +: IMG_WIDTH]),
-            img_f2r(image[1*IMG_WIDTH +: IMG_WIDTH]),
-            img_f2r(image[0*IMG_WIDTH +: IMG_WIDTH]),
+            img_f2r(image_bus[3*IMG_WIDTH +: IMG_WIDTH]),
+            img_f2r(image_bus[2*IMG_WIDTH +: IMG_WIDTH]),
+            img_f2r(image_bus[1*IMG_WIDTH +: IMG_WIDTH]),
+            img_f2r(image_bus[0*IMG_WIDTH +: IMG_WIDTH]),
             image_last,
             image_val,
             image_rdy,
@@ -251,7 +251,7 @@ module layers_tb;
 
         kernel_bus  = 'b0;
 
-        image       = 'b0;
+        image_bus   = 'b0;
         image_last  = 1'b0;
         image_val   = 1'b0;
 
@@ -290,32 +290,32 @@ module layers_tb;
         repeat(10) @(negedge clk);
 
         kernel_bus  <= {ker_r2f(16'd1), ker_r2f(16'd1), ker_r2f(16'd1), ker_r2f(16'd1)};
-        image       <= {img_r2f(16'd4), img_r2f(16'd3), img_r2f(16'd2), img_r2f(16'd1)};
+        image_bus   <= {img_r2f(16'd4), img_r2f(16'd3), img_r2f(16'd2), img_r2f(16'd1)};
         image_val   <= 1'b1;
         @(negedge clk);
         kernel_bus  <= {ker_r2f(16'd1), ker_r2f(16'd1), ker_r2f(16'd1), ker_r2f(16'd1)};
-        image       <= 'b0;
+        image_bus   <= 'b0;
         image_val   <= 1'b0;
         @(negedge clk);
         kernel_bus  <= 'b0;
-        image       <= 'b0;
+        image_bus   <= 'b0;
         image_val   <= 1'b0;
         repeat(2) @(negedge clk);
 
         kernel_bus  <= {ker_r2f(16'd1), ker_r2f(16'd1), ker_r2f(16'd1), ker_r2f(16'd1)};
-        //image       <= {img_r2f(16'd4), img_r2f(16'd3), img_r2f(16'd2), img_r2f(16'd1)};
-        //image       <= {img_r2f(16'd8), img_r2f(16'd7), img_r2f(16'd6), img_r2f(16'd5)};
-        image       <= {img_r2f(-16'd8), img_r2f(-16'd7), img_r2f(-16'd6), img_r2f(-16'd5)};
+        //image_bus   <= {img_r2f(16'd4), img_r2f(16'd3), img_r2f(16'd2), img_r2f(16'd1)};
+        //image_bus   <= {img_r2f(16'd8), img_r2f(16'd7), img_r2f(16'd6), img_r2f(16'd5)};
+        image_bus   <= {img_r2f(-16'd8), img_r2f(-16'd7), img_r2f(-16'd6), img_r2f(-16'd5)};
         image_val   <= 1'b1;
         image_last  <= 1'b1;
         @(negedge clk);
         kernel_bus  <= {ker_r2f(16'd1), ker_r2f(16'd1), ker_r2f(16'd1), ker_r2f(16'd1)};
-        image       <= 'b0;
+        image_bus   <= 'b0;
         image_val   <= 1'b0;
         image_last  <= 1'b0;
         @(negedge clk);
         kernel_bus  <= 'b0;
-        image       <= 'b0;
+        image_bus   <= 'b0;
         image_val   <= 1'b0;
         image_last  <= 1'b0;
 
@@ -323,21 +323,21 @@ module layers_tb;
         @(negedge clk);
 
         kernel_bus  <= {ker_r2f(16'd1), ker_r2f(16'd1), ker_r2f(16'd1), ker_r2f(16'd1)};
-        image       <= {img_r2f(16'd4), img_r2f(16'd3), img_r2f(16'd2), img_r2f(16'd1)};
+        image_bus   <= {img_r2f(16'd4), img_r2f(16'd3), img_r2f(16'd2), img_r2f(16'd1)};
         image_val   <= 1'b1;
         @(negedge clk);
         kernel_bus  <= {ker_r2f(16'd1), ker_r2f(16'd1), ker_r2f(16'd1), ker_r2f(16'd1)};
-        image       <= {img_r2f(16'd4), img_r2f(16'd3), img_r2f(16'd2), img_r2f(16'd1)};
+        image_bus   <= {img_r2f(16'd4), img_r2f(16'd3), img_r2f(16'd2), img_r2f(16'd1)};
         image_val   <= 1'b1;
         image_last  <= 1'b1;
         @(negedge clk);
         kernel_bus  <= {ker_r2f(16'd1), ker_r2f(16'd1), ker_r2f(16'd1), ker_r2f(16'd1)};
-        image       <= 'b0;
+        image_bus   <= 'b0;
         image_val   <= 1'b0;
         image_last  <= 1'b0;
         @(negedge clk);
         kernel_bus  <= 'b0;
-        image       <= 'b0;
+        image_bus   <= 'b0;
         image_val   <= 1'b0;
         image_last  <= 1'b0;
         repeat(2) @(negedge clk);
