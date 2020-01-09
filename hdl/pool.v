@@ -35,11 +35,11 @@ module pool
 
     // true if new number is max
     function new_max;
-        input signed [NUM_WIDTH-1:0] new;
-        input signed [NUM_WIDTH-1:0] old;
+        input signed [NUM_WIDTH-1:0] new_nb;
+        input signed [NUM_WIDTH-1:0] old_nb;
 
         begin
-            new_max = (new > old);
+            new_max = (new_nb > old_nb);
         end
     endfunction
 
