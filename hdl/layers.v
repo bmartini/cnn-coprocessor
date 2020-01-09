@@ -38,7 +38,7 @@ module layers
     input       [CFG_AWIDTH-1:0]                    cfg_addr,
     input                                           cfg_valid,
 
-    input       [GROUP_NB*KER_WIDTH*DEPTH_NB-1:0]   kernel,
+    input       [GROUP_NB*KER_WIDTH*DEPTH_NB-1:0]   kernel_bus,
     output reg                                      kernel_rdy,
 
     input       [GROUP_NB*IMG_WIDTH-1:0]            image,
@@ -333,7 +333,7 @@ module layers
                 .rst    (mac_rst[i]),
 
                 .img    (image_1p),
-                .ker    (kernel[i*KER_WIDTH*GROUP_NB +: KER_WIDTH*GROUP_NB]),
+                .ker    (kernel_bus[i*KER_WIDTH*GROUP_NB +: KER_WIDTH*GROUP_NB]),
                 .val    (kernel_rdy),
 
                 .result (mac_data[i*NUM_WIDTH*GROUP_NB +: NUM_WIDTH*GROUP_NB])
