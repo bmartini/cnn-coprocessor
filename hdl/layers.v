@@ -333,7 +333,7 @@ module layers
                 .rst    (mac_rst[i]),
 
                 .img    (image_1p),
-                .ker    (kernel),
+                .ker    (kernel[i*KER_WIDTH*GROUP_NB +: KER_WIDTH*GROUP_NB]),
                 .val    (kernel_rdy),
 
                 .result (mac_data[i*NUM_WIDTH*GROUP_NB +: NUM_WIDTH*GROUP_NB])
