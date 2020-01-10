@@ -18,6 +18,7 @@
 `include "group_mac.v"
 `include "group_add.v"
 `include "pool.v"
+`include "bias_add.v"
 `include "relu.v"
 `include "rescale.v"
 
@@ -38,6 +39,7 @@ module layers
     input       [CFG_AWIDTH-1:0]                    cfg_addr,
     input                                           cfg_valid,
 
+    input       [GROUP_NB*KER_WIDTH*DEPTH_NB-1:0]   bias_bus,
     input       [GROUP_NB*KER_WIDTH*DEPTH_NB-1:0]   kernel_bus,
     output reg                                      kernel_rdy,
 
@@ -115,7 +117,8 @@ module layers
     reg                                     pool_valid_1p;
     reg                                     pool_valid;
 
-    reg                                     relu_valid_2p;
+    reg                                     bias_valid;
+
     reg                                     relu_valid_1p;
     reg                                     relu_valid;
 
@@ -129,6 +132,7 @@ module layers
     reg  [DEPTH_NB*NUM_WIDTH*GROUP_NB-1:0]  hold;
     wire [DEPTH_NB*NUM_WIDTH-1:0]           add_data;
     wire [DEPTH_NB*NUM_WIDTH-1:0]           pool_data;
+    wire [DEPTH_NB*NUM_WIDTH-1:0]           bias_data;
     wire [DEPTH_NB*NUM_WIDTH-1:0]           relu_data;
     wire [DEPTH_NB*IMG_WIDTH-1:0]           rescale_data;
 
@@ -277,7 +281,9 @@ module layers
         pool_valid_1p       <= pool_valid_2p;
         pool_valid          <= pool_valid_1p;
 
-        relu_valid_1p       <= pool_valid;
+        bias_valid          <= pool_valid;
+
+        relu_valid_1p       <= bias_valid;
         relu_valid          <= relu_valid_1p;
 
         rescale_valid_3p    <= relu_valid;
@@ -364,13 +370,25 @@ module layers
             );
 
 
+            bias_add #(
+                .NUM_WIDTH (NUM_WIDTH))
+            bias_add_ (
+                .clk        (clk),
+
+                .bias       (bias_bus[i*KER_WIDTH*GROUP_NB +: NUM_WIDTH]),
+
+                .up_data    (pool_data[i*NUM_WIDTH +: NUM_WIDTH]),
+                .dn_data    (bias_data[i*NUM_WIDTH +: NUM_WIDTH])
+            );
+
+
             relu #(
                 .NUM_WIDTH (NUM_WIDTH))
             relu_ (
                 .clk        (clk),
                 .bypass     (bypass),
 
-                .up_data    (pool_data[i*NUM_WIDTH +: NUM_WIDTH]),
+                .up_data    (bias_data[i*NUM_WIDTH +: NUM_WIDTH]),
                 .dn_data    (relu_data[i*NUM_WIDTH +: NUM_WIDTH])
             );
 

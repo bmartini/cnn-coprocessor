@@ -86,6 +86,7 @@ module kernel_tb;
     reg                                     str_ker_val;
     wire                                    str_ker_rdy;
 
+    wire [GROUP_NB*KER_WIDTH*DEPTH_NB-1:0]  bias_bus;
     wire [GROUP_NB*KER_WIDTH*DEPTH_NB-1:0]  kernel_bus;
     reg                                     kernel_rdy;
 
@@ -118,6 +119,7 @@ module kernel_tb;
         .str_ker_val    (str_ker_val),
         .str_ker_rdy    (str_ker_rdy),
 
+        .bias_bus       (bias_bus),
         .kernel_bus     (kernel_bus),
         .kernel_rdy     (kernel_rdy)
     );
@@ -150,7 +152,8 @@ module kernel_tb;
             str_ker_val,
             str_ker_rdy,
 
-            "\tker: %x %b",
+            "\tker: %x %x %b",
+            bias_bus,
             kernel_bus,
             kernel_rdy,
 
@@ -236,22 +239,22 @@ module kernel_tb;
         cfg_data    <= 'b0;
         cfg_addr    <= 'b0;
         cfg_valid   <= 1'b0;
-        repeat(2) @(negedge clk);
+        repeat(3) @(negedge clk);
+
+
+        kernel_rdy <= 1'b1;
+        repeat(3) @(negedge clk);
+        kernel_rdy <= 1'b0;
+        @(negedge clk);
+        kernel_rdy <= 1'b1;
+        @(negedge clk);
+        kernel_rdy <= 1'b0;
+        @(negedge clk);
+
 
 
         kernel_rdy <= 1'b1;
         repeat(4) @(negedge clk);
-        kernel_rdy <= 1'b0;
-        @(negedge clk);
-        kernel_rdy <= 1'b1;
-        @(negedge clk);
-        kernel_rdy <= 1'b0;
-        @(negedge clk);
-
-
-
-        kernel_rdy <= 1'b1;
-        repeat(5) @(negedge clk);
         kernel_rdy <= 1'b0;
         @(negedge clk);
 
@@ -270,11 +273,11 @@ module kernel_tb;
         cfg_data    <= 'b0;
         cfg_addr    <= 'b0;
         cfg_valid   <= 1'b0;
-        repeat(2) @(negedge clk);
+        repeat(3) @(negedge clk);
 
 
         kernel_rdy <= 1'b1;
-        repeat(4) @(negedge clk);
+        repeat(3) @(negedge clk);
         kernel_rdy <= 1'b0;
         @(negedge clk);
         kernel_rdy <= 1'b1;

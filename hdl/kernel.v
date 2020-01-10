@@ -44,6 +44,7 @@ module kernel
     input                                           str_ker_val,
     output                                          str_ker_rdy,
 
+    output      [GROUP_NB*KER_WIDTH*DEPTH_NB-1:0]   bias_bus,
     output      [GROUP_NB*KER_WIDTH*DEPTH_NB-1:0]   kernel_bus,
     input                                           kernel_rdy
 );
@@ -142,6 +143,7 @@ module kernel
         .rd_cfg_start   (rd_cfg_start),
         .rd_cfg_end     (rd_cfg_end),
         .rd_cfg_set     (rd_cfg_set),
+        .rd_bias        (bias_bus),
         .rd_data        (kernel_bus),
         .rd_data_rdy    (kernel_rdy)
     );
