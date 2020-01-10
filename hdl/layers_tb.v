@@ -100,6 +100,25 @@ module layers_tb;
         end
     endfunction
 
+    // signed fixed point bias representation to real
+    function real bias_f2r;
+        input signed [GROUP_NB*KER_WIDTH-1:0] value;
+
+        begin
+            bias_f2r = value / ((1<<(IMG_POINT+KER_POINT)) * 1.0);
+        end
+    endfunction
+
+    // real to signed fixed point bias representation
+    function signed [GROUP_NB*KER_WIDTH-1:0] bias_r2f;
+        input real value;
+
+        begin
+            bias_r2f = value * (1<<(IMG_POINT+KER_POINT));
+        end
+    endfunction
+
+
 
 `ifdef TB_VERBOSE
     initial begin
@@ -120,6 +139,7 @@ module layers_tb;
     reg  [CFG_AWIDTH-1:0]                   cfg_addr;
     reg                                     cfg_valid;
 
+    reg  [GROUP_NB*KER_WIDTH*DEPTH_NB-1:0]  bias_bus;
     reg  [GROUP_NB*KER_WIDTH*DEPTH_NB-1:0]  kernel_bus;
     wire                                    kernel_rdy;
 
@@ -150,6 +170,7 @@ module layers_tb;
         .cfg_addr   (cfg_addr),
         .cfg_valid  (cfg_valid),
 
+        .bias_bus   (bias_bus),
         .kernel_bus (kernel_bus),
         .kernel_rdy (kernel_rdy),
 
@@ -175,6 +196,9 @@ module layers_tb;
 
             "\tcfg %x",
             cfg_data,
+
+            "\tbias: %f",
+            bias_f2r(bias_bus),
 
             "\tker: %f %f %f %f %b",
             ker_f2r(kernel_bus[3*KER_WIDTH +: KER_WIDTH]),
@@ -249,6 +273,8 @@ module layers_tb;
         cfg_addr    = 'b0;
         cfg_valid   = 1'b0;
 
+        //bias_bus    = 'b0;
+        bias_bus    = bias_r2f(1.5);
         kernel_bus  = 'b0;
 
         image_bus   = 'b0;
