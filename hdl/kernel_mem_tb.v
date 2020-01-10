@@ -79,6 +79,8 @@ module kernel_mem_tb;
     reg  [MEM_AWIDTH-1:0]                   rd_cfg_start;
     reg  [MEM_AWIDTH-1:0]                   rd_cfg_end;
     reg                                     rd_cfg_set;
+
+    wire [GROUP_NB*KER_WIDTH*DEPTH_NB-1:0]  rd_bias;
     wire [GROUP_NB*KER_WIDTH*DEPTH_NB-1:0]  rd_data;
     reg                                     rd_data_rdy;
 
@@ -108,6 +110,7 @@ module kernel_mem_tb;
         .rd_cfg_start   (rd_cfg_start),
         .rd_cfg_end     (rd_cfg_end),
         .rd_cfg_set     (rd_cfg_set),
+        .rd_bias        (rd_bias),
         .rd_data        (rd_data),
         .rd_data_rdy    (rd_data_rdy)
     );
@@ -129,12 +132,13 @@ module kernel_mem_tb;
             wr_data_val,
             wr_data_rdy,
 
-            "\trd <cfg: s %d, e %d, set: %b, data: %d, rdy: %b>",
+            "\trd <cfg: s %d, e %d, set: %b, data: %d, rdy: %b, bias: %d>",
             rd_cfg_start,
             rd_cfg_end,
             rd_cfg_set,
             rd_data,
             rd_data_rdy,
+            rd_bias,
 
         );
 
@@ -262,6 +266,7 @@ module kernel_mem_tb;
         rd_cfg_start    <= 'b0;
         rd_cfg_end      <= 'b0;
         rd_cfg_set      <= 1'b0;
+        @(negedge clk);
         @(negedge clk);
 
 

@@ -3,8 +3,8 @@
  *  kernel_mem
  *
  * Description:
- *  The kernel_mem module has a memory that stores the kernel data for all the
- *  convolution groups.
+ *  The kernel_mem module has a memory that stores the kernel and bias data for
+ *  all the convolution coulombs.
  *
  * Created:
  *  Sun Nov 11 17:28:24 PST 2018
@@ -39,6 +39,7 @@ module kernel_mem
     input       [MEM_AWIDTH-1:0]                    rd_cfg_end,
     input                                           rd_cfg_set,
 
+    output reg  [GROUP_NB*KER_WIDTH*DEPTH_NB-1:0]   rd_bias,
     output reg  [GROUP_NB*KER_WIDTH*DEPTH_NB-1:0]   rd_data,
     input                                           rd_data_rdy
 );
@@ -63,6 +64,7 @@ module kernel_mem
 
     wire                    rd_data_pop;
     reg                     rd_data_1st;
+    reg                     rd_data_2nd;
     reg  [MEM_AWIDTH-1:0]   rd_ptr;
     reg  [MEM_AWIDTH-1:0]   rd_start;
     reg  [MEM_AWIDTH-1:0]   rd_end;
@@ -113,14 +115,16 @@ module kernel_mem
 
 
     // read from memory
-    assign rd_data_pop = rd_data_1st | rd_data_rdy;
+    assign rd_data_pop = rd_data_1st | rd_data_2nd | rd_data_rdy;
 
 
     always @(posedge clk) begin
         rd_data_1st <= 1'b0;
+        rd_data_2nd <= rd_data_1st;
 
         if (rd_cfg_set) begin
             rd_data_1st <= 1'b1;
+            rd_data_2nd <= 1'b0;
         end
     end
 
@@ -131,7 +135,7 @@ module kernel_mem
             rd_end      <= 'b0;
         end
         else if (rd_cfg_set) begin
-            rd_start    <= rd_cfg_start;
+            rd_start    <= rd_cfg_start + 'b1;
             rd_end      <= rd_cfg_end;
         end
 
@@ -157,6 +161,12 @@ module kernel_mem
     always @(posedge clk)
         if (rd_data_pop) begin
             rd_data <= mem[rd_ptr];
+        end
+
+
+    always @(posedge clk)
+        if (rd_data_2nd) begin
+            rd_bias <= rd_data;
         end
 
 
