@@ -116,7 +116,7 @@ module image_read
     reg  [31:0] edge_r;
     reg  [31:0] edge_b;
 
-    // last area position a full conv/maxpool can be launched from
+    // position maxpool/conv within area
     reg  [31:0] area_w_max;
     reg  [31:0] area_h_max;
 
@@ -125,7 +125,7 @@ module image_read
     wire        area_w_last;
     wire        area_h_last;
 
-    // last conv position within a maxpool
+    // position of conv within a maxpool
     reg  [31:0] maxp_w_max;
     reg  [31:0] maxp_h_max;
 
@@ -134,7 +134,7 @@ module image_read
     wire        maxp_w_last;
     wire        maxp_h_last;
 
-    // last conv position within a maxpool
+    // position within convolution
     reg  [31:0] conv_w_max;
     reg  [31:0] conv_h_max;
     reg  [31:0] conv_d_max;
@@ -145,6 +145,33 @@ module image_read
     wire        conv_w_last;
     wire        conv_h_last;
     wire        conv_d_last;
+
+    // linear address calcuations
+    reg  [31:0] addr_h_1p;
+    reg  [31:0] addr_h_2p;
+    reg  [31:0] addr_h_3p;
+
+    reg  [31:0] addr_w_1p;
+    reg  [31:0] addr_w_2p;
+    reg  [31:0] addr_w_3p;
+
+    reg  [31:0] addr_d_1p;
+    reg  [31:0] addr_d_2p;
+    reg  [31:0] addr_d_3p;
+
+    reg  [31:0] addr_4p;
+
+    reg         padding_2p;
+    reg         padding_3p;
+    reg         padding_4p;
+
+    reg         addr_val_1p;
+    reg         addr_val_2p;
+    reg         addr_val_3p;
+    reg         addr_val_4p;
+
+    reg  [31:0] plane_WxD_i;
+    reg  [31:0] plane_WxD;
 
 
     /**
@@ -235,6 +262,13 @@ module image_read
         conv_w_max  <= conv_side - 'd1;
         conv_h_max  <= conv_side - 'd1;
         conv_d_max  <= img_d - 'd1;
+    end
+
+
+    // calculate the number of address in the WxD plane
+    always @(posedge clk) begin
+        plane_WxD_i <= img_w * img_d;
+        plane_WxD   <= plane_WxD_i;
     end
 
 
@@ -365,6 +399,60 @@ module image_read
 
 
 
+    // calculate linear addresses from counters
+    always @(posedge clk) begin
+        addr_h_1p <= conv_h_cnt + maxp_h_cnt + area_h_cnt;
+        addr_w_1p <= conv_w_cnt + maxp_w_cnt + area_w_cnt;
+        addr_d_1p <= conv_d_cnt;
+    end
+
+
+    always @(posedge clk) begin
+        addr_h_2p   <= (addr_h_1p - pad_t) * plane_WxD;
+        addr_h_3p   <= addr_h_2p;
+
+        addr_w_2p   <= (addr_w_1p - pad_l) * img_d;
+        addr_w_3p   <= addr_w_2p;
+
+        addr_d_2p   <= addr_d_1p;
+        addr_d_3p   <= addr_d_2p;
+    end
+
+
+    always @(posedge clk) begin
+        addr_4p <= 'b0;
+
+        if (addr_val_3p) begin
+            addr_4p <= addr_h_3p + addr_w_3p + addr_d_3p;
+        end
+    end
+
+
+    // constantly tests if total_(w|h)_cnt is a padding pixel
+    always @(posedge clk) begin
+        padding_2p <= 1'b0;
+        if (addr_w_1p < edge_l) padding_2p <= 1'b1;
+        if (addr_w_1p > edge_r) padding_2p <= 1'b1;
+        if (addr_h_1p < edge_t) padding_2p <= 1'b1;
+        if (addr_h_1p > edge_b) padding_2p <= 1'b1;
+
+        padding_3p <= padding_2p;
+        padding_4p <= padding_3p;
+    end
+
+
+    // constantly tests if total_(w|h)_cnt is a padding pixel
+    always @(posedge clk) begin
+        addr_val_1p <= state[ACTIVE];
+        addr_val_2p <= addr_val_1p;
+        addr_val_3p <= addr_val_2p & ~padding_2p;
+        addr_val_4p <= addr_val_3p;
+    end
+
+
+    assign rd_val   = addr_val_4p;
+
+    assign rd_addr  = addr_4p[MEM_AWIDTH-1:0];
 
 
 
