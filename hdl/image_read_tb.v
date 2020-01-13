@@ -204,12 +204,12 @@ module image_read_tb;
 `endif
 
         cfg_addr    <= uut.CFG_IR_IMG_W;
-        cfg_data    <= 32'd10;
+        cfg_data    <= 32'd9; // width = 10
         cfg_valid   <= 1'b1;
         @(negedge clk);
 
         cfg_addr    <= uut.CFG_IR_IMG_DH;
-        cfg_data    <= {16'd8, 16'd5};
+        cfg_data    <= {16'd7, 16'd4}; // depth = 8, height = 5
         cfg_valid   <= 1'b1;
         @(negedge clk);
 
@@ -219,7 +219,7 @@ module image_read_tb;
         @(negedge clk);
 
         cfg_addr    <= uut.CFG_IR_CONV;
-        cfg_data    <= {8'd2, 8'd3, 16'd2}; // {maxp, c_side, c_step}
+        cfg_data    <= {8'd0, 8'd2, 16'd1}; // {maxp, c_side, c_step}
         cfg_valid   <= 1'b1;
         @(negedge clk);
 
@@ -235,7 +235,7 @@ module image_read_tb;
 
 
 
-        repeat(10) @(negedge clk);
+        repeat(40) @(negedge clk);
 
 `ifdef TB_VERBOSE
     $display("END");

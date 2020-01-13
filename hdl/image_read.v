@@ -9,6 +9,9 @@
  *  generate all data streams for the image segment in the memory including the
  *  extra needed for maxpools.
  *
+ * Note:
+ *  All config values are indexed to ZERO and thus ZERO is a valued value.
+ *
  * Created:
  *  Mon Jan 13 15:59:19 AEDT 2020
  *
@@ -74,22 +77,41 @@ module image_read
     reg  [7:0]  cfg_pad_t;  // padding around top image segment
     reg  [7:0]  cfg_pad_b;  // padding around bottom image segment
 
-    reg  [7:0]  cfg_maxp_side;  // square side ov maxp e.g. 2x2
+    reg  [7:0]  cfg_maxp_side;  // square side of maxp e.g. 2x2
     reg  [7:0]  cfg_conv_side;  // square side of conv e.g. 3x3
     reg  [15:0] cfg_conv_step;  // step distance b/w conv volume
 
     reg  [31:0] img_w;
-    reg  [15:0] img_h;
-    reg  [15:0] img_d;
+    reg  [31:0] img_h;
+    reg  [31:0] img_d;
 
-    reg  [7:0]  pad_l;
-    reg  [7:0]  pad_r;
-    reg  [7:0]  pad_t;
-    reg  [7:0]  pad_b;
+    reg  [31:0] pad_l;
+    reg  [31:0] pad_r;
+    reg  [31:0] pad_t;
+    reg  [31:0] pad_b;
 
-    reg  [7:0]  maxp_side;
-    reg  [7:0]  conv_side;
-    reg  [15:0] conv_step;
+    reg         next_1p;
+    reg         next_2p;
+    reg         next_3p;
+
+    reg  [31:0] maxp_side;
+    reg  [31:0] conv_side;
+    reg  [31:0] conv_step;
+
+    // area of image with padding
+    reg  [31:0] area_w;
+    reg  [31:0] area_h;
+
+    // last area position a full conv/maxpool can be launched from
+    reg  [31:0] area_w_max;
+    reg  [31:0] area_h_max;
+
+    // edge between the padding and image in the area
+    reg  [31:0] edge_l;
+    reg  [31:0] edge_t;
+    reg  [31:0] edge_r;
+    reg  [31:0] edge_b;
+
 
 
     /**
@@ -127,11 +149,16 @@ module image_read
         end
 
 
-    always @(posedge clk)
+/* verilator lint_off WIDTH */
+    always @(posedge clk) begin
+        next_1p <= 1'b0;
+
         if (next) begin
-            img_w       <= cfg_img_w;
-            img_d       <= cfg_img_d;
-            img_h       <= cfg_img_h;
+            next_1p     <= 1'b1;
+
+            img_w       <= cfg_img_w + 'b1; // cfg 0 is 1 pixel image
+            img_d       <= cfg_img_d + 'b1; // cfg 0 is 1 pixel image
+            img_h       <= cfg_img_h + 'b1; // cfg 0 is 1 pixel image
 
             pad_l       <= cfg_pad_l;
             pad_r       <= cfg_pad_r;
@@ -139,10 +166,36 @@ module image_read
             pad_b       <= cfg_pad_b;
 
             maxp_side   <= cfg_maxp_side;
-            conv_side   <= cfg_conv_side;
-            conv_step   <= cfg_conv_step;
+            conv_side   <= cfg_conv_side + 'd1; // cfg 0 is a 1x1 conv
+            conv_step   <= cfg_conv_step + 'd1; // cfg 0 is a 1 pixel step
         end
+    end
+/* verilator lint_on WIDTH */
 
+
+    // calculates the new constraints after the next cfgs are loaded
+    always @(posedge clk) begin
+        next_2p <= next_1p;
+
+        // area of image with padding
+        area_w  <= pad_l + img_w + pad_r;
+        area_h  <= pad_t + img_h + pad_b;
+
+        // edge between the padding and image in the area
+        edge_l  <= pad_l;
+        edge_t  <= pad_t;
+        edge_r  <= pad_l + img_w - 'd1;
+        edge_b  <= pad_t + img_h - 'd1;
+    end
+
+
+    // last area position a full conv/maxpool can be launched from
+    always @(posedge clk) begin
+        next_3p     <= next_2p;
+
+        area_w_max  <= area_w - (maxp_side * conv_step) - conv_side;
+        area_h_max  <= area_h - (maxp_side * conv_step) - conv_side;
+    end
 
 
 
