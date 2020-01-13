@@ -152,29 +152,27 @@ module image_read_tb;
 //            uut.conv_side,
 //            uut.conv_step,
 
-            "\t<area max %4d %4d>",
-            uut.area_w_max,
-            uut.area_h_max,
-
-            "\tw %4d, l %b",
-            uut.area_w_cnt,
+            "\tlast: %b %b %b %b %b %b %b",
             uut.area_w_last,
-
-            "\th %4d, l %b",
-            uut.area_h_cnt,
             uut.area_h_last,
-
-            "\t<maxp max %4d %4d>",
-            uut.maxp_w_max,
-            uut.maxp_h_max,
-
-            "\t<cnt>: w %4d, l %b",
-            uut.maxp_w_cnt,
             uut.maxp_w_last,
-
-            "\t<cnt>: h %4d, l %b",
-            uut.maxp_h_cnt,
             uut.maxp_h_last,
+            uut.conv_w_last,
+            uut.conv_h_last,
+            uut.conv_d_last,
+
+            "\tarea: %d %d",
+            uut.area_h_cnt,
+            uut.area_w_cnt,
+
+            "\tmaxp: %d %d",
+            uut.maxp_h_cnt,
+            uut.maxp_w_cnt,
+
+            "\tconv: %d %d %d",
+            uut.conv_h_cnt,
+            uut.conv_w_cnt,
+            uut.conv_d_cnt,
 
 //            "\t<rd>: v %b, a %d, d: %d",
 //            rd_val,
@@ -262,7 +260,7 @@ module image_read_tb;
 
 
 
-        repeat(40) @(negedge clk);
+        repeat(400) @(negedge clk);
 
 `ifdef TB_VERBOSE
     $display("END");

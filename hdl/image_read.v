@@ -134,6 +134,18 @@ module image_read
     wire        maxp_w_last;
     wire        maxp_h_last;
 
+    // last conv position within a maxpool
+    reg  [31:0] conv_w_max;
+    reg  [31:0] conv_h_max;
+    reg  [31:0] conv_d_max;
+
+    reg  [31:0] conv_w_cnt;
+    reg  [31:0] conv_h_cnt;
+    reg  [31:0] conv_d_cnt;
+    wire        conv_w_last;
+    wire        conv_h_last;
+    wire        conv_d_last;
+
 
     /**
      * Implementation
@@ -177,9 +189,9 @@ module image_read
         if (next) begin
             next_1p     <= 1'b1;
 
-            img_w       <= cfg_img_w + 'b1; // cfg 0 is 1 pixel image
-            img_d       <= cfg_img_d + 'b1; // cfg 0 is 1 pixel image
-            img_h       <= cfg_img_h + 'b1; // cfg 0 is 1 pixel image
+            img_w       <= cfg_img_w + 'd1; // cfg 0 is 1 pixel image
+            img_d       <= cfg_img_d + 'd1; // cfg 0 is 1 pixel image
+            img_h       <= cfg_img_h + 'd1; // cfg 0 is 1 pixel image
 
             pad_l       <= cfg_pad_l;
             pad_r       <= cfg_pad_r;
@@ -219,6 +231,10 @@ module image_read
 
         maxp_w_max  <= maxp_side * conv_step;
         maxp_h_max  <= maxp_side * conv_step;
+
+        conv_w_max  <= conv_side - 'd1;
+        conv_h_max  <= conv_side - 'd1;
+        conv_d_max  <= img_d - 'd1;
     end
 
 
@@ -268,7 +284,9 @@ module image_read
             area_w_cnt  <= 'b0;
             area_h_cnt  <= 'b0;
         end
-        else if (state[ACTIVE] & maxp_w_last & maxp_h_last) begin
+        else if (state[ACTIVE]
+                    & maxp_w_last & maxp_h_last
+                    & conv_w_last & conv_h_last & conv_d_last) begin
 
             area_w_cnt <= area_w_cnt + conv_step;
             if (area_w_last) begin
@@ -295,7 +313,7 @@ module image_read
             maxp_w_cnt  <= 'b0;
             maxp_h_cnt  <= 'b0;
         end
-        else if (state[ACTIVE]) begin
+        else if (state[ACTIVE] & conv_w_last & conv_h_last & conv_d_last) begin
 
             maxp_w_cnt <= maxp_w_cnt + conv_step;
             if (maxp_w_last) begin
@@ -311,6 +329,39 @@ module image_read
     end
 
 
+
+    assign conv_w_last  = (conv_w_cnt >= conv_w_max);
+
+    assign conv_h_last  = (conv_h_cnt >= conv_h_max);
+
+    assign conv_d_last  = (conv_d_cnt >= conv_d_max);
+
+
+    always @(posedge clk) begin
+        if (state[RESET]) begin
+            conv_w_cnt  <= 'b0;
+            conv_h_cnt  <= 'b0;
+            conv_d_cnt  <= 'b0;
+        end
+        else if (state[ACTIVE]) begin
+
+            conv_d_cnt <= conv_d_cnt + 'd1;
+            if (conv_d_last) begin
+
+                conv_d_cnt  <= 'b0;
+                conv_w_cnt <= conv_w_cnt + 'd1;
+                if (conv_w_last) begin
+
+                    conv_w_cnt  <= 'b0;
+                    conv_h_cnt  <= conv_h_cnt + 'd1;
+                    if (conv_h_last) begin
+
+                        conv_h_cnt  <= 'b0;
+                    end
+                end
+            end
+        end
+    end
 
 
 
