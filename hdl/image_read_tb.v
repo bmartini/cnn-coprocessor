@@ -133,6 +133,25 @@ module image_read_tb;
             "%d %d",
             $time, rst,
 
+            "\t<next %d>",
+            next,
+
+//            "\t<cfg img>: w %d, h %d, d %d",
+//            uut.img_w,
+//            uut.img_h,
+//            uut.img_d,
+
+//            "\t<cfg pad>: l %d, r %d, t %d, b %d",
+//            uut.pad_l,
+//            uut.pad_r,
+//            uut.pad_t,
+//            uut.pad_b,
+
+//            "\t<cfg conv>: m %d, c_side %d, c_step %d",
+//            uut.maxp_side,
+//            uut.conv_side,
+//            uut.conv_step,
+
             "\t<rd>: v %b, a %d, d: %d",
             rd_val,
             rd_addr,
@@ -183,6 +202,36 @@ module image_read_tb;
 `ifdef TB_VERBOSE
     $display("configure");
 `endif
+
+        cfg_addr    <= uut.CFG_IR_IMG_W;
+        cfg_data    <= 32'd10;
+        cfg_valid   <= 1'b1;
+        @(negedge clk);
+
+        cfg_addr    <= uut.CFG_IR_IMG_DH;
+        cfg_data    <= {16'd8, 16'd5};
+        cfg_valid   <= 1'b1;
+        @(negedge clk);
+
+        cfg_addr    <= uut.CFG_IR_PAD;
+        cfg_data    <= {8'd1, 8'd1, 8'd1, 8'd1};
+        cfg_valid   <= 1'b1;
+        @(negedge clk);
+
+        cfg_addr    <= uut.CFG_IR_CONV;
+        cfg_data    <= {8'd2, 8'd3, 16'd2}; // {maxp, c_side, c_step}
+        cfg_valid   <= 1'b1;
+        @(negedge clk);
+
+        cfg_addr    <= 'b0;
+        cfg_data    <= 'b0;
+        cfg_valid   <= 1'b0;
+        @(negedge clk);
+
+        next <= 1'b1;
+        @(negedge clk);
+        next <= 1'b0;
+        @(negedge clk);
 
 
 
