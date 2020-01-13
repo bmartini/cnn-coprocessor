@@ -63,10 +63,18 @@ module image_read
 `include "cfg_parameters.vh"
 
 
+    localparam
+        RESET   = 0,
+        CONFIG  = 1,
+        ACTIVE  = 2;
+
+
     /**
      * Internal signals
      */
 
+    reg  [2:0]  state;
+    reg  [2:0]  state_nx;
 
     reg  [31:0] cfg_img_w;  // image width of segment within buf
     reg  [15:0] cfg_img_h;  // image height of segment within buf
@@ -105,6 +113,11 @@ module image_read
     // last area position a full conv/maxpool can be launched from
     reg  [31:0] area_w_max;
     reg  [31:0] area_h_max;
+
+    reg  [31:0] area_w_cnt;
+    reg  [31:0] area_h_cnt;
+    wire        area_w_last;
+    wire        area_h_last;
 
     // edge between the padding and image in the area
     reg  [31:0] edge_l;
@@ -196,6 +209,70 @@ module image_read
         area_w_max  <= area_w - (maxp_side * conv_step) - conv_side;
         area_h_max  <= area_h - (maxp_side * conv_step) - conv_side;
     end
+
+
+
+    always @(posedge clk)
+        if (rst) begin
+            state           <= 'b0;
+            state[RESET]    <= 1'b1;
+        end
+        else state <= state_nx;
+
+
+    always @* begin : CONTROL_
+        state_nx = 'b0;
+
+        case (1'b1)
+            state[RESET] : begin
+                state_nx[CONFIG] = 1'b1;
+            end
+            state[CONFIG] : begin
+                if (next_3p) begin
+                    state_nx[ACTIVE] = 1'b1;
+                end
+                else state_nx[CONFIG] = 1'b1;
+            end
+            state[ACTIVE] : begin
+                if (area_w_last & area_h_last) begin
+                    state_nx[RESET] = 1'b1;
+                end
+                else state_nx[ACTIVE] = 1'b1;
+            end
+            default : begin
+                state_nx[RESET] = 1'b1;
+            end
+        endcase
+    end
+
+
+
+    assign area_w_last = (area_w_cnt >= area_w_max);
+
+    assign area_h_last = (area_h_cnt >= area_h_max);
+
+
+    always @(posedge clk) begin
+        if (rst) begin
+            area_w_cnt  <= 'b0;
+            area_h_cnt  <= 'b0;
+        end
+        else if (state[ACTIVE]) begin
+
+            area_w_cnt <= area_w_cnt + conv_step;
+            if (area_w_last) begin
+
+                area_w_cnt  <= 'b0;
+                area_h_cnt  <= area_h_cnt + conv_step;
+                if (area_h_last) begin
+
+                    area_h_cnt  <= 'b0;
+                end
+            end
+        end
+    end
+
+
 
 
 

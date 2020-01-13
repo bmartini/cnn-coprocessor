@@ -152,10 +152,25 @@ module image_read_tb;
 //            uut.conv_side,
 //            uut.conv_step,
 
-            "\t<rd>: v %b, a %d, d: %d",
-            rd_val,
-            rd_addr,
-            rd_data,
+            "\t<area max>: w %d, h %d",
+            uut.area_w_max,
+            uut.area_h_max,
+
+            "\t<area cnt>: w %d, l %d",
+            uut.area_w_cnt,
+            uut.area_w_last,
+
+            "\t<area cnt h>: h %d, l %b",
+            uut.area_h_cnt,
+            uut.area_h_last,
+
+//            "\t<rd>: v %b, a %d, d: %d",
+//            rd_val,
+//            rd_addr,
+//            rd_data,
+
+            "\t<state>: %b",
+            uut.state,
 
         );
 
