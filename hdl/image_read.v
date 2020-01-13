@@ -110,6 +110,12 @@ module image_read
     reg  [31:0] area_w;
     reg  [31:0] area_h;
 
+    // edge between the padding and image in the area
+    reg  [31:0] edge_l;
+    reg  [31:0] edge_t;
+    reg  [31:0] edge_r;
+    reg  [31:0] edge_b;
+
     // last area position a full conv/maxpool can be launched from
     reg  [31:0] area_w_max;
     reg  [31:0] area_h_max;
@@ -119,12 +125,14 @@ module image_read
     wire        area_w_last;
     wire        area_h_last;
 
-    // edge between the padding and image in the area
-    reg  [31:0] edge_l;
-    reg  [31:0] edge_t;
-    reg  [31:0] edge_r;
-    reg  [31:0] edge_b;
+    // last conv position within a maxpool
+    reg  [31:0] maxp_w_max;
+    reg  [31:0] maxp_h_max;
 
+    reg  [31:0] maxp_w_cnt;
+    reg  [31:0] maxp_h_cnt;
+    wire        maxp_w_last;
+    wire        maxp_h_last;
 
 
     /**
@@ -208,6 +216,9 @@ module image_read
 
         area_w_max  <= area_w - (maxp_side * conv_step) - conv_side;
         area_h_max  <= area_h - (maxp_side * conv_step) - conv_side;
+
+        maxp_w_max  <= maxp_side * conv_step;
+        maxp_h_max  <= maxp_side * conv_step;
     end
 
 
@@ -247,17 +258,17 @@ module image_read
 
 
 
-    assign area_w_last = (area_w_cnt >= area_w_max);
+    assign area_w_last  = (area_w_cnt >= area_w_max);
 
-    assign area_h_last = (area_h_cnt >= area_h_max);
+    assign area_h_last  = (area_h_cnt >= area_h_max);
 
 
     always @(posedge clk) begin
-        if (rst) begin
+        if (state[RESET]) begin
             area_w_cnt  <= 'b0;
             area_h_cnt  <= 'b0;
         end
-        else if (state[ACTIVE]) begin
+        else if (state[ACTIVE] & maxp_w_last & maxp_h_last) begin
 
             area_w_cnt <= area_w_cnt + conv_step;
             if (area_w_last) begin
@@ -271,6 +282,36 @@ module image_read
             end
         end
     end
+
+
+
+    assign maxp_w_last  = (maxp_w_cnt >= maxp_w_max);
+
+    assign maxp_h_last  = (maxp_h_cnt >= maxp_h_max);
+
+
+    always @(posedge clk) begin
+        if (state[RESET]) begin
+            maxp_w_cnt  <= 'b0;
+            maxp_h_cnt  <= 'b0;
+        end
+        else if (state[ACTIVE]) begin
+
+            maxp_w_cnt <= maxp_w_cnt + conv_step;
+            if (maxp_w_last) begin
+
+                maxp_w_cnt  <= 'b0;
+                maxp_h_cnt  <= maxp_h_cnt + conv_step;
+                if (maxp_h_last) begin
+
+                    maxp_h_cnt  <= 'b0;
+                end
+            end
+        end
+    end
+
+
+
 
 
 

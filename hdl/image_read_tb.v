@@ -152,25 +152,37 @@ module image_read_tb;
 //            uut.conv_side,
 //            uut.conv_step,
 
-            "\t<area max>: w %d, h %d",
+            "\t<area max %4d %4d>",
             uut.area_w_max,
             uut.area_h_max,
 
-            "\t<area cnt>: w %d, l %d",
+            "\tw %4d, l %b",
             uut.area_w_cnt,
             uut.area_w_last,
 
-            "\t<area cnt h>: h %d, l %b",
+            "\th %4d, l %b",
             uut.area_h_cnt,
             uut.area_h_last,
+
+            "\t<maxp max %4d %4d>",
+            uut.maxp_w_max,
+            uut.maxp_h_max,
+
+            "\t<cnt>: w %4d, l %b",
+            uut.maxp_w_cnt,
+            uut.maxp_w_last,
+
+            "\t<cnt>: h %4d, l %b",
+            uut.maxp_h_cnt,
+            uut.maxp_h_last,
 
 //            "\t<rd>: v %b, a %d, d: %d",
 //            rd_val,
 //            rd_addr,
 //            rd_data,
 
-            "\t<state>: %b",
-            uut.state,
+//            "\t<state>: %b",
+//            uut.state,
 
         );
 
@@ -234,7 +246,7 @@ module image_read_tb;
         @(negedge clk);
 
         cfg_addr    <= uut.CFG_IR_CONV;
-        cfg_data    <= {8'd0, 8'd2, 16'd1}; // {maxp, c_side, c_step}
+        cfg_data    <= {8'd1, 8'd2, 16'd1}; // {maxp, c_side, c_step}
         cfg_valid   <= 1'b1;
         @(negedge clk);
 
