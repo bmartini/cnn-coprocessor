@@ -170,6 +170,11 @@ module image_read
     reg         addr_val_3p;
     reg         addr_val_4p;
 
+    reg         addr_last_1p;
+    reg         addr_last_2p;
+    reg         addr_last_3p;
+    reg         addr_last_4p;
+
     reg  [31:0] plane_WxD_i;
     reg  [31:0] plane_WxD;
 
@@ -453,6 +458,18 @@ module image_read
     end
 
 
+    always @(posedge clk) begin
+        addr_last_1p <= state[ACTIVE]
+                        & area_w_last & area_h_last
+                        & maxp_w_last & maxp_h_last
+                        & conv_w_last & conv_h_last & conv_d_last;
+
+        addr_last_2p <= addr_last_1p;
+        addr_last_3p <= addr_last_2p;
+        addr_last_4p <= addr_last_3p;
+    end
+
+
     // send address to memory
     assign rd_val   = addr_val_4p;
 
@@ -460,12 +477,23 @@ module image_read
 
 
     // wait for image data from memory then pass it to layer operations
+    reg  [RD_LATENCY-1:0]   addr_last_p;
     reg  [RD_LATENCY-1:0]   addr_val_p;
     reg  [RD_LATENCY-1:0]   padding_p;
 
     always @(posedge clk) begin
-        addr_val_p  <= {addr_val_p[RD_LATENCY-2:0], addr_val_4p};
-        padding_p   <= { padding_p[RD_LATENCY-2:0], padding_4p};
+        addr_last_p <= {addr_last_p[RD_LATENCY-2:0], addr_last_4p};
+        addr_val_p  <= { addr_val_p[RD_LATENCY-2:0], addr_val_4p};
+        padding_p   <= {  padding_p[RD_LATENCY-2:0], padding_4p};
+    end
+
+
+    always @(posedge clk) begin
+        image_last <= 1'b0;
+
+        if (addr_last_p[RD_LATENCY-1]) begin
+            image_last <= 1'b1;
+        end
     end
 
 
