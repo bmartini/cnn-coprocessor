@@ -66,15 +66,16 @@ module image_read
     localparam
         RESET   = 0,
         CONFIG  = 1,
-        ACTIVE  = 2;
+        ACTIVE  = 2,
+        PAUSE   = 3;
 
 
     /**
      * Internal signals
      */
 
-    reg  [2:0]  state;
-    reg  [2:0]  state_nx;
+    reg  [3:0]  state;
+    reg  [3:0]  state_nx;
 
     reg  [31:0] cfg_img_w;  // image width of segment within buf
     reg  [15:0] cfg_img_h;  // image height of segment within buf
@@ -306,7 +307,16 @@ module image_read
 
                     state_nx[RESET] = 1'b1;
                 end
+                else if ( ~image_rdy) begin
+                    state_nx[PAUSE] = 1'b1;
+                end
                 else state_nx[ACTIVE] = 1'b1;
+            end
+            state[PAUSE] : begin
+                if (image_rdy) begin
+                    state_nx[ACTIVE] = 1'b1;
+                end
+                else state_nx[PAUSE] = 1'b1;
             end
             default : begin
                 state_nx[RESET] = 1'b1;
