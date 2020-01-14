@@ -225,12 +225,12 @@ module image_read
             img_d       <= cfg_img_d + 'd1; // cfg 0 is 1 pixel image
             img_h       <= cfg_img_h + 'd1; // cfg 0 is 1 pixel image
 
-            pad_l       <= cfg_pad_l;
-            pad_r       <= cfg_pad_r;
-            pad_t       <= cfg_pad_t;
-            pad_b       <= cfg_pad_b;
+            pad_l       <= cfg_pad_l; // cfg 0 is no padding
+            pad_r       <= cfg_pad_r; // cfg 0 is no padding
+            pad_t       <= cfg_pad_t; // cfg 0 is no padding
+            pad_b       <= cfg_pad_b; // cfg 0 is no padding
 
-            maxp_side   <= cfg_maxp_side;
+            maxp_side   <= cfg_maxp_side;       // cfg 0 is no maxpool
             conv_side   <= cfg_conv_side + 'd1; // cfg 0 is a 1x1 conv
             conv_step   <= cfg_conv_step + 'd1; // cfg 0 is a 1 pixel step
         end
@@ -258,8 +258,8 @@ module image_read
     always @(posedge clk) begin
         next_3p     <= next_2p;
 
-        area_w_max  <= area_w - (maxp_side * conv_step) - conv_side;
-        area_h_max  <= area_h - (maxp_side * conv_step) - conv_side;
+        area_w_max  <= area_w - (maxp_side * conv_step) - conv_side - 'd1;
+        area_h_max  <= area_h - (maxp_side * conv_step) - conv_side - 'd1;
 
         maxp_w_max  <= maxp_side * conv_step;
         maxp_h_max  <= maxp_side * conv_step;

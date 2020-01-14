@@ -136,6 +136,25 @@ module image_read_tb;
 
 
 
+//    reg [31:0] addr_y;
+//    reg [31:0] addr_x;
+//
+//    // calculate linear addresses from counters
+//    always @(posedge clk) begin
+//        addr_y <= uut.area_h_cnt;
+//        addr_x <= uut.area_w_cnt;
+//    end
+//
+//    always @(posedge clk)
+//        $display("%d %d %d %d %d"
+//                , addr_y
+//                , addr_x
+//                , uut.addr_h_1p
+//                , uut.addr_w_1p
+//                , uut.addr_d_1p
+//                );
+
+
     /**
      * Wave form display
      */
