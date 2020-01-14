@@ -81,6 +81,8 @@ module image_read_tb;
 
     wire                            rd_val;
     wire [MEM_AWIDTH-1:0]           rd_addr;
+    reg  [MEM_AWIDTH-1:0]           rd_addr_1p;
+    reg  [MEM_AWIDTH-1:0]           rd_addr_2p;
     reg  [GROUP_NB*IMG_WIDTH-1:0]   rd_data;
 
     wire [GROUP_NB*IMG_WIDTH-1:0]   image_bus;
@@ -124,6 +126,16 @@ module image_read_tb;
     );
 
 
+
+    // use rd_addr as the return data from memory
+    always @(posedge clk) begin
+        rd_addr_1p  <= rd_addr;
+        rd_addr_2p  <= rd_addr_1p;
+        rd_data     <= rd_addr_2p;
+    end
+
+
+
     /**
      * Wave form display
      */
@@ -161,26 +173,19 @@ module image_read_tb;
 //            uut.conv_h_last,
 //            uut.conv_d_last,
 
-            "\tarea: %d %d",
-            uut.area_h_cnt,
-            uut.area_w_cnt,
-
-            "\tmaxp: %d %d",
-            uut.maxp_h_cnt,
-            uut.maxp_w_cnt,
-
-            "\tconv: %d %d %d",
-            uut.conv_h_cnt,
-            uut.conv_w_cnt,
-            uut.conv_d_cnt,
-
-            "\t<rd>: v %b, a %d, d: %d",
+            "\t<rd>: v %b, a %d, d: %x",
             rd_val,
             rd_addr,
             rd_data,
 
-//            "\t<state>: %b",
-//            uut.state,
+            "\t<img>: %x %b %b %b",
+            image_bus,
+            image_last,
+            image_val,
+            image_rdy,
+
+            "\t<state>: %b",
+            uut.state,
 
         );
 
@@ -210,7 +215,7 @@ module image_read_tb;
 
         rd_data     = 'b0;
 
-        image_rdy   = 1'b0;
+        image_rdy   = 1'b1;
         //end init
 
 `ifdef TB_VERBOSE
@@ -259,8 +264,9 @@ module image_read_tb;
         @(negedge clk);
 
 
+        @(posedge uut.state[uut.RESET]);
 
-        repeat(400) @(negedge clk);
+        repeat(20) @(negedge clk);
 
 `ifdef TB_VERBOSE
     $display("END");

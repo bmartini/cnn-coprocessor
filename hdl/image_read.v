@@ -49,9 +49,9 @@ module image_read
     output wire [MEM_AWIDTH-1:0]            rd_addr,
     input  wire [GROUP_NB*IMG_WIDTH-1:0]    rd_data,
 
-    output wire [GROUP_NB*IMG_WIDTH-1:0]    image_bus,
-    output wire                             image_last,
-    output wire                             image_val,
+    output reg  [GROUP_NB*IMG_WIDTH-1:0]    image_bus,
+    output reg                              image_last,
+    output reg                              image_val,
     input  wire                             image_rdy
 );
 
@@ -295,7 +295,10 @@ module image_read
                 else state_nx[CONFIG] = 1'b1;
             end
             state[ACTIVE] : begin
-                if (area_w_last & area_h_last) begin
+                if (  area_w_last & area_h_last
+                    & maxp_w_last & maxp_h_last
+                    & conv_w_last & conv_h_last & conv_d_last) begin
+
                     state_nx[RESET] = 1'b1;
                 end
                 else state_nx[ACTIVE] = 1'b1;
@@ -428,13 +431,13 @@ module image_read
     end
 
 
-    // constantly tests if total_(w|h)_cnt is a padding pixel
+    // constantly tests if addr_(w|h)_1p is addressing a padding pixel
     always @(posedge clk) begin
         padding_2p <= 1'b0;
-        if (addr_w_1p < edge_l) padding_2p <= 1'b1;
-        if (addr_w_1p > edge_r) padding_2p <= 1'b1;
-        if (addr_h_1p < edge_t) padding_2p <= 1'b1;
-        if (addr_h_1p > edge_b) padding_2p <= 1'b1;
+        if (addr_w_1p < edge_l) padding_2p <= addr_val_1p;
+        if (addr_w_1p > edge_r) padding_2p <= addr_val_1p;
+        if (addr_h_1p < edge_t) padding_2p <= addr_val_1p;
+        if (addr_h_1p > edge_b) padding_2p <= addr_val_1p;
 
         padding_3p <= padding_2p;
         padding_4p <= padding_3p;
@@ -450,9 +453,38 @@ module image_read
     end
 
 
+    // send address to memory
     assign rd_val   = addr_val_4p;
 
     assign rd_addr  = addr_4p[MEM_AWIDTH-1:0];
+
+
+    // wait for image data from memory then pass it to layer operations
+    reg  [RD_LATENCY-1:0]   addr_val_p;
+    reg  [RD_LATENCY-1:0]   padding_p;
+
+    always @(posedge clk) begin
+        addr_val_p  <= {addr_val_p[RD_LATENCY-2:0], addr_val_4p};
+        padding_p   <= { padding_p[RD_LATENCY-2:0], padding_4p};
+    end
+
+
+    always @(posedge clk) begin
+        image_val <= 1'b0;
+
+        if (addr_val_p[RD_LATENCY-1] | padding_p[RD_LATENCY-1]) begin
+            image_val <= 1'b1;
+        end
+    end
+
+
+    always @(posedge clk) begin
+        image_bus <= 'b0;
+
+        if (addr_val_p[RD_LATENCY-1]) begin
+            image_bus <= rd_data;
+        end
+    end
 
 
 
