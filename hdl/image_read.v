@@ -22,6 +22,8 @@
 `define _image_read_
 
 
+`include "fifo_simple.v"
+
 `default_nettype none
 
 module image_read
@@ -49,8 +51,8 @@ module image_read
     output wire [MEM_AWIDTH-1:0]            rd_addr,
     input  wire [GROUP_NB*IMG_WIDTH-1:0]    rd_data,
 
-    output reg  [GROUP_NB*IMG_WIDTH-1:0]    image_bus,
-    output reg                              image_last,
+    output wire [GROUP_NB*IMG_WIDTH-1:0]    image_bus,
+    output wire                             image_last,
     output reg                              image_val,
     input  wire                             image_rdy
 );
@@ -179,6 +181,14 @@ module image_read
     reg  [31:0] plane_WxD_i;
     reg  [31:0] plane_WxD;
 
+    reg  [GROUP_NB*IMG_WIDTH-1:0]   buffer_bus;
+    reg                             buffer_last;
+    reg                             buffer_val;
+    wire                            buffer_empty;
+    wire                            buffer_stall;
+
+    wire [GROUP_NB*IMG_WIDTH-1:0]   image_bus_i;
+    wire                            image_last_i;
 
     /**
      * Implementation
@@ -499,30 +509,66 @@ module image_read
 
 
     always @(posedge clk) begin
-        image_last <= 1'b0;
+        buffer_last <= 1'b0;
 
         if (addr_last_p[RD_LATENCY-1]) begin
-            image_last <= 1'b1;
+            buffer_last <= 1'b1;
         end
     end
 
 
     always @(posedge clk) begin
-        image_val <= 1'b0;
+        buffer_val <= 1'b0;
 
         if (addr_val_p[RD_LATENCY-1] | padding_p[RD_LATENCY-1]) begin
-            image_val <= 1'b1;
+            buffer_val <= 1'b1;
         end
     end
 
 
     always @(posedge clk) begin
-        image_bus <= 'b0;
+        buffer_bus <= 'b0;
 
         if (addr_val_p[RD_LATENCY-1]) begin
-            image_bus <= rd_data;
+            buffer_bus <= rd_data;
         end
     end
+
+
+
+    // buffer to stall image data
+    fifo_simple #(
+        .DATA_WIDTH ((GROUP_NB*IMG_WIDTH) + 1),
+        .ADDR_WIDTH (4)) // 16 deep
+    buffer_ (
+        .clk        (clk),
+        .rst        (rst),
+
+        .count      (),
+        .full       (),
+        .full_a     (),
+        .empty      (buffer_empty),
+        .empty_a    (),
+
+        .push       (buffer_val),
+        .push_data  ({buffer_bus, buffer_last}),
+
+        .pop        ( ~buffer_stall),
+        .pop_data   ({image_bus_i, image_last_i})
+    );
+
+
+
+    assign image_bus    = image_bus_i;
+
+    assign image_last   = image_val & image_last_i;
+
+    assign buffer_stall = image_val & ~image_rdy;
+
+
+    always @(posedge clk)
+        if      (rst)               image_val <= 1'b0;
+        else if ( ~buffer_stall)    image_val <= ~buffer_empty;
 
 
 

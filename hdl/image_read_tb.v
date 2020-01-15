@@ -206,6 +206,10 @@ module image_read_tb;
             "\t<state>: %b",
             uut.state,
 
+            "\t<buffer_val>: %b %d",
+            uut.buffer_val,
+            uut.buffer_.count,
+
         );
 
     endtask // display_signals
@@ -283,7 +287,15 @@ module image_read_tb;
         @(negedge clk);
 
 
-        @(posedge uut.state[uut.RESET]);
+        repeat(2280) @(negedge clk);
+
+        image_rdy <= 1'b0;
+        repeat(20) @(negedge clk);
+        image_rdy <= 1'b1;
+        repeat(50) @(negedge clk);
+
+
+        //@(posedge uut.state[uut.RESET]);
 
         repeat(20) @(negedge clk);
 
