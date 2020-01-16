@@ -50,12 +50,13 @@ module image_write_tb;
      * Local parameters
      */
 
-    localparam CFG_DWIDTH       = 32;
-    localparam CFG_AWIDTH       = 5;
+    localparam CFG_DWIDTH   = 32;
+    localparam CFG_AWIDTH   = 5;
 
-    localparam STR_IMG_WIDTH    = 64;
+    localparam DEPTH_NB     = 16;
+    localparam IMG_WIDTH    = 16;
 
-    localparam MEM_AWIDTH       = 16;
+    localparam MEM_AWIDTH   = 16;
 
 
 `ifdef TB_VERBOSE
@@ -68,21 +69,21 @@ module image_write_tb;
     /**
      *  signals, registers and wires
      */
-    reg                         rst;
+    reg                             rst;
 
-    reg  [CFG_DWIDTH-1:0]       cfg_data;
-    reg  [CFG_AWIDTH-1:0]       cfg_addr;
-    reg                         cfg_valid;
+    reg  [CFG_DWIDTH-1:0]           cfg_data;
+    reg  [CFG_AWIDTH-1:0]           cfg_addr;
+    reg                             cfg_valid;
 
-    reg                         next;
+    reg                             next;
 
-    reg  [STR_IMG_WIDTH-1:0]    str_img_bus;
-    reg                         str_img_val;
-    wire                        str_img_rdy;
+    reg  [IMG_WIDTH*DEPTH_NB-1:0]   str_img_bus;
+    reg                             str_img_val;
+    wire                            str_img_rdy;
 
-    wire                        wr_val;
-    wire [MEM_AWIDTH-1:0]       wr_addr;
-    wire [STR_IMG_WIDTH-1:0]    wr_data;
+    wire                            wr_val;
+    wire [MEM_AWIDTH-1:0]           wr_addr;
+    wire [IMG_WIDTH*DEPTH_NB-1:0]   wr_data;
 
 
     /**
@@ -90,12 +91,13 @@ module image_write_tb;
      */
 
     image_write #(
-        .CFG_DWIDTH     (CFG_DWIDTH),
-        .CFG_AWIDTH     (CFG_AWIDTH),
+        .CFG_DWIDTH (CFG_DWIDTH),
+        .CFG_AWIDTH (CFG_AWIDTH),
 
-        .STR_IMG_WIDTH  (STR_IMG_WIDTH),
+        .DEPTH_NB   (DEPTH_NB),
+        .IMG_WIDTH  (IMG_WIDTH),
 
-        .MEM_AWIDTH     (MEM_AWIDTH))
+        .MEM_AWIDTH (MEM_AWIDTH))
     uut (
         .clk            (clk),
         .rst            (rst),

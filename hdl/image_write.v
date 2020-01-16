@@ -25,29 +25,30 @@
 
 module image_write
   #(parameter
-    CFG_DWIDTH      = 32,
-    CFG_AWIDTH      = 5,
+    CFG_DWIDTH  = 32,
+    CFG_AWIDTH  = 5,
 
-    STR_IMG_WIDTH   = 64,
+    DEPTH_NB    = 16,
+    IMG_WIDTH   = 16,
 
-    MEM_AWIDTH      = 16)
-   (input  wire                     clk,
-    input  wire                     rst,
+    MEM_AWIDTH  = 16)
+   (input  wire                             clk,
+    input  wire                             rst,
 
-    input  wire [CFG_DWIDTH-1:0]    cfg_data,
-    input  wire [CFG_AWIDTH-1:0]    cfg_addr,
-    input  wire                     cfg_valid,
+    input  wire [CFG_DWIDTH-1:0]            cfg_data,
+    input  wire [CFG_AWIDTH-1:0]            cfg_addr,
+    input  wire                             cfg_valid,
 
     // load next cfg values and start sending data image_mem
-    input  wire                     next,
+    input  wire                             next,
 
-    input  wire [STR_IMG_WIDTH-1:0] str_img_bus,
-    input  wire                     str_img_val,
-    output reg                      str_img_rdy,
+    input  wire [IMG_WIDTH*DEPTH_NB-1:0]    str_img_bus,
+    input  wire                             str_img_val,
+    output reg                              str_img_rdy,
 
-    output wire                     wr_val,
-    output wire [MEM_AWIDTH-1:0]    wr_addr,
-    output wire [STR_IMG_WIDTH-1:0] wr_data
+    output wire                             wr_val,
+    output wire [MEM_AWIDTH-1:0]            wr_addr,
+    output wire [IMG_WIDTH*DEPTH_NB-1:0]    wr_data
 );
 
 

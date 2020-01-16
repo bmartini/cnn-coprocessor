@@ -50,10 +50,11 @@ module image_mem_tb;
      * Local parameters
      */
 
-    localparam STR_IMG_WIDTH    = 32;
-    localparam GROUP_NB         = 1;
-    localparam IMG_WIDTH        = 16;
-    localparam MEM_AWIDTH       = 16;
+    localparam DEPTH_NB     = 2;
+    localparam GROUP_NB     = 1;
+    localparam IMG_WIDTH    = 16;
+
+    localparam MEM_AWIDTH   = 16;
 
 
 `ifdef TB_VERBOSE
@@ -70,7 +71,7 @@ module image_mem_tb;
 
     reg                             wr_val;
     reg  [MEM_AWIDTH-1:0]           wr_addr;
-    reg  [STR_IMG_WIDTH-1:0]        wr_data;
+    reg  [IMG_WIDTH*DEPTH_NB-1:0]   wr_data;
 
     reg                             rd_val;
     reg  [MEM_AWIDTH-1:0]           rd_addr;
@@ -84,12 +85,11 @@ module image_mem_tb;
      */
 
     image_mem #(
-        .STR_IMG_WIDTH  (STR_IMG_WIDTH),
+        .DEPTH_NB   (DEPTH_NB),
+        .GROUP_NB   (GROUP_NB),
+        .IMG_WIDTH  (IMG_WIDTH),
 
-        .GROUP_NB       (GROUP_NB),
-        .IMG_WIDTH      (IMG_WIDTH),
-
-        .MEM_AWIDTH     (MEM_AWIDTH))
+        .MEM_AWIDTH (MEM_AWIDTH))
     uut (
         .clk            (clk),
         .rst            (rst),

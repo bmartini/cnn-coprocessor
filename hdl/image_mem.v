@@ -22,8 +22,7 @@
 
 module image_mem
   #(parameter
-    STR_IMG_WIDTH   = 64,
-
+    DEPTH_NB        = 16,
     GROUP_NB        = 4,
     IMG_WIDTH       = 16,
 
@@ -33,7 +32,7 @@ module image_mem
 
     input  wire                             wr_val,
     input  wire [MEM_AWIDTH-1:0]            wr_addr,
-    input  wire [STR_IMG_WIDTH-1:0]         wr_data,
+    input  wire [IMG_WIDTH*DEPTH_NB-1:0]    wr_data,
 
     input  wire                             rd_val,
     input  wire [MEM_AWIDTH-1:0]            rd_addr,
@@ -50,7 +49,7 @@ module image_mem
 
     // bank number needs to be (1, 2, 4, 8, 16, 32, 64)
     localparam BANK_DWIDTH  = (GROUP_NB*IMG_WIDTH);
-    localparam BANK_NB      = (STR_IMG_WIDTH/BANK_DWIDTH);
+    localparam BANK_NB      = (DEPTH_NB/GROUP_NB);
     localparam BANK_LG2 =
         ( 0 == (BANK_NB-1)) ? 0 :
         ( 1 >= (BANK_NB-1)) ? 1 :
@@ -73,7 +72,7 @@ module image_mem
 
     reg  [MEM_AWIDTH-1:0]           addr_1p;
 
-    reg  [STR_IMG_WIDTH-1:0]        wr_data_1p;
+    reg  [IMG_WIDTH*DEPTH_NB-1:0]   wr_data_1p;
 
     reg                             wr_val_1p;
 
