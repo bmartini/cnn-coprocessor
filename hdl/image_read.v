@@ -76,110 +76,110 @@ module image_read
      * Internal signals
      */
 
-    reg  [3:0]  state;
-    reg  [3:0]  state_nx;
+    reg  [3:0]                      state;
+    reg  [3:0]                      state_nx;
 
-    reg  [31:0] cfg_img_w;  // image width of segment within buf
-    reg  [15:0] cfg_img_h;  // image height of segment within buf
-    reg  [15:0] cfg_img_d;  // image depth of segment within buf
+    reg  [31:0]                     cfg_img_w;  // image width of segment within buf
+    reg  [15:0]                     cfg_img_h;  // image height of segment within buf
+    reg  [15:0]                     cfg_img_d;  // image depth of segment within buf
 
-    reg  [7:0]  cfg_pad_l;  // padding around left image segment
-    reg  [7:0]  cfg_pad_r;  // padding around right image segment
-    reg  [7:0]  cfg_pad_t;  // padding around top image segment
-    reg  [7:0]  cfg_pad_b;  // padding around bottom image segment
+    reg  [7:0]                      cfg_pad_l;  // padding around left image segment
+    reg  [7:0]                      cfg_pad_r;  // padding around right image segment
+    reg  [7:0]                      cfg_pad_t;  // padding around top image segment
+    reg  [7:0]                      cfg_pad_b;  // padding around bottom image segment
 
-    reg  [7:0]  cfg_maxp_side;  // square side of maxp e.g. 2x2
-    reg  [7:0]  cfg_conv_side;  // square side of conv e.g. 3x3
-    reg  [15:0] cfg_conv_step;  // step distance b/w conv volume
+    reg  [7:0]                      cfg_maxp_side;  // square side of maxp e.g. 2x2
+    reg  [7:0]                      cfg_conv_side;  // square side of conv e.g. 3x3
+    reg  [15:0]                     cfg_conv_step;  // step distance b/w conv volume
 
-    reg  [31:0] img_w;
-    reg  [31:0] img_h;
-    reg  [31:0] img_d;
+    reg  [31:0]                     img_w;
+    reg  [31:0]                     img_h;
+    reg  [31:0]                     img_d;
 
-    reg  [31:0] pad_l;
-    reg  [31:0] pad_r;
-    reg  [31:0] pad_t;
-    reg  [31:0] pad_b;
+    reg  [31:0]                     pad_l;
+    reg  [31:0]                     pad_r;
+    reg  [31:0]                     pad_t;
+    reg  [31:0]                     pad_b;
 
-    reg         next_1p;
-    reg         next_2p;
-    reg         next_3p;
+    reg                             next_1p;
+    reg                             next_2p;
+    reg                             next_3p;
 
-    reg  [31:0] maxp_side;
-    reg  [31:0] conv_side;
-    reg  [31:0] conv_step;
+    reg  [31:0]                     maxp_side;
+    reg  [31:0]                     conv_side;
+    reg  [31:0]                     conv_step;
 
     // area of image with padding
-    reg  [31:0] area_w;
-    reg  [31:0] area_h;
+    reg  [31:0]                     area_w;
+    reg  [31:0]                     area_h;
 
     // edge between the padding and image in the area
-    reg  [31:0] edge_l;
-    reg  [31:0] edge_t;
-    reg  [31:0] edge_r;
-    reg  [31:0] edge_b;
+    reg  [31:0]                     edge_l;
+    reg  [31:0]                     edge_t;
+    reg  [31:0]                     edge_r;
+    reg  [31:0]                     edge_b;
 
     // position maxpool/conv within area
-    reg  [31:0] area_w_max;
-    reg  [31:0] area_h_max;
+    reg  [31:0]                     area_w_max;
+    reg  [31:0]                     area_h_max;
 
-    reg  [31:0] area_w_cnt;
-    reg  [31:0] area_h_cnt;
-    wire        area_w_last;
-    wire        area_h_last;
+    reg  [31:0]                     area_w_cnt;
+    reg  [31:0]                     area_h_cnt;
+    wire                            area_w_last;
+    wire                            area_h_last;
 
     // position of conv within a maxpool
-    reg  [31:0] maxp_w_max;
-    reg  [31:0] maxp_h_max;
+    reg  [31:0]                     maxp_w_max;
+    reg  [31:0]                     maxp_h_max;
 
-    reg  [31:0] maxp_w_cnt;
-    reg  [31:0] maxp_h_cnt;
-    wire        maxp_w_last;
-    wire        maxp_h_last;
+    reg  [31:0]                     maxp_w_cnt;
+    reg  [31:0]                     maxp_h_cnt;
+    wire                            maxp_w_last;
+    wire                            maxp_h_last;
 
     // position within convolution
-    reg  [31:0] conv_w_max;
-    reg  [31:0] conv_h_max;
-    reg  [31:0] conv_d_max;
+    reg  [31:0]                     conv_w_max;
+    reg  [31:0]                     conv_h_max;
+    reg  [31:0]                     conv_d_max;
 
-    reg  [31:0] conv_w_cnt;
-    reg  [31:0] conv_h_cnt;
-    reg  [31:0] conv_d_cnt;
-    wire        conv_w_last;
-    wire        conv_h_last;
-    wire        conv_d_last;
+    reg  [31:0]                     conv_w_cnt;
+    reg  [31:0]                     conv_h_cnt;
+    reg  [31:0]                     conv_d_cnt;
+    wire                            conv_w_last;
+    wire                            conv_h_last;
+    wire                            conv_d_last;
 
     // linear address calcuations
-    reg  [31:0] addr_h_1p;
-    reg  [31:0] addr_h_2p;
-    reg  [31:0] addr_h_3p;
+    reg  [31:0]                     addr_h_1p;
+    reg  [31:0]                     addr_h_2p;
+    reg  [31:0]                     addr_h_3p;
 
-    reg  [31:0] addr_w_1p;
-    reg  [31:0] addr_w_2p;
-    reg  [31:0] addr_w_3p;
+    reg  [31:0]                     addr_w_1p;
+    reg  [31:0]                     addr_w_2p;
+    reg  [31:0]                     addr_w_3p;
 
-    reg  [31:0] addr_d_1p;
-    reg  [31:0] addr_d_2p;
-    reg  [31:0] addr_d_3p;
+    reg  [31:0]                     addr_d_1p;
+    reg  [31:0]                     addr_d_2p;
+    reg  [31:0]                     addr_d_3p;
 
-    reg  [31:0] addr_4p;
+    reg  [31:0]                     addr_4p;
 
-    reg         padding_2p;
-    reg         padding_3p;
-    reg         padding_4p;
+    reg                             padding_2p;
+    reg                             padding_3p;
+    reg                             padding_4p;
 
-    reg         addr_val_1p;
-    reg         addr_val_2p;
-    reg         addr_val_3p;
-    reg         addr_val_4p;
+    reg                             addr_val_1p;
+    reg                             addr_val_2p;
+    reg                             addr_val_3p;
+    reg                             addr_val_4p;
 
-    reg         addr_last_1p;
-    reg         addr_last_2p;
-    reg         addr_last_3p;
-    reg         addr_last_4p;
+    reg                             addr_last_1p;
+    reg                             addr_last_2p;
+    reg                             addr_last_3p;
+    reg                             addr_last_4p;
 
-    reg  [31:0] plane_WxD_i;
-    reg  [31:0] plane_WxD;
+    reg  [31:0]                     plane_WxD_i;
+    reg  [31:0]                     plane_WxD;
 
     reg  [GROUP_NB*IMG_WIDTH-1:0]   buffer_bus;
     reg                             buffer_last;
