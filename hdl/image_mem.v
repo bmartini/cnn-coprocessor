@@ -5,8 +5,8 @@
  * Description:
  *  The image_mem module has a single port memory that stores the image data
  *  for convolutions. If the wr data stream is wider then the read, the memory
- *  is separated into coulombs so that the write words can be written as one
- *  and the reading can access the data per coulomb.
+ *  is separated into columns so that the write words can be written as one and
+ *  the reading can access the data per column.
  *
  * Created:
  *  Sat Jan 11 01:02:25 AEDT 2020

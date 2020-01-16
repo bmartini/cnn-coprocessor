@@ -4,7 +4,7 @@
  *
  * Description:
  *  The kernel_mem module has a memory that stores the kernel and bias data for
- *  all the convolution coulombs.
+ *  all the convolution columns.
  *
  * Created:
  *  Sun Nov 11 17:28:24 PST 2018
