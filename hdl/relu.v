@@ -14,13 +14,15 @@
 `ifndef _relu_
 `define _relu_
 
+`default_nettype none
+
 module relu
   #(parameter
     NUM_WIDTH = 16)
-   (input                       clk,
-    input                       bypass,
+   (input  wire                 clk,
+    input  wire                 bypass,
 
-    input       [NUM_WIDTH-1:0] up_data,
+    input  wire [NUM_WIDTH-1:0] up_data,
     output reg  [NUM_WIDTH-1:0] dn_data
 );
 

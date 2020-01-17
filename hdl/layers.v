@@ -22,6 +22,7 @@
 `include "relu.v"
 `include "rescale.v"
 
+`default_nettype none
 
 module layers
   #(parameter
@@ -32,25 +33,25 @@ module layers
     GROUP_NB    = 4,
     IMG_WIDTH   = 16,
     KER_WIDTH   = 16)
-   (input                                           clk,
-    input                                           rst,
+   (input  wire                                     clk,
+    input  wire                                     rst,
 
-    input       [CFG_DWIDTH-1:0]                    cfg_data,
-    input       [CFG_AWIDTH-1:0]                    cfg_addr,
-    input                                           cfg_valid,
+    input  wire [CFG_DWIDTH-1:0]                    cfg_data,
+    input  wire [CFG_AWIDTH-1:0]                    cfg_addr,
+    input  wire                                     cfg_valid,
 
-    input       [GROUP_NB*KER_WIDTH*DEPTH_NB-1:0]   bias_bus,
-    input       [GROUP_NB*KER_WIDTH*DEPTH_NB-1:0]   kernel_bus,
+    input  wire [GROUP_NB*KER_WIDTH*DEPTH_NB-1:0]   bias_bus,
+    input  wire [GROUP_NB*KER_WIDTH*DEPTH_NB-1:0]   kernel_bus,
     output reg                                      kernel_rdy,
 
-    input       [GROUP_NB*IMG_WIDTH-1:0]            image_bus,
-    input                                           image_last,
-    input                                           image_val,
-    output                                          image_rdy,
+    input  wire [GROUP_NB*IMG_WIDTH-1:0]            image_bus,
+    input  wire                                     image_last,
+    input  wire                                     image_val,
+    output wire                                     image_rdy,
 
     output reg  [IMG_WIDTH*DEPTH_NB-1:0]            result,
-    output                                          result_val,
-    input                                           result_rdy
+    output wire                                     result_val,
+    input  wire                                     result_rdy
 );
 
 
@@ -413,5 +414,7 @@ module layers
 
 
 endmodule
+
+`default_nettype wire
 
 `endif //  `ifndef _layers_

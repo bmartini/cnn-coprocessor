@@ -16,14 +16,16 @@
 `define _pool_
 
 
+`default_nettype none
+
 module pool
   #(parameter
     NUM_WIDTH = 16)
-   (input                       clk,
-    input                       restart,
+   (input  wire                 clk,
+    input  wire                 restart,
 
-    input       [NUM_WIDTH-1:0] up_data,
-    input                       up_valid,
+    input  wire [NUM_WIDTH-1:0] up_data,
+    input  wire                 up_valid,
 
     output reg  [NUM_WIDTH-1:0] dn_data
 );
@@ -114,5 +116,7 @@ module pool
 
 
 endmodule
+
+`default_nettype wire
 
 `endif //  `ifndef _pool_

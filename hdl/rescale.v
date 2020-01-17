@@ -21,18 +21,20 @@
 `define _rescale_
 
 
+`default_nettype none
+
 module rescale
   #(parameter
     NUM_WIDTH   = 33,
     NUM_AWIDTH  = $clog2(NUM_WIDTH), // do not overwrite
 
     IMG_WIDTH   = 16)
-   (input                       clk,
+   (input  wire                 clk,
 
-    input       [7:0]           shift,
-    input       [7:0]           head,
+    input  wire [7:0]           shift,
+    input  wire [7:0]           head,
 
-    input       [NUM_WIDTH-1:0] up_data,
+    input  wire [NUM_WIDTH-1:0] up_data,
     output reg  [IMG_WIDTH-1:0] dn_data
 );
 
@@ -135,5 +137,7 @@ module rescale
 
 
 endmodule
+
+`default_nettype wire
 
 `endif //  `ifndef _rescale_

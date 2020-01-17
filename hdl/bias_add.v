@@ -15,15 +15,16 @@
 `ifndef _bias_add_
 `define _bias_add_
 
+`default_nettype none
 
 module bias_add
   #(parameter
     NUM_WIDTH = 16)
-   (input                       clk,
+   (input  wire                 clk,
 
-    input       [NUM_WIDTH-1:0] bias,
+    input  wire [NUM_WIDTH-1:0] bias,
 
-    input       [NUM_WIDTH-1:0] up_data,
+    input  wire [NUM_WIDTH-1:0] up_data,
     output reg  [NUM_WIDTH-1:0] dn_data
 );
 
@@ -60,5 +61,7 @@ module bias_add
 
 
 endmodule
+
+`default_nettype wire
 
 `endif //  `ifndef _bias_add_

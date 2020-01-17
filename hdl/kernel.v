@@ -19,6 +19,8 @@
 `include "str_gbox.v"
 `include "kernel_mem.v"
 
+`default_nettype none
+
 
 module kernel
   #(parameter
@@ -33,20 +35,20 @@ module kernel
 
     MEM_AWIDTH      = 16,
     MEM_DEPTH       = 1<<MEM_AWIDTH)
-   (input                                           clk,
-    input                                           rst,
+   (input  wire                                     clk,
+    input  wire                                     rst,
 
-    input       [CFG_DWIDTH-1:0]                    cfg_data,
-    input       [CFG_AWIDTH-1:0]                    cfg_addr,
-    input                                           cfg_valid,
+    input  wire [CFG_DWIDTH-1:0]                    cfg_data,
+    input  wire [CFG_AWIDTH-1:0]                    cfg_addr,
+    input  wire                                     cfg_valid,
 
-    input       [STR_KER_WIDTH-1:0]                 str_ker,
-    input                                           str_ker_val,
-    output                                          str_ker_rdy,
+    input  wire [STR_KER_WIDTH-1:0]                 str_ker,
+    input  wire                                     str_ker_val,
+    output wire                                     str_ker_rdy,
 
-    output      [GROUP_NB*KER_WIDTH*DEPTH_NB-1:0]   bias_bus,
-    output      [GROUP_NB*KER_WIDTH*DEPTH_NB-1:0]   kernel_bus,
-    input                                           kernel_rdy
+    output wire [GROUP_NB*KER_WIDTH*DEPTH_NB-1:0]   bias_bus,
+    output wire [GROUP_NB*KER_WIDTH*DEPTH_NB-1:0]   kernel_bus,
+    input  wire                                     kernel_rdy
 );
 
 
@@ -151,5 +153,7 @@ module kernel
 
 
 endmodule
+
+`default_nettype wire
 
 `endif //  `ifndef _kernel_

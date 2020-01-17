@@ -29,22 +29,24 @@
 `define _str_gbox_
 
 
+`default_nettype none
+
 module str_gbox
   #(parameter
     DATA_UP_WIDTH   = 2,
     DATA_DN_WIDTH   = 8)
-   (input                           clk,
-    input                           rst,
+   (input  wire                     clk,
+    input  wire                     rst,
 
-    input       [DATA_UP_WIDTH-1:0] up_data,
-    input                           up_last,
-    input                           up_val,
-    output                          up_rdy,
+    input  wire [DATA_UP_WIDTH-1:0] up_data,
+    input  wire                     up_last,
+    input  wire                     up_val,
+    output wire                     up_rdy,
 
-    output      [DATA_DN_WIDTH-1:0] dn_data,
-    output                          dn_last,
-    output                          dn_val,
-    input                           dn_rdy
+    output wire [DATA_DN_WIDTH-1:0] dn_data,
+    output wire                     dn_last,
+    output wire                     dn_val,
+    input  wire                     dn_rdy
 );
 
 
@@ -227,5 +229,7 @@ module str_gbox
 
 
 endmodule
+
+`default_nettype wire
 
 `endif //  `ifndef _str_gbox_

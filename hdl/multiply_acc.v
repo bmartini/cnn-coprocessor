@@ -2,19 +2,21 @@
 `define _multiply_acc_
 
 
+`default_nettype none
+
 module multiply_acc
   #(parameter
     IMG_WIDTH   = 16,
     KER_WIDTH   = 16)
    (
-    input                               clk,
-    input                               rst,
+    input  wire                         clk,
+    input  wire                         rst,
 
-    input      [IMG_WIDTH-1:0]          img,
-    input      [KER_WIDTH-1:0]          ker,
-    input                               val,
+    input  wire [IMG_WIDTH-1:0]         img,
+    input  wire [KER_WIDTH-1:0]         ker,
+    input  wire                         val,
 
-    output reg [IMG_WIDTH+KER_WIDTH:0]  result
+    output reg  [IMG_WIDTH+KER_WIDTH:0] result
 );
 
 
@@ -81,5 +83,7 @@ module multiply_acc
 
 
 endmodule
+
+`default_nettype wire
 
 `endif //  `ifndef _multiply_acc_

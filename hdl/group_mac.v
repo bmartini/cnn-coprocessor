@@ -18,19 +18,21 @@
 
 `include "multiply_acc.v"
 
+`default_nettype none
+
 module group_mac
   #(parameter
     GROUP_NB    = 4,
     IMG_WIDTH   = 16,
     KER_WIDTH   = 16)
-   (input                                               clk,
-    input                                               rst,
+   (input  wire                                         clk,
+    input  wire                                         rst,
 
-    input       [GROUP_NB*IMG_WIDTH-1:0]                img,
-    input       [GROUP_NB*KER_WIDTH-1:0]                ker,
-    input                                               val,
+    input  wire [GROUP_NB*IMG_WIDTH-1:0]                img,
+    input  wire [GROUP_NB*KER_WIDTH-1:0]                ker,
+    input  wire                                         val,
 
-    output      [GROUP_NB*(IMG_WIDTH+KER_WIDTH+1)-1:0]  result
+    output wire [GROUP_NB*(IMG_WIDTH+KER_WIDTH+1)-1:0]  result
 );
 
 
@@ -87,5 +89,7 @@ module group_mac
 
 
 endmodule
+
+`default_nettype wire
 
 `endif //  `ifndef _group_mac_

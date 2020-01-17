@@ -17,13 +17,14 @@
 `ifndef _fifo_simple_
 `define _fifo_simple_
 
+`default_nettype none
 
 module fifo_simple
   #(parameter
     DATA_WIDTH  = 16,
     ADDR_WIDTH  = 16)
-   (input                           clk,
-    input                           rst,
+   (input  wire                     clk,
+    input  wire                     rst,
 
     output reg  [ADDR_WIDTH:0]      count,
     output reg                      full,
@@ -31,10 +32,10 @@ module fifo_simple
     output reg                      empty,
     output reg                      empty_a,
 
-    input                           push,
-    input       [DATA_WIDTH-1:0]    push_data,
+    input  wire                     push,
+    input  wire [DATA_WIDTH-1:0]    push_data,
 
-    input                           pop,
+    input  wire                     pop,
     output reg  [DATA_WIDTH-1:0]    pop_data
 );
 
@@ -184,5 +185,7 @@ module fifo_simple
 
 
 endmodule
+
+`default_nettype wire
 
 `endif //  `ifndef _fifo_simple_

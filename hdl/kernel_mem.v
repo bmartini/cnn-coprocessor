@@ -16,6 +16,7 @@
 `define _kernel_mem_
 
 
+`default_nettype none
 
 module kernel_mem
   #(parameter
@@ -25,23 +26,23 @@ module kernel_mem
 
     MEM_AWIDTH  = 16,
     MEM_DEPTH   = 1<<MEM_AWIDTH)
-   (input                                           clk,
-    input                                           rst,
+   (input  wire                                     clk,
+    input  wire                                     rst,
 
-    input       [MEM_AWIDTH-1:0]                    wr_cfg_end,
-    input                                           wr_cfg_set,
+    input  wire [MEM_AWIDTH-1:0]                    wr_cfg_end,
+    input  wire                                     wr_cfg_set,
 
-    input       [GROUP_NB*KER_WIDTH*DEPTH_NB-1:0]   wr_data,
-    input                                           wr_data_val,
-    output                                          wr_data_rdy,
+    input  wire [GROUP_NB*KER_WIDTH*DEPTH_NB-1:0]   wr_data,
+    input  wire                                     wr_data_val,
+    output wire                                     wr_data_rdy,
 
-    input       [MEM_AWIDTH-1:0]                    rd_cfg_start,
-    input       [MEM_AWIDTH-1:0]                    rd_cfg_end,
-    input                                           rd_cfg_set,
+    input  wire [MEM_AWIDTH-1:0]                    rd_cfg_start,
+    input  wire [MEM_AWIDTH-1:0]                    rd_cfg_end,
+    input  wire                                     rd_cfg_set,
 
     output reg  [GROUP_NB*KER_WIDTH*DEPTH_NB-1:0]   rd_bias,
     output reg  [GROUP_NB*KER_WIDTH*DEPTH_NB-1:0]   rd_data,
-    input                                           rd_data_rdy
+    input  wire                                     rd_data_rdy
 );
 
 
@@ -171,5 +172,7 @@ module kernel_mem
 
 
 endmodule
+
+`default_nettype wire
 
 `endif //  `ifndef _kernel_mem_
