@@ -5,4 +5,7 @@
         CFG_IR_IMG_W     =  3,
         CFG_IR_IMG_DH    =  4,
         CFG_IR_PAD       =  5,
-        CFG_IR_CONV      =  6;
+        CFG_IR_CONV      =  6,
+        CFG_IW_IMG_W     =  7,
+        CFG_IW_START     =  8,
+        CFG_IW_STEP      =  9;

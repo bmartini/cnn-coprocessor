@@ -180,6 +180,21 @@ module image_write_tb;
     $display("configure");
 `endif
 
+        cfg_addr    <= uut.CFG_IW_IMG_W;
+        cfg_data    <= 32'd9; // width = 10
+        cfg_valid   <= 1'b1;
+        @(negedge clk);
+
+        cfg_addr    <= uut.CFG_IW_START;
+        cfg_data    <= {16'd0, 16'd4}; // start = 0, height = 5
+        cfg_valid   <= 1'b1;
+        @(negedge clk);
+
+        cfg_addr    <= uut.CFG_IW_STEP;
+        cfg_data    <= {16'd3, 16'd9}; // step_pixel = 4, step_row = 10
+        cfg_valid   <= 1'b1;
+        @(negedge clk);
+
         cfg_addr    <= 'b0;
         cfg_data    <= 'b0;
         cfg_valid   <= 1'b0;
