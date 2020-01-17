@@ -82,7 +82,7 @@ module kernel_tb;
     reg  [CFG_AWIDTH-1:0]                   cfg_addr;
     reg                                     cfg_valid;
 
-    reg  [STR_KER_WIDTH-1:0]                str_ker;
+    reg  [STR_KER_WIDTH-1:0]                str_ker_bus;
     reg                                     str_ker_val;
     wire                                    str_ker_rdy;
 
@@ -115,7 +115,7 @@ module kernel_tb;
         .cfg_addr       (cfg_addr),
         .cfg_valid      (cfg_valid),
 
-        .str_ker        (str_ker),
+        .str_ker_bus    (str_ker_bus),
         .str_ker_val    (str_ker_val),
         .str_ker_rdy    (str_ker_rdy),
 
@@ -148,7 +148,7 @@ module kernel_tb;
             uut.rd_cfg_end,
 
             "\tstr %x %b %b",
-            str_ker,
+            str_ker_bus,
             str_ker_val,
             str_ker_rdy,
 
@@ -181,7 +181,7 @@ module kernel_tb;
         cfg_addr    = 'b0;
         cfg_valid   = 1'b0;
 
-        str_ker     = 'b0;
+        str_ker_bus = 'b0;
         str_ker_val = 1'b0;
 
         kernel_rdy  = 'b0;
@@ -217,12 +217,12 @@ module kernel_tb;
 `endif
 
         repeat(4*8) begin
-            str_ker     <= str_ker + 16'd1;
+            str_ker_bus <= str_ker_bus + 16'd1;
             str_ker_val <= 1'b1;
             @(negedge clk);
         end
 
-        str_ker     <= 16'd0;
+        str_ker_bus <= 16'd0;
         str_ker_val <= 1'b0;
         @(negedge clk);
 

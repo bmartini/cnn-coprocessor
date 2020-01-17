@@ -42,7 +42,7 @@ module kernel
     input  wire [CFG_AWIDTH-1:0]                    cfg_addr,
     input  wire                                     cfg_valid,
 
-    input  wire [STR_KER_WIDTH-1:0]                 str_ker,
+    input  wire [STR_KER_WIDTH-1:0]                 str_ker_bus,
     input  wire                                     str_ker_val,
     output wire                                     str_ker_rdy,
 
@@ -111,7 +111,7 @@ module kernel
         .clk        (clk),
         .rst        (rst),
 
-        .up_data    (str_ker),
+        .up_data    (str_ker_bus),
         .up_last    (1'b0),
         .up_val     (str_ker_val),
         .up_rdy     (str_ker_rdy),

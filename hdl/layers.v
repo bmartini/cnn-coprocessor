@@ -49,7 +49,7 @@ module layers
     input  wire                                     image_val,
     output wire                                     image_rdy,
 
-    output reg  [IMG_WIDTH*DEPTH_NB-1:0]            result,
+    output reg  [IMG_WIDTH*DEPTH_NB-1:0]            result_bus,
     output wire                                     result_val,
     input  wire                                     result_rdy
 );
@@ -312,7 +312,7 @@ module layers
 
     always @(posedge clk)
         if (rescale_valid) begin
-            result <= rescale_data;
+            result_bus <= rescale_data;
         end
 
 

@@ -148,7 +148,7 @@ module layers_tb;
     reg                                     image_val;
     wire                                    image_rdy;
 
-    wire [IMG_WIDTH*DEPTH_NB-1:0]           result;
+    wire [IMG_WIDTH*DEPTH_NB-1:0]           result_bus;
     wire                                    result_val;
     reg                                     result_rdy;
 
@@ -179,7 +179,7 @@ module layers_tb;
         .image_val  (image_val),
         .image_rdy  (image_rdy),
 
-        .result     (result),
+        .result_bus (result_bus),
         .result_val (result_val),
         .result_rdy (result_rdy)
     );
@@ -217,7 +217,7 @@ module layers_tb;
             image_rdy,
 
             "\tres: %f %b %b",
-            img_f2r(result),
+            img_f2r(result_bus),
             result_val,
             result_rdy,
 
