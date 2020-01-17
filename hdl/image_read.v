@@ -305,8 +305,11 @@ module image_read
                 state_nx[CONFIG] = 1'b1;
             end
             state[CONFIG] : begin
-                if (next_3p) begin
+                if (next_3p & image_rdy) begin
                     state_nx[ACTIVE] = 1'b1;
+                end
+                else if (next_3p & ~image_rdy) begin
+                    state_nx[PAUSE] = 1'b1;
                 end
                 else state_nx[CONFIG] = 1'b1;
             end
