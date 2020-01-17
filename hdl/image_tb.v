@@ -53,15 +53,15 @@ module image_tb;
 `include "cfg_parameters.vh"
 
     localparam CFG_DWIDTH      = 32;
-    localparam CFG_AWIDTH      = 5;
+    localparam CFG_AWIDTH      =  5;
 
     localparam STR_IMG_WIDTH   = 64;
 
-    localparam GROUP_NB        = 4;
+    localparam GROUP_NB        =  4;
     localparam IMG_WIDTH       = 16;
-    localparam DEPTH_NB        = 1;
+    localparam DEPTH_NB        =  8;
 
-    localparam MEM_AWIDTH      = 8;
+    localparam MEM_AWIDTH      = 16;
 
 
 
@@ -193,15 +193,92 @@ module image_tb;
 `endif
 
         // send write cfg
+        cfg_addr    <= uut.CFG_IW_IMG_W;
+        cfg_data    <= 32'd9; // width = 10
+        cfg_valid   <= 1'b1;
+        @(negedge clk);
+
+        cfg_addr    <= uut.CFG_IW_START;
+        cfg_data    <= {16'd0, 16'd4}; // start = 0, height = 5
+        cfg_valid   <= 1'b1;
+        @(negedge clk);
+
+        cfg_addr    <= uut.CFG_IW_STEP;
+        cfg_data    <= {16'd3, 16'd9}; // step_pixel = 4, step_row = 10
+        cfg_valid   <= 1'b1;
+        @(negedge clk);
+
+        cfg_addr    <= uut.CFG_IMG_WR;
         cfg_data    <= 'b0;
+        cfg_valid   <= 1'b1;
+        @(negedge clk);
+
         cfg_addr    <= 'b0;
+        cfg_data    <= 'b0;
+        cfg_valid   <= 1'b0;
+        repeat(5) @(negedge clk);
+
+
+
+`ifdef TB_VERBOSE
+    $display("send wr data");
+`endif
+
+        repeat (10*5*4*(IMG_WIDTH*DEPTH_NB/STR_IMG_WIDTH)) begin
+            str_img_bus <= str_img_bus+'d1;
+            str_img_val <= 1'b1;
+            @(negedge clk);
+        end
+
+        str_img_bus <= 'b0;
+        str_img_val <= 1'b0;
+        repeat(10) @(negedge clk);
+
+
+`ifdef TB_VERBOSE
+    $display("send rd config");
+`endif
+
+
+        cfg_addr    <= uut.CFG_IR_IMG_W;
+        cfg_data    <= 32'd9; // width = 10
+        cfg_valid   <= 1'b1;
+        @(negedge clk);
+
+        cfg_addr    <= uut.CFG_IR_IMG_DH;
+        cfg_data    <= {16'd7, 16'd4}; // depth = 8, height = 5
+        cfg_valid   <= 1'b1;
+        @(negedge clk);
+
+        cfg_addr    <= uut.CFG_IR_PAD;
+        cfg_data    <= {8'd1, 8'd1, 8'd1, 8'd1};
+        cfg_valid   <= 1'b1;
+        @(negedge clk);
+
+        cfg_addr    <= uut.CFG_IR_CONV;
+        cfg_data    <= {8'd1, 8'd2, 16'd1}; // {maxp = 2, c_side = 3, c_step = 2}
+        cfg_valid   <= 1'b1;
+        @(negedge clk);
+
+        cfg_addr    <= uut.CFG_IMG_RD;
+        cfg_data    <= 'b0;
+        cfg_valid   <= 1'b1;
+        @(negedge clk);
+
+        cfg_addr    <= 'b0;
+        cfg_data    <= 'b0;
         cfg_valid   <= 1'b0;
         repeat(2) @(negedge clk);
 
 
+        image_rdy <= 1'b1;
+        while ( ~uut.image_last) begin;
+            @(negedge clk);
+        end
+        @(negedge clk);
 
-
-        repeat(200) @(negedge clk);
+        image_rdy <= 1'b0;
+        repeat(10) @(negedge clk);
 
 
 `ifdef TB_VERBOSE
@@ -209,5 +286,6 @@ module image_tb;
 `endif
         -> end_trigger;
     end
+
 
 endmodule
