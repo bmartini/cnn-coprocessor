@@ -118,6 +118,20 @@ module image_write_tb;
     );
 
 
+    always @(posedge clk)
+        if (str_img_val & str_img_rdy) begin
+            str_img_bus <= str_img_bus + 'd1;
+        end
+
+
+`ifndef TB_VERBOSE
+    always @(posedge clk)
+        if (wr_val) begin
+            $display("   %d ", wr_addr);
+        end
+`endif
+
+
 
     /**
      * Wave form display
@@ -131,10 +145,20 @@ module image_write_tb;
             "\t<nx %d>",
             next,
 
-            "\t<wr>: v %b, a %d, d: %x",
+            "\t<str>: d %d, v %b, r: %b",
+            str_img_bus[0 +: IMG_WIDTH],
+            str_img_val,
+            str_img_rdy,
+
+            "\t<wr>: v %b, a %d, d: %d",
             wr_val,
             wr_addr,
-            wr_data,
+            wr_data[0 +: IMG_WIDTH],
+
+//            "\t<wr>: h %d, w %d, d: %d",
+//            uut.addr_h,
+//            uut.addr_w,
+//            uut.addr_d,
         );
 
     endtask // display_signals
@@ -161,7 +185,7 @@ module image_write_tb;
 
         next        = 1'b0;
 
-        str_img_bus = 'b0;
+        str_img_bus = 'd1;
         str_img_val = 1'b0;
         //end init
 
@@ -206,11 +230,18 @@ module image_write_tb;
         @(negedge clk);
 
 
+`ifdef TB_VERBOSE
+    $display("stream in data");
+`endif
+        repeat(5) @(negedge clk);
+        str_img_val <= 1'b1;
 
 
 
 
-        repeat(20) @(negedge clk);
+
+
+        repeat(350) @(negedge clk);
 
 `ifdef TB_VERBOSE
     $display("END");

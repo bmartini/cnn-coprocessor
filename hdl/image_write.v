@@ -70,16 +70,51 @@ module image_write
     reg  [15:0]                     cfg_step_p; // address steps separating pixels
     reg  [15:0]                     cfg_step_r; // address steps b/w start of each row
 
-    reg  [31:0]                     img_w;
-    reg  [31:0]                     img_h;
+    reg  [31:0]                     img_w_max;
+    reg  [31:0]                     img_h_max;
     reg  [31:0]                     start;
+    reg  [31:0]                     step_p_max;
     reg  [31:0]                     step_p;
     reg  [31:0]                     step_r;
 
     reg                             next_1p;
-    reg                             next_2p;
-    reg                             next_3p;
+    wire                            done;
 
+    reg  [31:0]                     addr_w;
+    reg  [31:0]                     addr_h;
+    reg  [31:0]                     addr_d;
+
+    wire                            addr_w_last;
+    wire                            addr_h_last;
+    wire                            addr_d_last;
+
+    reg  [31:0]                     addr_w_1p;
+    reg  [31:0]                     addr_h_1p;
+    reg  [31:0]                     addr_d_1p;
+
+    reg  [31:0]                     addr_w_2p;
+    reg  [31:0]                     addr_h_2p;
+    reg  [31:0]                     addr_d_2p;
+
+    reg  [31:0]                     addr_h_3p;
+    reg  [31:0]                     addr_dw_3p;
+
+    reg  [31:0]                     addr_h_4p;
+    reg  [31:0]                     addr_dw_4p;
+
+    reg  [31:0]                     addr_5p;
+
+    reg                             addr_val_1p;
+    reg                             addr_val_2p;
+    reg                             addr_val_3p;
+    reg                             addr_val_4p;
+    reg                             addr_val_5p;
+
+    reg  [IMG_WIDTH*DEPTH_NB-1:0]   str_img_bus_1p;
+    reg  [IMG_WIDTH*DEPTH_NB-1:0]   str_img_bus_2p;
+    reg  [IMG_WIDTH*DEPTH_NB-1:0]   str_img_bus_3p;
+    reg  [IMG_WIDTH*DEPTH_NB-1:0]   str_img_bus_4p;
+    reg  [IMG_WIDTH*DEPTH_NB-1:0]   str_img_bus_5p;
 
 
     /**
@@ -114,11 +149,12 @@ module image_write
         if (next) begin
             next_1p     <= 1'b1;
 
-            img_w       <= cfg_img_w + 'd1; // cfg 0 is 1 pixel image width
-            img_h       <= cfg_img_h + 'd1; // cfg 0 is 1 pixel image height
+            img_w_max   <= cfg_img_w; // cfg 0 is 1 pixel image width
+            img_h_max   <= cfg_img_h; // cfg 0 is 1 pixel image height
 
             start       <= cfg_start; // cfg 0 is address zero
 
+            step_p_max  <= cfg_step_p;
             step_p      <= cfg_step_p + 'd1; // cfg 0 is a 1 pixel step
             step_r      <= cfg_step_r + 'd1; // cfg 0 is a 1 pixel step
         end
@@ -127,6 +163,103 @@ module image_write
 
 
 
+    // control state logic
+    assign done = str_img_val & addr_w_last & addr_h_last & addr_d_last;
+
+
+    always @(posedge clk)
+        if      (rst)       str_img_rdy <= 1'b0;
+        else if (next_1p)   str_img_rdy <= 1'b1;
+        else if (done)      str_img_rdy <= 1'b0;
+
+
+
+
+    // address counters
+    assign addr_w_last  = (addr_w >= img_w_max);
+
+    assign addr_h_last  = (addr_h >= img_h_max);
+
+    assign addr_d_last  = (addr_d >= step_p_max);
+
+
+    always @(posedge clk) begin
+        if (rst) begin
+            addr_w  <= 'b0;
+            addr_h  <= 'b0;
+            addr_d  <= 'b0;
+        end
+        else if (str_img_val & str_img_rdy) begin
+
+            addr_w <= addr_w + 'd1;
+            if (addr_w_last) begin
+
+                addr_w  <= 'b0;
+                addr_h  <= addr_h + 'd1;
+                if (addr_h_last) begin
+
+                    addr_h  <= 'b0;
+                    addr_d  <= addr_d + 'd1;
+                    if (addr_d_last) begin
+
+                        addr_d <= 'b0;
+                    end
+                end
+            end
+        end
+    end
+
+
+    // calculate linear addresses from counters
+    always @(posedge clk) begin
+        addr_w_1p <= addr_w * step_p;
+        addr_w_2p <= addr_w_1p;
+
+        addr_h_1p <= addr_h * step_p;
+        addr_h_2p <= addr_h_1p;
+
+        addr_d_1p <= addr_d + start;
+        addr_d_2p <= addr_d_1p;
+    end
+
+
+    always @(posedge clk) begin
+        addr_h_3p <= addr_h_2p * step_r;
+        addr_h_4p <= addr_h_3p;
+
+        addr_dw_3p  <= addr_d_2p + addr_w_2p;
+        addr_dw_4p  <= addr_dw_3p;
+    end
+
+
+    always @(posedge clk) begin
+        addr_5p <= addr_h_4p + addr_dw_4p;
+    end
+
+
+    always @(posedge clk) begin
+        addr_val_1p <= str_img_val & str_img_rdy;
+        addr_val_2p <= addr_val_1p;
+        addr_val_3p <= addr_val_2p;
+        addr_val_4p <= addr_val_3p;
+        addr_val_5p <= addr_val_4p;
+    end
+
+
+    always @(posedge clk) begin
+        str_img_bus_1p <= str_img_bus;
+        str_img_bus_2p <= str_img_bus_1p;
+        str_img_bus_3p <= str_img_bus_2p;
+        str_img_bus_4p <= str_img_bus_3p;
+        str_img_bus_5p <= str_img_bus_4p;
+    end
+
+
+    assign wr_val   = addr_val_5p;
+
+    assign wr_addr  = addr_5p[MEM_AWIDTH-1:0];
+
+    assign wr_data  = str_img_bus_5p;
 
 
 endmodule
