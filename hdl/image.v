@@ -93,8 +93,6 @@ module image
 
 
     always @(posedge clk) begin
-        cfg_wr_m0   <= 'b0;
-        cfg_wr_m1   <= 'b0;
         cfg_wr_set  <= 1'b0;
 
         if (cfg_valid & (cfg_addr == CFG_IMG_WR)) begin
@@ -106,8 +104,6 @@ module image
 
 
     always @(posedge clk) begin
-        cfg_rd_m0   <= 'b0;
-        cfg_rd_m1   <= 'b0;
         cfg_rd_set  <= 1'b0;
 
         if (cfg_valid & (cfg_addr == CFG_IMG_RD)) begin
