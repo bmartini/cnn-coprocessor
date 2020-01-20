@@ -47,6 +47,8 @@ module rescale
     localparam signed [IMG_WIDTH-1:0] IMG_MAX = ({1'b0, {IMG_WIDTH-1{1'b1}}});
     localparam signed [IMG_WIDTH-1:0] IMG_MIN = ({1'b1, {IMG_WIDTH-1{1'b0}}});
 
+    localparam NUM_WIDTH_MAX = NUM_WIDTH-2;
+
 
     function grater_than_max;
         input [NUM_WIDTH-1:0]   number;
@@ -55,7 +57,7 @@ module rescale
         begin
             grater_than_max = 1'b0;
 
-            for (ii = 0; ii < NUM_WIDTH[NUM_AWIDTH-1:0]-2; ii=ii+1) begin
+            for (ii = 0; ii < NUM_WIDTH_MAX[NUM_AWIDTH-1:0]; ii=ii+1) begin
                 if (number[ii] & (ii >= head[NUM_AWIDTH-1:0])) begin
                     grater_than_max = ~number[NUM_WIDTH-1];
                 end
@@ -71,7 +73,7 @@ module rescale
         begin
             less_than_min = 1'b0;
 
-            for (ii = 0; ii < NUM_WIDTH[NUM_AWIDTH-1:0]-2; ii=ii+1) begin
+            for (ii = 0; ii < NUM_WIDTH_MAX[NUM_AWIDTH-1:0]; ii=ii+1) begin
                 if ( ~number[ii] & (ii >= head[NUM_AWIDTH-1:0])) begin
                     less_than_min = number[NUM_WIDTH-1];
                 end
