@@ -31,6 +31,8 @@ module image_read
     CFG_DWIDTH      = 32,
     CFG_AWIDTH      = 5,
 
+    // if the latency between sending the read address and receiving the data
+    // changes, this parameter must be updated
     RD_LATENCY      = 3,
 
     GROUP_NB        = 4,

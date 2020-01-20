@@ -36,9 +36,7 @@ module image_mem
 
     input  wire                             rd_val,
     input  wire [MEM_AWIDTH-1:0]            rd_addr,
-
-    output reg  [GROUP_NB*IMG_WIDTH-1:0]    rd_data,
-    output reg                              rd_data_val
+    output reg  [GROUP_NB*IMG_WIDTH-1:0]    rd_data
 );
 
 
@@ -72,9 +70,7 @@ module image_mem
 
     reg  [IMG_WIDTH*DEPTH_NB-1:0]   wr_data_1p;
     reg                             wr_val_1p;
-
     reg                             rd_val_1p;
-    reg                             rd_val_2p;
 
 
     /**
@@ -94,16 +90,8 @@ module image_mem
 
 
     always @(posedge clk)
-        if (rst) begin
-            rd_val_1p   <= 1'b0;
-            rd_val_2p   <= 1'b0;
-            rd_data_val <= 1'b0;
-        end
-        else begin
-            rd_val_1p   <= rd_val & ~wr_val;
-            rd_val_2p   <= rd_val_1p;
-            rd_data_val <= rd_val_2p;
-        end
+        if (rst)    rd_val_1p <= 1'b0;
+        else        rd_val_1p <= rd_val & ~wr_val;
 
 
     generate

@@ -179,8 +179,7 @@ module image
 
         .rd_val         (rd_val & cfg_rd_m0),
         .rd_addr        (rd_addr),
-        .rd_data        (rd_m0_data),
-        .rd_data_val    ()
+        .rd_data        (rd_m0_data)
     );
 
 
@@ -200,8 +199,7 @@ module image
 
         .rd_val         (rd_val & cfg_rd_m1),
         .rd_addr        (rd_addr),
-        .rd_data        (rd_m1_data),
-        .rd_data_val    ()
+        .rd_data        (rd_m1_data)
     );
 
 

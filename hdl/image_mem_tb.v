@@ -75,9 +75,10 @@ module image_mem_tb;
 
     reg                             rd_val;
     reg  [MEM_AWIDTH-1:0]           rd_addr;
-
     wire [GROUP_NB*IMG_WIDTH-1:0]   rd_data;
-    wire                            rd_data_val;
+
+    reg                             rd_val_2p;
+    reg                             rd_data_val;
 
 
     /**
@@ -100,10 +101,20 @@ module image_mem_tb;
 
         .rd_val         (rd_val),
         .rd_addr        (rd_addr),
-
-        .rd_data        (rd_data),
-        .rd_data_val    (rd_data_val)
+        .rd_data        (rd_data)
     );
+
+
+    always @(posedge clk)
+        if (rst) begin
+            rd_val_2p   <= 1'b0;
+            rd_data_val <= 1'b0;
+        end
+        else begin
+            rd_val_2p   <= uut.rd_val_1p;
+            rd_data_val <= rd_val_2p;
+        end
+
 
 
     /**
