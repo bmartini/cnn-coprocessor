@@ -55,8 +55,8 @@ module rescale
         begin
             grater_than_max = 1'b0;
 
-            for (ii=NUM_WIDTH[NUM_AWIDTH-1:0]-2; ii >= head[NUM_AWIDTH-1:0]; ii=ii-1) begin
-                if (number[ii]) begin
+            for (ii = 0; ii < NUM_WIDTH[NUM_AWIDTH-1:0]-2; ii=ii+1) begin
+                if (number[ii] & (ii >= head[NUM_AWIDTH-1:0])) begin
                     grater_than_max = ~number[NUM_WIDTH-1];
                 end
             end
@@ -71,8 +71,8 @@ module rescale
         begin
             less_than_min = 1'b0;
 
-            for (ii=NUM_WIDTH[NUM_AWIDTH-1:0]-2; ii >= head[NUM_AWIDTH-1:0]; ii=ii-1) begin
-                if ( ~number[ii]) begin
+            for (ii = 0; ii < NUM_WIDTH[NUM_AWIDTH-1:0]-2; ii=ii+1) begin
+                if ( ~number[ii] & (ii >= head[NUM_AWIDTH-1:0])) begin
                     less_than_min = number[NUM_WIDTH-1];
                 end
             end
