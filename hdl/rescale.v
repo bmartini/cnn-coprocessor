@@ -50,7 +50,6 @@ module rescale
 
     function grater_than_max;
         input [NUM_WIDTH-1:0]   number;
-        input [7:0]             head;
         reg   [NUM_AWIDTH-1:0]  ii;
 
         begin
@@ -67,7 +66,6 @@ module rescale
 
     function less_than_min;
         input [NUM_WIDTH-1:0]   number;
-        input [7:0]             head;
         reg   [NUM_AWIDTH-1:0]  ii;
 
         begin
@@ -107,12 +105,12 @@ module rescale
 
     // test upper limit
     always @(posedge clk)
-        bound_max_p2 <= grater_than_max(up_data_p1, head);
+        bound_max_p2 <= grater_than_max(up_data_p1);
 
 
     // test lower limit
     always @(posedge clk)
-        bound_min_p2 <= less_than_min(up_data_p1, head);
+        bound_min_p2 <= less_than_min(up_data_p1);
 
 
     always @(posedge clk) begin
