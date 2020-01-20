@@ -133,8 +133,6 @@ module image_mem
         end
         else begin : BANK_MULTI_
 
-            reg  [BANK_LG2-1:0]     aa;
-
             reg  [BANK_AWIDTH-1:0]  addr_1p;
             reg  [BANK_LG2-1:0]     mux_1p;
             reg  [BANK_LG2-1:0]     mux_2p;
