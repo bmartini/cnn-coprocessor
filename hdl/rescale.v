@@ -92,10 +92,6 @@ module rescale
     reg  [IMG_WIDTH-1:0]    rescale_data_p2;
     reg  [IMG_WIDTH-1:0]    rescale_data_p3;
 
-    reg                     rescale_valid_p1;
-    reg                     rescale_valid_p2;
-    reg                     rescale_valid_p3;
-
     reg                     bound_max_p2;
     reg                     bound_min_p2;
 
