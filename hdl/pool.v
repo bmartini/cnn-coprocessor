@@ -56,7 +56,6 @@ module pool
 
     reg                     restart_1p;
     reg                     restart_2p;
-    reg                     restart_3p;
 
 
     /**
@@ -76,7 +75,6 @@ module pool
 
     always @(posedge clk) begin
         restart_2p  <= restart_1p;
-        restart_3p  <= restart_2p;
 
         up_valid_1p <= up_valid;
         up_valid_2p <= up_valid_1p;
