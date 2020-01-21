@@ -86,14 +86,14 @@ module rescale
      * Internal signals
      */
 
-    reg  [NUM_WIDTH-1:0]    up_data_p1;
+    reg  [NUM_WIDTH-1:0]    up_data_1p;
 
-    reg  [NUM_WIDTH-1:0]    rescale_data_p1;
-    reg  [IMG_WIDTH-1:0]    rescale_data_p2;
-    reg  [IMG_WIDTH-1:0]    rescale_data_p3;
+    reg  [NUM_WIDTH-1:0]    rescale_data_1p;
+    reg  [IMG_WIDTH-1:0]    rescale_data_2p;
+    reg  [IMG_WIDTH-1:0]    rescale_data_3p;
 
-    reg                     bound_max_p2;
-    reg                     bound_min_p2;
+    reg                     bound_max_2p;
+    reg                     bound_min_2p;
 
 
     /**
@@ -102,34 +102,34 @@ module rescale
 
 
     always @(posedge clk)
-        up_data_p1 <= up_data;
+        up_data_1p <= up_data;
 
 
     // test upper limit
     always @(posedge clk)
-        bound_max_p2 <= grater_than_max(up_data_p1);
+        bound_max_2p <= grater_than_max(up_data_1p);
 
 
     // test lower limit
     always @(posedge clk)
-        bound_min_p2 <= less_than_min(up_data_p1);
+        bound_min_2p <= less_than_min(up_data_1p);
 
 
     always @(posedge clk) begin
         // shift up_data to scale from num to img
-        rescale_data_p1 <= up_data >> shift;
-        rescale_data_p2 <= rescale_data_p1[0 +: IMG_WIDTH];
+        rescale_data_1p <= up_data >> shift;
+        rescale_data_2p <= rescale_data_1p[0 +: IMG_WIDTH];
     end
 
 
     always @(posedge clk)
-        if      (bound_min_p2)  rescale_data_p3 <= IMG_MIN;
-        else if (bound_max_p2)  rescale_data_p3 <= IMG_MAX;
-        else                    rescale_data_p3 <= rescale_data_p2;
+        if      (bound_min_2p)  rescale_data_3p <= IMG_MIN;
+        else if (bound_max_2p)  rescale_data_3p <= IMG_MAX;
+        else                    rescale_data_3p <= rescale_data_2p;
 
 
     always @(posedge clk)
-        dn_data <= rescale_data_p3;
+        dn_data <= rescale_data_3p;
 
 
 endmodule
