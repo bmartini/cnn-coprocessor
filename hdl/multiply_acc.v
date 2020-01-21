@@ -41,22 +41,22 @@ module multiply_acc
     endfunction
 
 
-    reg  [IMG_WIDTH-1:0]            img_rr;
-    reg  [IMG_WIDTH-1:0]            img_r;
+    reg  [IMG_WIDTH-1:0]            img_2p;
+    reg  [IMG_WIDTH-1:0]            img_1p;
 
-    reg  [KER_WIDTH-1:0]            ker_rr;
-    reg  [KER_WIDTH-1:0]            ker_r;
+    reg  [KER_WIDTH-1:0]            ker_2p;
+    reg  [KER_WIDTH-1:0]            ker_1p;
 
-    reg  [IMG_WIDTH+KER_WIDTH-1:0]  product;
-    reg  [IMG_WIDTH+KER_WIDTH:0]    result_i;
+    reg  [IMG_WIDTH+KER_WIDTH-1:0]  product_3p;
+    reg  [IMG_WIDTH+KER_WIDTH:0]    result_4p;
 
 
     always @(posedge clk) begin
-        img_r   <= 'b0;
-        ker_r   <= ker;
+        img_1p  <= 'b0;
+        ker_1p  <= ker;
 
         if (val) begin
-            img_r   <= img;
+            img_1p  <= img;
         end
     end
 
@@ -67,18 +67,18 @@ module multiply_acc
     always @(posedge clk)
 `endif
         if (rst) begin
-            img_rr      <= 'b0;
-            ker_rr      <= 'b0;
-            product     <= 'b0;
-            result_i    <= 'b0;
+            img_2p      <= 'b0;
+            ker_2p      <= 'b0;
+            product_3p  <= 'b0;
+            result_4p   <= 'b0;
             result      <= 'b0;
         end
         else begin
-            img_rr      <= img_r;
-            ker_rr      <= ker_r;
-            product     <= multiply(img_rr,   ker_rr);
-            result_i    <= addition(result_i, product);
-            result      <= result_i;
+            img_2p      <= img_1p;
+            ker_2p      <= ker_1p;
+            product_3p  <= multiply(img_2p,     ker_2p);
+            result_4p   <= addition(result_4p,  product_3p);
+            result      <= result_4p;
         end
 
 
