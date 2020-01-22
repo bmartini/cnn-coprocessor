@@ -1,0 +1,124 @@
+#!/usr/bin/env bash
+set -o errexit
+
+
+function print_usage() {
+	echo "
+Usage: $0 [OPTION] [project-name]
+
+Description: Synthesize a project in workspace & produce bitfile.
+
+Options:
+ -h	Print this help info.
+
+ -d	Override default workspace directory 'bit/workspace'.
+
+ -s	Synthesize only. Assumes that the 'bitgen-prep' script has already
+	been run.
+
+ -t	Tag the bitfile with time, hash and state of the repo.
+
+Argument:
+	The 'project-name' is an optional argument that will select which
+	project to synthesize. Without the argument the default
+	project-tda_pico_m505' is used.
+"
+}
+
+
+flag_d=
+flag_s=
+flag_t=
+
+# default workspace directory
+WORKSPACE='bit/workspace'
+
+# command line options
+while getopts "d:hst" flag
+do
+	case "$flag" in
+		d) flag_d=1; WORKSPACE="${OPTARG}";;
+		s) flag_s=1;;
+		t) flag_t=1;;
+		h) print_usage; exit 2;;
+		?) print_usage; exit 2;;
+	esac
+done
+
+
+# default project selection
+PROJ='project-microzed'
+
+
+# sanitise project argument
+shift $(($OPTIND - 1))
+if [ $# -gt 1 ]
+then :
+	echo "ERROR: To many arguments"
+	exit 1
+elif [ ! -d  "bit/$@" ]
+then :
+	echo "ERROR: Project not found"
+	exit 1
+fi
+
+
+# assign project if given as argument
+if [[ ! -z "$@" && "$@" != "$PROJ" ]]
+then :
+	PROJ=$@
+fi
+
+
+# default repo state is 'clean'
+STATE="$(git log -n1 --pretty=%H)"
+
+# check if project is in a 'dirty' state with file edits
+if [[ $(git status -uno 2> /dev/null | tail -n1) != *"nothing to commit"* ]]
+then :
+	STATE="$STATE-dirty"
+fi
+
+
+# prep for project syntheses
+if [ -z "$flag_s" ]
+then :
+	if [ -z "$flag_d" ]; then
+		./bitgen-prep
+	else
+		./bitgen-prep -d "${WORKSPACE}"
+	fi
+fi
+
+if [ ! -d "${WORKSPACE}" ]
+then :
+	echo "ERROR: No '${WORKSPACE}' directory found"
+	exit 1
+fi
+
+
+# default bitstream file extension
+EXT='bit'
+
+if [ -n "$(command -v vivado)" ]
+then :
+	# generate the bitfile using Xilinx tools
+	cd "${WORKSPACE}"
+	vivado -mode tcl -source $PROJ/generate-bitfile.tcl
+
+else
+	echo "ERROR: No synthesis tools have been sourced."
+	exit 1
+fi
+
+
+DATE="$(date -Iminutes)"
+
+# copy bitfile to repo root
+if [ -z "$flag_t" ]; then
+	find ./$PROJ -name "*.${EXT}" | xargs -I F cp F ../../${PROJ#"project-"}.${EXT}
+else
+	find ./$PROJ -name "*.${EXT}" | xargs -I F cp F ../../${PROJ#"project-"}-${DATE}-${STATE}.${EXT}
+fi
+
+echo "${DATE}-${STATE}"

@@ -1,0 +1,184 @@
+#!/usr/bin/env bash
+set -o errexit
+
+
+function print_usage() {
+	echo "
+Usage: $0 [OPTION]
+
+Description: Prepare project build directories for use in workspace.
+
+Options:
+ -c	Copy Verilog source code and 3rd party IP to an already existing
+	workspace directory. Perform no other functions.
+
+ -d	Override default workspace directory 'bit/workspace'.
+
+ -h	Print this help info.
+
+ -l	Symbolically link project files into the workspace dir instead of
+	copying them. Any changes to these file during building will thus be
+	propagated back into the repo.
+
+ -L	Symbolically link project directory into the workspace instead of
+	copying it. This takes precedents over the '-l'.
+"
+}
+
+
+function included_files {
+	# limitations in regex, only one file name per include
+	# limitations in regex, file name cannot have double quote char
+
+	grep -o '^\s*`include\s*\".*\"' ${1} | awk -F\" '{print $(NF-1)}'
+}
+
+
+# argument assumed to be full path name
+function copy_with_dependencies {
+	# put file into set
+	fileset[$(basename ${1})]=${1}
+
+	# copy file to destination
+	cp -n "${1}" "${2}" || { echo "ERROR unable to copy file ${1}" ; exit 1; }
+
+	for file in $(included_files ${1})
+	do
+		# does the file exist in working dir
+		if [ ! -f ${file} ]
+		then
+			# find the first file that matches the name
+			file=$(find . -name ${file} -type f -print | head -n 1)
+
+			# zero length if file not found
+			test -z "${file}" && continue
+		fi
+
+		# checkout if file is in set that thus has been copied already
+		if [ ! ${fileset[$(basename ${file})]} ]
+		then :
+			# since has not been copied, call copy_with_dependencies on it
+			copy_with_dependencies ${file} ${2}
+		fi
+	done
+}
+
+
+function copy_for_synth() {
+	test -d ${1}/hdl || { echo "ERROR: directory '${1}/hdl' not found" ; exit 1; }
+
+	# copy Verilog code files from hdl directory into bit work dir
+	for FILE in $(find ./hdl/ -name "*.v" ! -name "*_tb.v" -type f -print)
+	do
+		cp -n $FILE ${1}/hdl/ || { echo "ERROR duplicate filename ${FILE}" ; exit 1; }
+	done
+
+	# copy Verilog Header files from hdl directory into bit work dir
+	for FILE in $(find ./hdl/ -name "*.vh" -type f -print)
+	do
+		cp -n $FILE ${1}/hdl/ || { echo "ERROR duplicate filename ${FILE}" ; exit 1; }
+	done
+
+	# copy SystemVerilog code files from hdl directory into bit work dir
+	for FILE in $(find ./hdl/ -name "*.sv" -type f -print)
+	do
+		cp -n $FILE ${1}/hdl/ || { echo "ERROR duplicate filename ${FILE}" ; exit 1; }
+	done
+
+
+	# copy 3rd party IP into bit work dir
+	test -d ip && { cp -r ip/* ${1}; }
+
+
+	# populate IP Package hdl directories
+	if [ -d "${1}/ip_repo" ]; then
+		cd ${1}
+
+		for PKG in ip_repo/*
+		do
+			declare -A fileset
+
+			test -d "${PKG}"/hdl && { rm -rf "${PKG}"/hdl ; }
+			mkdir -p "${PKG}"/hdl
+			TOPFILE=$(basename "${PKG%_1.0}").v
+			copy_with_dependencies "hdl/${TOPFILE}" "${PKG}/hdl/";
+
+			unset fileset
+		done
+
+		cd -
+	fi
+
+
+	echo "Source files copied to workspace directory"
+}
+
+
+flag_c=
+flag_d=
+flag_l=
+flag_L=
+
+# default workspace directory
+WORKSPACE='bit/workspace'
+
+# command line options
+while getopts "cd:hlL" flag
+do
+	case "$flag" in
+		c) flag_c=1;;
+		d) flag_d=1; WORKSPACE="$OPTARG";;
+		L) flag_L=1;;
+		l) flag_l=1;;
+		h) print_usage; exit 2;;
+		?) print_usage; exit 2;;
+	esac
+done
+
+
+# copy source code and then exit
+if [ ! -z "$flag_c" ]; then
+	copy_for_synth "${WORKSPACE}"
+	exit 0
+fi
+
+
+# create bit workspace directory
+if [ -z "$flag_d" ]; then
+	test -d "${WORKSPACE}" && rm -rf "${WORKSPACE}"
+else
+	test -d "${WORKSPACE}" && { echo "ERROR workspace directory already exists" ; exit 1; }
+fi
+
+mkdir -p "${WORKSPACE}/hdl"
+
+
+# create build directories
+if [ ! -z "$flag_L" ]; then
+	# link directories
+	for DIR in $(find bit/project-* -maxdepth 0 -type d)
+	do
+		ln -s "${PWD}/${DIR}" "${WORKSPACE}/$(basename ${DIR})"
+	done
+elif [ ! -z "$flag_l" ]; then
+	# create directories but link files
+	for DIR in $(find bit/project-*/ -type d)
+	do
+		mkdir -p "${WORKSPACE}/$(basename ${DIR})"
+	done
+
+	# populate with links to files
+	for FILE in $(find bit/project-*/ -type f)
+	do
+		ln -s "${PWD}/${FILE}" "${WORKSPACE}/$(basename ${DIR})"
+	done
+else
+	# copy directories
+	for DIR in $(find bit/project-* -maxdepth 0 -type d)
+	do
+		cp -r "${PWD}/${DIR}" "${WORKSPACE}/$(basename ${DIR})"
+	done
+fi
+
+# copy verilog code and IP into bit work dir
+copy_for_synth "${WORKSPACE}"
