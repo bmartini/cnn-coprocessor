@@ -1,3 +1,6 @@
+`ifndef _str_gbox_
+`define _str_gbox_
+
 /**
  * Module:
  *  str_gbox
@@ -25,9 +28,6 @@
  * Authors:
  *  Berin Martini (berin.martini@gmail.com)
  */
-`ifndef _str_gbox_
-`define _str_gbox_
-
 
 `default_nettype none
 

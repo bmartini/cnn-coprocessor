@@ -1,3 +1,6 @@
+`ifndef _fifo_simple_
+`define _fifo_simple_
+
 /**
  * Module:
  *  fifo_simple
@@ -14,8 +17,7 @@
  * Author:
  *  Berin Martini (berin.martini@gmail.com)
  */
-`ifndef _fifo_simple_
-`define _fifo_simple_
+
 
 `default_nettype none
 

@@ -1,3 +1,6 @@
+`ifndef _pool_
+`define _pool_
+
 /*
  * Module:
  *  pool
@@ -12,8 +15,6 @@
  * Author:
  *  Berin Martini (berin.martini@gmail.com)
  */
-`ifndef _pool_
-`define _pool_
 
 
 `default_nettype none

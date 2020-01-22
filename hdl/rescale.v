@@ -1,3 +1,6 @@
+`ifndef _rescale_
+`define _rescale_
+
 /**
  * Module:
  *  rescale
@@ -17,8 +20,6 @@
  * Authors:
  *  Berin Martini (berin.martini@gmail.com)
  */
-`ifndef _rescale_
-`define _rescale_
 
 
 `default_nettype none

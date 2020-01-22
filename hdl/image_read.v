@@ -1,3 +1,6 @@
+`ifndef _image_read_
+`define _image_read_
+
 /*
  * Module:
  *  image_read
@@ -18,8 +21,6 @@
  * Author:
  *  Berin Martini (berin.martini@gmail.com)
  */
-`ifndef _image_read_
-`define _image_read_
 
 
 `include "fifo_simple.v"

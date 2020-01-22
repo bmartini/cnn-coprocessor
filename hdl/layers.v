@@ -1,3 +1,6 @@
+`ifndef _layers_
+`define _layers_
+
 /*
  * Module:
  *  layers
@@ -11,8 +14,6 @@
  * Author:
  *  Berin Martini (berin.martini@gmail.com)
  */
-`ifndef _layers_
-`define _layers_
 
 
 `include "group_mac.v"

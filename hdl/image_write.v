@@ -1,3 +1,6 @@
+`ifndef _image_write_
+`define _image_write_
+
 /*
  * Module:
  *  image_write
@@ -17,8 +20,6 @@
  * Author:
  *  Berin Martini (berin.martini@gmail.com)
  */
-`ifndef _image_write_
-`define _image_write_
 
 
 `default_nettype none

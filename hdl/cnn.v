@@ -1,3 +1,6 @@
+`ifndef _cnn_
+`define _cnn_
+
 /*
  * Module:
  *  cnn
@@ -12,9 +15,6 @@
  * Author:
  *  Berin Martini (berin.martini@gmail.com)
  */
-`ifndef _cnn_
-`define _cnn_
-
 
 `include "kernel.v"
 `include "image.v"

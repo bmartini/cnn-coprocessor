@@ -1,3 +1,6 @@
+`ifndef _kernel_
+`define _kernel_
+
 /*
  * Module:
  *  kernel
@@ -12,8 +15,6 @@
  * Author:
  *  Berin Martini (berin.martini@gmail.com)
  */
-`ifndef _kernel_
-`define _kernel_
 
 
 `include "str_gbox.v"

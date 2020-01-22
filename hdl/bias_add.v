@@ -1,3 +1,6 @@
+`ifndef _bias_add_
+`define _bias_add_
+
 /*
  * Module:
  *  bias_add
@@ -12,8 +15,7 @@
  * Author:
  *  Berin Martini (berin.martini@gmail.com)
  */
-`ifndef _bias_add_
-`define _bias_add_
+
 
 `default_nettype none
 

@@ -1,3 +1,6 @@
+`ifndef _relu_
+`define _relu_
+
 /*
  * Module:
  *  relu
@@ -11,8 +14,7 @@
  * Author:
  *  Berin Martini (berin.martini@gmail.com)
  */
-`ifndef _relu_
-`define _relu_
+
 
 `default_nettype none
 

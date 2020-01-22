@@ -1,3 +1,6 @@
+`ifndef _kernel_mem_
+`define _kernel_mem_
+
 /*
  * Module:
  *  kernel_mem
@@ -12,8 +15,6 @@
  * Author:
  *  Berin Martini (berin.martini@gmail.com)
  */
-`ifndef _kernel_mem_
-`define _kernel_mem_
 
 
 `default_nettype none

@@ -1,3 +1,6 @@
+`ifndef _group_mac_
+`define _group_mac_
+
 /*
  * Module:
  *  group_mac
@@ -12,8 +15,6 @@
  * Author:
  *  Berin Martini (berin.martini@gmail.com)
  */
-`ifndef _group_mac_
-`define _group_mac_
 
 
 `include "multiply_acc.v"

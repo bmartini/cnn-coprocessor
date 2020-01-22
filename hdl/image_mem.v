@@ -1,3 +1,6 @@
+`ifndef _image_mem_
+`define _image_mem_
+
 /*
  * Module:
  *  image_mem
@@ -14,8 +17,6 @@
  * Author:
  *  Berin Martini (berin.martini@gmail.com)
  */
-`ifndef _image_mem_
-`define _image_mem_
 
 
 `default_nettype none

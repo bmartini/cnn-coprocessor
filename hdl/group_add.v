@@ -1,3 +1,6 @@
+`ifndef _group_add_
+`define _group_add_
+
 /*
  * Module:
  *  group_add
@@ -12,8 +15,7 @@
  * Author:
  *  Berin Martini (berin.martini@gmail.com)
  */
-`ifndef _group_add_
-`define _group_add_
+
 
 `default_nettype none
 
