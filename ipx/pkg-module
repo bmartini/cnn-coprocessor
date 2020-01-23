@@ -12,7 +12,7 @@ Options:
  -h	Print this help info.
 
  -p	Specify FPGA platform ([microzed]|zedboard|zc706).
-	This option passed to the 'bit/make-proj.sh' script.
+	This option passed to the 'bit/make-proj' script.
 
 
 Argument:
@@ -101,7 +101,7 @@ fi
 
 # generate the Xilinx project to use to create IP Package
 cd bit/workspace/
-../make-proj.sh -p "${platform,,}"
+../make-proj -p "${platform,,}"
 
 
 # if tmp.tcl file exists delete it
