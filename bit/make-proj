@@ -55,7 +55,7 @@ if [ "${platform,,}" == "microzed" ]; then
 
 	echo "
 create_project $PROJ ./project-$PROJ -part xc7z020clg400-1
-set_property board_part em.avnet.com:microzed_7020:part0:1.0 [current_project]
+set_property board_part em.avnet.com:microzed_7020:part0:1.1 [current_project]
 " > tmp.tcl
 
 elif [ "${platform,,}" == "zedboard" ]; then
