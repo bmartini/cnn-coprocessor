@@ -85,9 +85,11 @@ function copy_for_synth() {
 		cp -n $FILE ${1}/hdl/ || { echo "ERROR duplicate filename ${FILE}" ; exit 1; }
 	done
 
-
 	# copy 3rd party IP into bit work dir
-	test -d ip && { cp -r ip/* ${1}; }
+	for DIR in $(find ./ipx/ -type d ! -name ipx -print)
+	do
+		cp -rn ${DIR} ${1} || { echo "ERROR duplicate dirname ${DIR}" ; exit 1; }
+	done
 
 
 	# populate IP Package hdl directories
