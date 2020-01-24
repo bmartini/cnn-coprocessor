@@ -86,7 +86,7 @@ function copy_for_synth() {
 	done
 
 	# copy 3rd party IP into bit work dir
-	for DIR in $(find ./ipx/ -type d ! -name ipx -print)
+	for DIR in $(find ./ipx/ -maxdepth 1 -mindepth 1 -type d -print)
 	do
 		cp -rn ${DIR} ${1} || { echo "ERROR duplicate dirname ${DIR}" ; exit 1; }
 	done
