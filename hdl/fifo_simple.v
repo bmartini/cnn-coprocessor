@@ -301,6 +301,24 @@ module fifo_simple
 //        end
 
 
+    //
+    // Check that some fundamental use cases are valid
+    //
+
+    reg  f_full_state_reached = 1'b0;
+    always @(posedge clk)
+        if      (rst)   f_full_state_reached <= 1'b0;
+        else if (full)  f_full_state_reached <= 1'b1;
+
+
+    // show that the FIFO can fill up and then return to empty, traveling the
+    // entire range of the FIFO depth and thus able to test all assert
+    // statements
+    always @(*)
+        cover(f_full_state_reached && empty);
+
+
+
 `endif
 endmodule
 
