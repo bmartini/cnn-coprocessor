@@ -179,6 +179,128 @@ module fifo_simple
 
 
 
+`ifdef FORMAL
+
+    initial begin
+        // ensure reset is triggered at the start
+        assume(rst == 1);
+    end
+
+
+    //
+    // Check that counters and pointers stay within their relative ranges
+    //
+
+    // tests that counter stays in range
+    always @(*)
+        if ( ~rst) begin
+            assert(0 <= count <= DEPTH);
+            //assert((count == 0) == empty);      // for use with exact empty generation
+            //assert((count == DEPTH) == full);   // for use with exact full generation
+        end
+
+
+    // empty is lazy deassert and an aggressive activate, thus the count will
+    // sometimes be non-zero while the FIFO is triggering empty. however if the
+    // count is zero the FIFO MUST be empty
+    always @(*)
+        if ( ~rst && (count == 0)) begin
+            assert(empty);
+        end
+
+
+    // full is lazy deassert and an aggressive activate, thus the count will
+    // sometimes be less then max while the FIFO is triggering full. however if
+    // the count is zero the FIFO MUST be empty
+    always @(*)
+        if ( ~rst && (count == DEPTH)) begin
+            assert(full);
+        end
+
+
+    // tests direction of pointer travel, push incrementing to 'full'
+    always @(*)
+        if ( ~rst && (push_ptr >= pop_ptr)) begin
+            assert((push_ptr - pop_ptr) <= DEPTH);
+        end
+
+
+    // tests direction of pointer travel, pop incrementing to 'empty'
+    always @(*)
+        if ( ~rst && (push_ptr < pop_ptr)) begin
+            assert((pop_ptr - push_ptr) >= DEPTH);
+        end
+
+
+    //
+    // Check that pop behavior is consistent
+    //
+
+    // popping from an empty FIFO will not change the pop addr or data register
+    always @(posedge clk)
+        if ( ~rst && $past( ~rst && pop && empty)) begin
+            assert($stable(pop_addr));
+            assert($stable(pop_data));
+        end
+
+
+    // empty signal asserted only after data is popped
+    always @(posedge clk)
+        if ( ~rst && $past( ~rst) && $rose(empty)) begin
+            assert($past(pop));
+            assert($past(empty_a));
+        end
+
+
+    // empty signal asserted when both pointers are equal
+    always @(*)
+        if ( ~rst && (pop_ptr == push_ptr)) begin
+            assert(empty);
+        end
+
+
+    // triggers empty signal only when FIFO is truly empty
+//    always @(*)
+//        if ( ~rst && (empty)) begin
+//            assert(pop_ptr == push_ptr);
+//        end
+
+
+    //
+    // Check that push behavior is consistent
+    //
+
+    // pushing into a full FIFO will not change the push addr or mem data
+    always @(posedge clk)
+        if ( ~rst && $past( ~rst && push && full)) begin
+            assert($stable(push_addr));
+            assert($stable(mem[push_addr]));
+        end
+
+
+    // full signal asserted only after data is pushed
+    always @(posedge clk)
+        if ( ~rst && $rose(full)) begin
+            assert($past(push));
+            assert($past(full_a));
+        end
+
+
+    // full signal asserted when both pointers are not equal but addrs are
+    always @(*)
+        if ( ~rst && (pop_ptr != push_ptr) && (pop_addr == push_addr)) begin
+            assert(full);
+        end
+
+
+    // triggers full signal only when FIFO is truly full
+//    always @(*)
+//        if ( ~rst && full) begin
+//            assert((pop_ptr != push_ptr) && (pop_addr == push_addr));
+//        end
+
+
+`endif
 endmodule
 
 `default_nettype wire
