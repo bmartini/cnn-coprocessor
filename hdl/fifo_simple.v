@@ -94,7 +94,8 @@ module fifo_simple
 
 
     // full next
-    assign full_nx  = (push_addr_nx == pop_addr) & (push_ptr_nx[ADDR_WIDTH] != pop_ptr[ADDR_WIDTH]);
+    assign full_nx =
+        (push_addr_nx == pop_addr) & (push_ptr_nx[ADDR_WIDTH] != pop_ptr[ADDR_WIDTH]);
 
     // almost full next
     assign push_ptr_a_nx    = push_ptr_nx + 1;
@@ -106,7 +107,8 @@ module fifo_simple
 
 
     // empty next
-    assign empty_nx = (push_addr == pop_addr_nx) & (push_ptr[ADDR_WIDTH] == pop_ptr_nx[ADDR_WIDTH]);
+    assign empty_nx =
+        (push_addr == pop_addr_nx) & (push_ptr[ADDR_WIDTH] == pop_ptr_nx[ADDR_WIDTH]);
 
     // almost empty next
     assign pop_ptr_a_nx     = pop_ptr_nx + 1;
@@ -126,17 +128,8 @@ module fifo_simple
 
     // registered population count.
     always @(posedge clk)
-        if (rst) begin
-            count <= 'b0;
-        end
-        else begin
-            if (push_ptr[ADDR_WIDTH] == pop_ptr_nx[ADDR_WIDTH]) begin
-                count <= (push_addr - pop_addr_nx);
-            end
-            else begin
-                count <= DEPTH - pop_addr_nx + push_addr;
-            end
-        end
+        if (rst)    count <= 'b0;
+        else        count <= (push_ptr_nx - pop_ptr_nx);
 
 
     // registered full flag

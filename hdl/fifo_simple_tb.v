@@ -129,6 +129,7 @@ module fifo_simple_tb;
             "\tempty",
             "\tempty_a",
             "\tcount",
+            "\thalf",
 
         );
     endtask
