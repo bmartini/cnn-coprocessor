@@ -95,7 +95,7 @@ module fifo_simple
 
     // full next
     assign full_nx =
-        (push_addr_nx == pop_addr) & (push_ptr_nx[ADDR_WIDTH] != pop_ptr[ADDR_WIDTH]);
+        (push_addr_nx == pop_addr_nx) & (push_ptr_nx[ADDR_WIDTH] != pop_ptr_nx[ADDR_WIDTH]);
 
     // almost full next
     assign push_ptr_a_nx    = push_ptr_nx + 1;
@@ -103,12 +103,12 @@ module fifo_simple
     assign push_addr_a_nx   = push_ptr_a_nx[0 +: ADDR_WIDTH];
 
     assign full_a_nx =
-        (push_addr_a_nx == pop_addr) & (push_ptr_a_nx[ADDR_WIDTH] != pop_ptr[ADDR_WIDTH]);
+        (push_addr_a_nx == pop_addr_nx) & (push_ptr_a_nx[ADDR_WIDTH] != pop_ptr_nx[ADDR_WIDTH]);
 
 
     // empty next
     assign empty_nx =
-        (push_addr == pop_addr_nx) & (push_ptr[ADDR_WIDTH] == pop_ptr_nx[ADDR_WIDTH]);
+        (push_addr_nx == pop_addr_nx) & (push_ptr_nx[ADDR_WIDTH] == pop_ptr_nx[ADDR_WIDTH]);
 
     // almost empty next
     assign pop_ptr_a_nx     = pop_ptr_nx + 1;
@@ -116,7 +116,7 @@ module fifo_simple
     assign pop_addr_a_nx    = pop_ptr_a_nx[0 +: ADDR_WIDTH];
 
     assign empty_a_nx =
-        (push_addr == pop_addr_a_nx) & (push_ptr[ADDR_WIDTH] == pop_ptr_a_nx[ADDR_WIDTH]);
+        (push_addr_nx == pop_addr_a_nx) & (push_ptr_nx[ADDR_WIDTH] == pop_ptr_a_nx[ADDR_WIDTH]);
 
 
     // pop next
@@ -195,27 +195,9 @@ module fifo_simple
     always @(*)
         if ( ~rst) begin
             assert(0 <= count <= DEPTH);
-            //assert((count == 0) == empty);      // for use with exact empty generation
-            //assert((count == DEPTH) == full);   // for use with exact full generation
+            assert((count == 0) == empty);      // for use with exact empty generation
+            assert((count == DEPTH) == full);   // for use with exact full generation
             assert( ~(empty && full)); // impossible state of being both full and empty
-        end
-
-
-    // empty is lazy deassert and an aggressive activate, thus the count will
-    // sometimes be non-zero while the FIFO is triggering empty. however if the
-    // count is zero the FIFO MUST be empty
-    always @(*)
-        if ( ~rst && (count == 0)) begin
-            assert(empty);
-        end
-
-
-    // full is lazy deassert and an aggressive activate, thus the count will
-    // sometimes be less then max while the FIFO is triggering full. however if
-    // the count is zero the FIFO MUST be empty
-    always @(*)
-        if ( ~rst && (count == DEPTH)) begin
-            assert(full);
         end
 
 
@@ -255,16 +237,9 @@ module fifo_simple
 
     // empty signal asserted when both pointers are equal
     always @(*)
-        if ( ~rst && (pop_ptr == push_ptr)) begin
-            assert(empty);
+        if ( ~rst) begin
+            assert(empty == (pop_ptr == push_ptr));
         end
-
-
-    // triggers empty signal only when FIFO is truly empty
-//    always @(*)
-//        if ( ~rst && (empty)) begin
-//            assert(pop_ptr == push_ptr);
-//        end
 
 
     //
@@ -289,16 +264,9 @@ module fifo_simple
 
     // full signal asserted when both pointers are not equal but addrs are
     always @(*)
-        if ( ~rst && (pop_ptr != push_ptr) && (pop_addr == push_addr)) begin
-            assert(full);
+        if ( ~rst) begin
+            assert(full == ((pop_ptr != push_ptr) && (pop_addr == push_addr)));
         end
-
-
-    // triggers full signal only when FIFO is truly full
-//    always @(*)
-//        if ( ~rst && full) begin
-//            assert((pop_ptr != push_ptr) && (pop_addr == push_addr));
-//        end
 
 
     //
