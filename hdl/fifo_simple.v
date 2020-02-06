@@ -183,7 +183,7 @@ module fifo_simple
 
     initial begin
         // ensure reset is triggered at the start
-        assume(rst == 1);
+        restrict(rst);
     end
 
 
@@ -197,6 +197,7 @@ module fifo_simple
             assert(0 <= count <= DEPTH);
             //assert((count == 0) == empty);      // for use with exact empty generation
             //assert((count == DEPTH) == full);   // for use with exact full generation
+            assert( ~(empty && full)); // impossible state of being both full and empty
         end
 
 
@@ -280,7 +281,7 @@ module fifo_simple
 
     // full signal asserted only after data is pushed
     always @(posedge clk)
-        if ( ~rst && $rose(full)) begin
+        if ( ~rst && $past( ~rst) && $rose(full)) begin
             assert($past(push));
             assert($past(full_a));
         end
