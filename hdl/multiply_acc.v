@@ -53,10 +53,11 @@ module multiply_acc
 
     always @(posedge clk) begin
         img_1p  <= 'b0;
-        ker_1p  <= ker;
+        ker_1p  <= 'b0;
 
-        if (val) begin
+        if (val && ~rst) begin
             img_1p  <= img;
+            ker_1p  <= ker;
         end
     end
 
@@ -122,10 +123,16 @@ module multiply_acc
         end
 
 
-    // result is reset to zero after a reset signal
+    // result and data pipeline is reset to zero after a reset signal
     always @(posedge clk)
-        if (past_exists && $fell(rst)) begin
-            assert(result == 0);
+        if (past_exists && ~rst && $past(rst)) begin
+            assert(result      == 'b0);
+            assert(img_1p      == 'b0);
+            assert(ker_1p      == 'b0);
+            assert(img_2p      == 'b0);
+            assert(ker_2p      == 'b0);
+            assert(product_3p  == 'b0);
+            assert(result_4p   == 'b0);
         end
 
 
