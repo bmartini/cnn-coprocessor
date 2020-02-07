@@ -33,7 +33,6 @@ module rescale
    (input  wire                 clk,
 
     input  wire [7:0]           shift,
-    input  wire [7:0]           head,
 
     input  wire [NUM_WIDTH-1:0] up_data,
     output reg  [IMG_WIDTH-1:0] dn_data
@@ -48,18 +47,19 @@ module rescale
     localparam signed [IMG_WIDTH-1:0] IMG_MAX = ({1'b0, {IMG_WIDTH-1{1'b1}}});
     localparam signed [IMG_WIDTH-1:0] IMG_MIN = ({1'b1, {IMG_WIDTH-1{1'b0}}});
 
-    localparam NUM_WIDTH_MAX = NUM_WIDTH-2;
+    localparam NUM_WIDTH_MAX = NUM_WIDTH;
 
 
-    function grater_than_max;
-        input [NUM_WIDTH-1:0]   number;
+    function grater_than_max (
+            input [NUM_WIDTH-1:0]   number,
+            input [NUM_AWIDTH-1:0]  overflow
+        );
         reg   [NUM_AWIDTH-1:0]  ii;
 
         begin
             grater_than_max = 1'b0;
-
-            for (ii = 0; ii < NUM_WIDTH_MAX[NUM_AWIDTH-1:0]; ii=ii+1) begin
-                if (number[ii] & (ii >= head[NUM_AWIDTH-1:0])) begin
+            for (ii = 0; ii < NUM_WIDTH[NUM_AWIDTH-1:0]; ii=ii+1) begin
+                if (number[ii] & (ii >= overflow)) begin
                     grater_than_max = ~number[NUM_WIDTH-1];
                 end
             end
@@ -67,15 +67,17 @@ module rescale
     endfunction
 
 
-    function less_than_min;
-        input [NUM_WIDTH-1:0]   number;
+    function less_than_min (
+            input [NUM_WIDTH-1:0]   number,
+            input [NUM_AWIDTH-1:0]  overflow
+        );
+
         reg   [NUM_AWIDTH-1:0]  ii;
 
         begin
             less_than_min = 1'b0;
-
-            for (ii = 0; ii < NUM_WIDTH_MAX[NUM_AWIDTH-1:0]; ii=ii+1) begin
-                if ( ~number[ii] & (ii >= head[NUM_AWIDTH-1:0])) begin
+            for (ii = 0; ii < NUM_WIDTH[NUM_AWIDTH-1:0]; ii=ii+1) begin
+                if ( ~number[ii] & (ii >= overflow)) begin
                     less_than_min = number[NUM_WIDTH-1];
                 end
             end
@@ -88,6 +90,7 @@ module rescale
      */
 
     reg  [NUM_WIDTH-1:0]    up_data_1p;
+    reg  [NUM_AWIDTH-1:0]   overflow_1p;
 
     reg  [NUM_WIDTH-1:0]    rescale_data_1p;
     reg  [IMG_WIDTH-1:0]    rescale_data_2p;
@@ -102,18 +105,23 @@ module rescale
      */
 
 
-    always @(posedge clk)
+    always @(posedge clk) begin
         up_data_1p <= up_data;
+
+        // calculate the bit address in the up stream number that contains the
+        // top/left most bit of the down (image) number
+        overflow_1p <= (IMG_WIDTH[NUM_AWIDTH-1:0] - 'b1) + shift[NUM_AWIDTH-1:0];
+    end
 
 
     // test upper limit
     always @(posedge clk)
-        bound_max_2p <= grater_than_max(up_data_1p);
+        bound_max_2p <= grater_than_max(up_data_1p, overflow_1p);
 
 
     // test lower limit
     always @(posedge clk)
-        bound_min_2p <= less_than_min(up_data_1p);
+        bound_min_2p <= less_than_min(up_data_1p, overflow_1p);
 
 
     always @(posedge clk) begin

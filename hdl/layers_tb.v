@@ -133,7 +133,6 @@ module layers_tb;
     reg                                     rst;
 
     reg  [7:0]                              shift;
-    reg  [7:0]                              head;
 
     reg  [CFG_DWIDTH-1:0]                   cfg_data;
     reg  [CFG_AWIDTH-1:0]                   cfg_addr;
@@ -267,7 +266,6 @@ module layers_tb;
         rst = 0;
 
         shift       = KER_POINT;
-        head        = IMG_WIDTH+KER_POINT-1;
 
         cfg_data    = 'b0;
         cfg_addr    = 'b0;
@@ -298,8 +296,8 @@ module layers_tb;
     $display("send config");
 `endif
 
-        // {bypass, pool_nb, shift, head}
-        cfg_data    = {8'd0, 8'd1, shift, head};
+        // {NaN, bypass, pool_nb, shift}
+        cfg_data    = {8'd0, 8'd0, 8'd1, shift};
         cfg_addr    = CFG_LAYERS;
         cfg_valid   = 1'b1;
         @(negedge clk);

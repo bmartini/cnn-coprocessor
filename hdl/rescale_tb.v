@@ -107,7 +107,6 @@ module rescale_tb;
      */
 
     reg  [7:0]              shift = 8; // (NUM_POINT-IMG_POINT)
-    reg  [7:0]              head = 23; // (IMG_WIDTH+(NUM_POINT-IMG_POINT)-1)
 
     reg  [NUM_WIDTH-1:0]    up_data;
     wire [IMG_WIDTH-1:0]    dn_data;
@@ -124,7 +123,6 @@ module rescale_tb;
         .clk        (clk),
 
         .shift      (shift),
-        .head       (head),
 
         .up_data    (up_data),
         .dn_data    (dn_data)
