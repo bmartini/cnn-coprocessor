@@ -114,6 +114,62 @@ module pool
 
 
 
+`ifdef FORMAL
+
+    reg         past_exists;
+    reg  [2:0]  past_wait;
+    initial begin
+        restrict(past_exists ==  'b0);
+        restrict(past_wait   == 1'b0);
+    end
+
+    // extend wait time unit the past can be accessed
+    always @(posedge clk)
+        {past_exists, past_wait} <= {past_wait, 1'b1};
+
+
+
+    //
+    // Check restart signal behavior
+    //
+
+    // once a restart signal has been registered, its associated up stream data
+    // will eventually replace the down stream data value
+    always @(posedge clk)
+        if (past_exists && $past(restart_1p, 3) && $past(up_valid_1p, 3)) begin
+            assert(dn_data == $past(up_data_1p, 3));
+        end
+
+
+    // once driven high the restart signal will not be cleared until valid up
+    // stream data is sent thus proving the restart command can be pre-loaded
+    always @(posedge clk)
+        if (past_exists && $fell(restart_1p)) begin
+            assert($past(up_valid_1p));
+        end
+
+
+    //
+    // Check data path behavior
+    //
+
+    // down stream data will always be equal to or greater than that which
+    // rewrites it
+    always @(posedge clk)
+        if (past_exists && $past(up_valid_3p)) begin
+            assert($signed(dn_data) >= $signed($past(up_data_3p)));
+        end
+
+
+    // data in the comparison store will only ever decrease in value due to a
+    // restart
+    always @(posedge clk)
+        if (past_exists && ($signed(up_data_3p) < $signed($past(up_data_3p)))) begin
+            assert($past(restart_2p & up_valid_2p));
+        end
+
+
+`endif
 endmodule
 
 `default_nettype wire
