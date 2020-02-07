@@ -1,0 +1,12 @@
+[options]
+mode prove
+
+[engines]
+smtbmc
+
+[script]
+read -formal relu.v
+prep -top relu
+
+[files]
+../hdl/relu.v
