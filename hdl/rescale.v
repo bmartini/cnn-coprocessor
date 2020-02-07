@@ -156,6 +156,12 @@ module rescale
         {past_exists, past_wait} <= {past_wait, 1'b1};
 
 
+    // ask that the shift cfg values are within valid range
+    always @(*) begin
+        assume(shift <= (NUM_WIDTH-IMG_WIDTH));
+    end
+
+
 
     function signed [NUM_WIDTH-1:0] shift_with_sign (
             input [NUM_WIDTH-1:0]   number,
@@ -178,7 +184,7 @@ module rescale
 
     // correctly constrains up stream number to max/min value of down stream data width
     always @(posedge clk)
-        if (past_exists && ($past(shift, 4) <= (NUM_WIDTH-IMG_WIDTH))) begin
+        if (past_exists) begin
 
             if (shift_with_sign($past(up_data, 4), $past(shift, 4)) < $signed(IMG_MIN)) begin
                 assert(dn_data == IMG_MIN);
@@ -193,7 +199,6 @@ module rescale
     // correctly shift and pass though up stream data when within bounds
     always @(posedge clk)
         if (past_exists
-            && ($past(shift, 4) <= (NUM_WIDTH-IMG_WIDTH))
             && (shift_with_sign($past(up_data, 4), $past(shift, 4)) > $signed(IMG_MIN))
             && (shift_with_sign($past(up_data, 4), $past(shift, 4)) < $signed(IMG_MAX))
             ) begin
@@ -204,10 +209,18 @@ module rescale
 
     // positive & negative up stream numbers will retain sign
     always @(posedge clk)
-        if (past_exists && ($past(shift, 4) <= (NUM_WIDTH-IMG_WIDTH))) begin
+        if (past_exists) begin
             assert(dn_data[IMG_WIDTH-1] == $past(up_data[NUM_WIDTH-1], 4));
         end
 
+
+    // current max/min calculation does not rely on IMG_(MIN|MAX) definitions
+    // while the verification model does. this test helps check if the
+    // parameters and max/min code have the same understanding and values
+    always @(posedge clk)
+        if (past_exists) begin
+            assert($signed(IMG_MIN) <= $signed(dn_data) <= $signed(IMG_MAX));
+        end
 
 
 `endif
