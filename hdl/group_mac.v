@@ -89,6 +89,83 @@ module group_mac
     endgenerate
 
 
+
+`ifdef FORMAL
+
+    reg         past_exists;
+    reg  [4:0]  past_wait;
+    initial begin
+        restrict property (past_exists == 1'b0);
+        restrict property (past_wait   ==  'b0);
+    end
+
+    // extend wait time unit the past can be accessed
+    always @(posedge clk)
+        {past_exists, past_wait} <= {past_wait, 1'b1};
+
+
+
+    //
+    // Check that the down stream value are stimulated correctly by up stream
+    // data. The correctness of the calculations are being asserted within the
+    // multiply_acc module
+    //
+
+
+    // check that there is a non-zero pair of numbers on the incoming buses
+    function non_zero (
+            input wire [GROUP_NB*IMG_WIDTH-1:0] img_bus,
+            input wire [GROUP_NB*KER_WIDTH-1:0] ker_bus
+        );
+
+        reg  [GROUP_NB-1:0] img_zeros;
+        reg  [GROUP_NB-1:0] ker_zeros;
+        integer xx;
+
+        for (xx = 0; xx < GROUP_NB; xx = xx + 1) begin
+            img_zeros[xx] = |(img_bus[xx*IMG_WIDTH +: IMG_WIDTH]);
+            ker_zeros[xx] = |(ker_bus[xx*KER_WIDTH +: KER_WIDTH]);
+        end
+
+        non_zero = |(img_zeros & ker_zeros);
+    endfunction
+
+
+    // result must have changed with new valid data that are not zero
+    always @(posedge clk)
+        if (past_exists
+            && $past(val, 6) && non_zero($past(img, 6), $past(ker, 6))
+            && $past( ~rst, 6)
+            && $past( ~rst, 5)
+            && $past( ~rst, 4)
+            && $past( ~rst, 3)
+            && $past( ~rst, 2)
+            && $past( ~rst, 1)
+            ) begin
+
+            assert($changed(result));
+        end
+
+
+    // result will not change when new valid data is zero
+    always @(posedge clk)
+        if (past_exists
+            && $past(val, 6) && ~non_zero($past(img, 6), $past(ker, 6))
+            && $past( ~rst, 1)
+            ) begin
+
+            assert($stable(result));
+        end
+
+
+    // result cannot change without new valid data
+    always @(posedge clk)
+        if (past_exists && $past( ~rst) && $past( ~val, 6)) begin
+            assert($stable(result));
+        end
+
+
+`endif
 endmodule
 
 `default_nettype wire
