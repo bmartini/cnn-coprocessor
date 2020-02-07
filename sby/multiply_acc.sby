@@ -1,0 +1,12 @@
+[options]
+mode prove
+
+[engines]
+smtbmc
+
+[script]
+read -formal multiply_acc.v
+prep -top multiply_acc
+
+[files]
+../hdl/multiply_acc.v
