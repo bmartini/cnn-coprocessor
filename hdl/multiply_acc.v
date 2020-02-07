@@ -89,8 +89,8 @@ module multiply_acc
     reg         past_exists;
     reg  [3:0]  past_wait;
     initial begin
-        restrict(past_exists == 1'b0);
-        restrict(past_wait   ==  'b0);
+        restrict property (past_exists == 1'b0);
+        restrict property (past_wait   ==  'b0);
     end
 
     // extend wait time unit the past can be accessed

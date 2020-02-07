@@ -65,7 +65,7 @@ module bias_add
 
     reg  past_exists;
     initial begin
-        restrict(past_exists == 1'b0);
+        restrict property (past_exists == 1'b0);
     end
 
     // extend wait time unit the past can be accessed

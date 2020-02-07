@@ -183,7 +183,7 @@ module fifo_simple
 
     initial begin
         // ensure reset is triggered at the start
-        restrict(rst);
+        restrict property (rst);
     end
 
 

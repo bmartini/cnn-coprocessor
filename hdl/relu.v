@@ -69,8 +69,8 @@ module relu
     reg  past_exists;
     reg  past_wait;
     initial begin
-        restrict(past_exists == 1'b0);
-        restrict(past_wait   == 1'b0);
+        restrict property (past_exists == 1'b0);
+        restrict property (past_wait   == 1'b0);
     end
 
     // extend wait time unit the past can be accessed
