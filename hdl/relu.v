@@ -92,14 +92,14 @@ module relu
 
     // up stream data is unchanged when value is greater then zero
     always @(posedge clk)
-        if (past_exists && $past(($signed(up_data) >= 0), 2)) begin
+        if (past_exists && ($signed($past(up_data, 2)) >= 0)) begin
             assert(dn_data == $past(up_data, 2));
         end
 
 
     // up stream data is set to zero when not bypassed and value is greater then zero
     always @(posedge clk)
-        if (past_exists && $past(bypass, 2) && $past(($signed(up_data) < 0), 2)) begin
+        if (past_exists && $past(bypass, 2) && ($signed($past(up_data, 2)) < 0)) begin
             assert(dn_data == $past(up_data, 2));
         end
 
