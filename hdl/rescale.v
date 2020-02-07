@@ -141,6 +141,76 @@ module rescale
         dn_data <= rescale_data_3p;
 
 
+
+`ifdef FORMAL
+
+    reg         past_exists;
+    reg  [2:0]  past_wait;
+    initial begin
+        restrict property (past_exists == 1'b0);
+        restrict property (past_wait   ==  'b0);
+    end
+
+    // extend wait time unit the past can be accessed
+    always @(posedge clk)
+        {past_exists, past_wait} <= {past_wait, 1'b1};
+
+
+
+    function signed [NUM_WIDTH-1:0] shift_with_sign (
+            input [NUM_WIDTH-1:0]   number,
+            input [NUM_AWIDTH-1:0]  shift_right
+        );
+        reg   [7:0]  ii;
+
+        begin
+
+            for (ii = 0; ii < NUM_WIDTH; ii=ii+1) begin
+                if (ii < shift_right) begin
+                    number = {number[NUM_WIDTH-1], number[NUM_WIDTH-1:1]};
+                end
+            end
+
+            shift_with_sign = number;
+        end
+    endfunction
+
+
+    // correctly constrains up stream number to max/min value of down stream data width
+    always @(posedge clk)
+        if (past_exists && ($past(shift, 4) <= (NUM_WIDTH-IMG_WIDTH))) begin
+
+            if (shift_with_sign($past(up_data, 4), $past(shift, 4)) < $signed(IMG_MIN)) begin
+                assert(dn_data == IMG_MIN);
+            end
+
+            if (shift_with_sign($past(up_data, 4), $past(shift, 4)) > $signed(IMG_MAX)) begin
+                assert(dn_data == IMG_MAX);
+            end
+        end
+
+
+    // correctly shift and pass though up stream data when within bounds
+    always @(posedge clk)
+        if (past_exists
+            && ($past(shift, 4) <= (NUM_WIDTH-IMG_WIDTH))
+            && (shift_with_sign($past(up_data, 4), $past(shift, 4)) > $signed(IMG_MIN))
+            && (shift_with_sign($past(up_data, 4), $past(shift, 4)) < $signed(IMG_MAX))
+            ) begin
+
+            assert(dn_data == $past(up_data[shift +: IMG_WIDTH], 4));
+        end
+
+
+    // positive & negative up stream numbers will retain sign
+    always @(posedge clk)
+        if (past_exists && ($past(shift, 4) <= (NUM_WIDTH-IMG_WIDTH))) begin
+            assert(dn_data[IMG_WIDTH-1] == $past(up_data[NUM_WIDTH-1], 4));
+        end
+
+
+
+`endif
 endmodule
 
 `default_nettype wire
