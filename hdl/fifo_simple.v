@@ -94,7 +94,8 @@ module fifo_simple
 
 
     // full next
-    assign full_nx  = (push_addr_nx == pop_addr) & (push_ptr_nx[ADDR_WIDTH] != pop_ptr[ADDR_WIDTH]);
+    assign full_nx =
+        (push_addr_nx == pop_addr_nx) & (push_ptr_nx[ADDR_WIDTH] != pop_ptr_nx[ADDR_WIDTH]);
 
     // almost full next
     assign push_ptr_a_nx    = push_ptr_nx + 1;
@@ -102,11 +103,12 @@ module fifo_simple
     assign push_addr_a_nx   = push_ptr_a_nx[0 +: ADDR_WIDTH];
 
     assign full_a_nx =
-        (push_addr_a_nx == pop_addr) & (push_ptr_a_nx[ADDR_WIDTH] != pop_ptr[ADDR_WIDTH]);
+        (push_addr_a_nx == pop_addr_nx) & (push_ptr_a_nx[ADDR_WIDTH] != pop_ptr_nx[ADDR_WIDTH]);
 
 
     // empty next
-    assign empty_nx = (push_addr == pop_addr_nx) & (push_ptr[ADDR_WIDTH] == pop_ptr_nx[ADDR_WIDTH]);
+    assign empty_nx =
+        (push_addr_nx == pop_addr_nx) & (push_ptr_nx[ADDR_WIDTH] == pop_ptr_nx[ADDR_WIDTH]);
 
     // almost empty next
     assign pop_ptr_a_nx     = pop_ptr_nx + 1;
@@ -114,7 +116,7 @@ module fifo_simple
     assign pop_addr_a_nx    = pop_ptr_a_nx[0 +: ADDR_WIDTH];
 
     assign empty_a_nx =
-        (push_addr == pop_addr_a_nx) & (push_ptr[ADDR_WIDTH] == pop_ptr_a_nx[ADDR_WIDTH]);
+        (push_addr_nx == pop_addr_a_nx) & (push_ptr_nx[ADDR_WIDTH] == pop_ptr_a_nx[ADDR_WIDTH]);
 
 
     // pop next
@@ -126,17 +128,8 @@ module fifo_simple
 
     // registered population count.
     always @(posedge clk)
-        if (rst) begin
-            count <= 'b0;
-        end
-        else begin
-            if (push_ptr[ADDR_WIDTH] == pop_ptr_nx[ADDR_WIDTH]) begin
-                count <= (push_addr - pop_addr_nx);
-            end
-            else begin
-                count <= DEPTH - pop_addr_nx + push_addr;
-            end
-        end
+        if (rst)    count <= 'b0;
+        else        count <= (push_ptr_nx - pop_ptr_nx);
 
 
     // registered full flag
@@ -186,6 +179,115 @@ module fifo_simple
 
 
 
+`ifdef FORMAL
+
+    initial begin
+        // ensure reset is triggered at the start
+        restrict property (rst);
+    end
+
+
+    //
+    // Check that counters and pointers stay within their relative ranges
+    //
+
+    // tests that counter stays in range
+    always @(*)
+        if ( ~rst) begin
+            assert(0 <= count <= DEPTH);
+            assert((count == 0) == empty);      // for use with exact empty generation
+            assert((count == DEPTH) == full);   // for use with exact full generation
+            assert( ~(empty && full)); // impossible state of being both full and empty
+        end
+
+
+    // tests direction of pointer travel, push incrementing to 'full'
+    always @(*)
+        if ( ~rst && (push_ptr >= pop_ptr)) begin
+            assert((push_ptr - pop_ptr) <= DEPTH);
+        end
+
+
+    // tests direction of pointer travel, pop incrementing to 'empty'
+    always @(*)
+        if ( ~rst && (push_ptr < pop_ptr)) begin
+            assert((pop_ptr - push_ptr) >= DEPTH);
+        end
+
+
+    //
+    // Check that pop behavior is consistent
+    //
+
+    // popping from an empty FIFO will not change the pop addr or data register
+    always @(posedge clk)
+        if ( ~rst && $past( ~rst && pop && empty)) begin
+            assert($stable(pop_addr));
+            assert($stable(pop_data));
+        end
+
+
+    // empty signal asserted only after data is popped
+    always @(posedge clk)
+        if ( ~rst && $past( ~rst) && $rose(empty)) begin
+            assert($past(pop));
+            assert($past(empty_a));
+        end
+
+
+    // empty signal asserted when both pointers are equal
+    always @(*)
+        if ( ~rst) begin
+            assert(empty == (pop_ptr == push_ptr));
+        end
+
+
+    //
+    // Check that push behavior is consistent
+    //
+
+    // pushing into a full FIFO will not change the push addr or mem data
+    always @(posedge clk)
+        if ( ~rst && $past( ~rst && push && full)) begin
+            assert($stable(push_addr));
+            assert($stable(mem[push_addr]));
+        end
+
+
+    // full signal asserted only after data is pushed
+    always @(posedge clk)
+        if ( ~rst && $past( ~rst) && $rose(full)) begin
+            assert($past(push));
+            assert($past(full_a));
+        end
+
+
+    // full signal asserted when both pointers are not equal but addrs are
+    always @(*)
+        if ( ~rst) begin
+            assert(full == ((pop_ptr != push_ptr) && (pop_addr == push_addr)));
+        end
+
+
+    //
+    // Check that some fundamental use cases are valid
+    //
+
+    reg  f_full_state_reached = 1'b0;
+    always @(posedge clk)
+        if      (rst)   f_full_state_reached <= 1'b0;
+        else if (full)  f_full_state_reached <= 1'b1;
+
+
+    // show that the FIFO can fill up and then return to empty, traveling the
+    // entire range of the FIFO depth and thus able to test all assert
+    // statements
+    always @(*)
+        cover(f_full_state_reached && empty);
+
+
+
+`endif
 endmodule
 
 `default_nettype wire

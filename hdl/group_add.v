@@ -86,16 +86,56 @@ module group_add
         end
         else begin : INVALID_
 
-            // Icarus
+            // bad group number parameter
             initial begin
-                $display("ERROR: %m");
-                $finish;
+                assert(0);
             end
         end
     endgenerate
 
 
 
+`ifdef FORMAL
+
+    reg         past_exists;
+    reg  [2:0]  past_wait;
+    initial begin
+        restrict property (past_exists == 1'b0);
+        restrict property (past_wait   ==  'b0);
+    end
+
+    // extend wait time unit the past can be accessed
+    always @(posedge clk)
+        {past_exists, past_wait} <= {past_wait, 1'b1};
+
+
+
+    //
+    // Check that the down stream value is the result of adding the up stream
+    // data
+    //
+
+    function [NUM_WIDTH-1:0] sum_bus;
+        input  wire [NUM_WIDTH*GROUP_NB-1:0] bus;
+        integer xx;
+
+        begin
+            sum_bus = {NUM_WIDTH*GROUP_NB{1'b0}};
+
+            for (xx = 0; xx < GROUP_NB; xx = xx + 1) begin
+                sum_bus = $signed(sum_bus) + $signed(bus[xx*NUM_WIDTH +: NUM_WIDTH]);
+            end
+        end
+    endfunction
+
+
+    always @(posedge clk)
+        if (past_exists) begin
+            assert(dn_data == sum_bus($past(up_data, 5)));
+        end
+
+
+`endif
 endmodule
 
 `default_nettype wire

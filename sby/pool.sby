@@ -1,0 +1,12 @@
+[options]
+mode prove
+
+[engines]
+smtbmc
+
+[script]
+read -formal pool.v
+prep -top pool
+
+[files]
+../hdl/pool.v

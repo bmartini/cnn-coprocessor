@@ -61,7 +61,26 @@ module bias_add
         dn_data <= addition(bias, up_data);
 
 
+`ifdef FORMAL
 
+    reg  past_exists;
+    initial begin
+        restrict property (past_exists == 1'b0);
+    end
+
+    // extend wait time unit the past can be accessed
+    always @(posedge clk)
+        past_exists <= 1'b1;
+
+
+    // signed integer addition
+    always @(posedge clk)
+        if (past_exists) begin
+            assert(dn_data == ($past($signed(bias) + $signed(up_data))));
+        end
+
+
+`endif
 endmodule
 
 `default_nettype wire

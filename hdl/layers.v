@@ -94,7 +94,6 @@ module layers
     (* KEEP = "TRUE" *) reg  [DEPTH_NB-1:0] pool_rst;
 
     reg  [7:0]                              shift;
-    reg  [7:0]                              head;
 
     reg                                     bypass;
     reg  [7:0]                              pool_nb;
@@ -147,10 +146,9 @@ module layers
 
     always @(posedge clk)
         if (cfg_valid & (cfg_addr == CFG_LAYERS)) begin
-            bypass  <= cfg_data[24];
-            pool_nb <= cfg_data[23:16];
-            shift   <= cfg_data[15: 8];
-            head    <= cfg_data[ 7: 0];
+            bypass  <= cfg_data[16];
+            pool_nb <= cfg_data[15: 8];
+            shift   <= cfg_data[ 7: 0];
         end
 
 
@@ -402,7 +400,6 @@ module layers
                 .clk        (clk),
 
                 .shift      (shift),
-                .head       (head),
 
                 .up_data    (relu_data[i*NUM_WIDTH +: NUM_WIDTH]),
                 .dn_data    (rescale_data[i*IMG_WIDTH +: IMG_WIDTH])

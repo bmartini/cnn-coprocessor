@@ -1,0 +1,13 @@
+[options]
+mode prove
+
+[engines]
+smtbmc
+
+[script]
+read -formal group_add.v
+chparam -set GROUP_NB 4 group_add
+prep -top group_add
+
+[files]
+../hdl/group_add.v

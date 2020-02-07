@@ -1,0 +1,20 @@
+[tasks]
+bmc
+prove
+cover
+
+[options]
+bmc:   mode bmc
+prove: mode prove
+cover: mode cover
+
+[engines]
+smtbmc
+
+[script]
+read -formal fifo_simple.v
+chparam -set ADDR_WIDTH 3 fifo_simple
+prep -top fifo_simple
+
+[files]
+../hdl/fifo_simple.v

@@ -1,0 +1,12 @@
+[options]
+mode prove
+
+[engines]
+smtbmc
+
+[script]
+read -formal rescale.v
+prep -top rescale
+
+[files]
+../hdl/rescale.v

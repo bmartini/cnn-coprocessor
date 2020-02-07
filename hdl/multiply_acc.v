@@ -53,10 +53,11 @@ module multiply_acc
 
     always @(posedge clk) begin
         img_1p  <= 'b0;
-        ker_1p  <= ker;
+        ker_1p  <= 'b0;
 
-        if (val) begin
+        if (val && ~rst) begin
             img_1p  <= img;
+            ker_1p  <= ker;
         end
     end
 
@@ -82,6 +83,60 @@ module multiply_acc
         end
 
 
+
+`ifdef FORMAL
+
+    reg         past_exists;
+    reg  [3:0]  past_wait;
+    initial begin
+        restrict property (past_exists == 1'b0);
+        restrict property (past_wait   ==  'b0);
+    end
+
+    // extend wait time unit the past can be accessed
+    always @(posedge clk)
+        {past_exists, past_wait} <= {past_wait, 1'b1};
+
+
+
+    //
+    // Check that the down stream value is correctly calculated
+    //
+
+
+    // check that arithmetic is correct
+    always @(posedge clk)
+        if (past_exists && $past( ~rst)) begin
+            assert( $signed(product_3p)
+                == ($signed($past(img_2p)) * $signed($past(ker_2p))));
+
+
+            assert( $signed(result_4p)
+                == ($signed($past(result_4p)) + $signed($past(product_3p))));
+        end
+
+
+    // result cannot change without new valid data
+    always @(posedge clk)
+        if (past_exists && $past( ~rst) && $past( ~val, 5)) begin
+            assert($stable(result));
+        end
+
+
+    // result and data pipeline is reset to zero after a reset signal
+    always @(posedge clk)
+        if (past_exists && ~rst && $past(rst)) begin
+            assert(result      == 'b0);
+            assert(img_1p      == 'b0);
+            assert(ker_1p      == 'b0);
+            assert(img_2p      == 'b0);
+            assert(ker_2p      == 'b0);
+            assert(product_3p  == 'b0);
+            assert(result_4p   == 'b0);
+        end
+
+
+`endif
 endmodule
 
 `default_nettype wire

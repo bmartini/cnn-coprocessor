@@ -1,0 +1,13 @@
+[options]
+mode prove
+depth 3
+
+[engines]
+smtbmc
+
+[script]
+read -formal bias_add.v
+prep -top bias_add
+
+[files]
+../hdl/bias_add.v

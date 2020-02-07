@@ -64,6 +64,47 @@ module relu
         dn_data <= up_data_1p;
 
 
+`ifdef FORMAL
+
+    reg  past_exists;
+    reg  past_wait;
+    initial begin
+        restrict property (past_exists == 1'b0);
+        restrict property (past_wait   == 1'b0);
+    end
+
+    // extend wait time unit the past can be accessed
+    always @(posedge clk)
+        {past_exists, past_wait} <= {past_wait, 1'b1};
+
+
+
+    //
+    // Check that up stream number is changed as expected of ReLU operation
+    //
+
+    // up stream data is unchanged when paired when bypass active
+    always @(posedge clk)
+        if (past_exists && $past(bypass, 2)) begin
+            assert(dn_data == $past(up_data, 2));
+        end
+
+
+    // up stream data is unchanged when value is greater then zero
+    always @(posedge clk)
+        if (past_exists && ($signed($past(up_data, 2)) >= 0)) begin
+            assert(dn_data == $past(up_data, 2));
+        end
+
+
+    // up stream data is set to zero when not bypassed and value is greater then zero
+    always @(posedge clk)
+        if (past_exists && $past(bypass, 2) && ($signed($past(up_data, 2)) < 0)) begin
+            assert(dn_data == $past(up_data, 2));
+        end
+
+
+`endif
 endmodule
 
 `endif //  `ifndef _relu_

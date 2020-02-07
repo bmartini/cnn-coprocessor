@@ -1,0 +1,13 @@
+[options]
+mode prove
+
+[engines]
+smtbmc
+
+[script]
+read -formal group_mac.v
+prep -top group_mac
+
+[files]
+../hdl/group_mac.v
+../hdl/multiply_acc.v
