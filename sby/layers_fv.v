@@ -85,6 +85,18 @@ module layers_fv
     end
 
 
+    // force the the reset low and keep it low after one reset, must be used
+    // with the reset set to high in an initial block
+    always @(posedge clk)
+        if ($past(rst) || ~rst) begin
+            assume( ~rst);
+        end
+
+
+    always @(posedge clk)
+        cfg_valid <= 1'b0;
+
+
     // ask that the cfg data values are within valid range
     always @(*) begin
         // for completeness
@@ -96,10 +108,6 @@ module layers_fv
         // test only valid values of the shift value
         assume(cfg_data[ 7:0] <= (NUM_WIDTH-IMG_WIDTH));
     end
-
-
-    always @(posedge clk)
-        cfg_valid <= 1'b0;
 
 
     //
