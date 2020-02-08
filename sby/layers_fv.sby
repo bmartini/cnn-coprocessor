@@ -7,6 +7,7 @@ cover
 bmc:   mode bmc
 prove: mode prove
 cover: mode cover
+cover: depth 30
 
 [engines]
 smtbmc

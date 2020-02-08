@@ -470,14 +470,32 @@ module layers
     //
 
 
+    // coverage path is only valid if the module has done at least one restart
+    reg  rst_done = 1'b0;
+    always @(posedge clk)
+        if (rst) rst_done <= 1'b1;
+
+
+
+    // coverage path is only valid if the module has done at least one configuration
+    reg  cfg_done = 1'b0;
+    always @(posedge clk)
+        if (cfg_valid) cfg_done <= 1'b1;
+
+
+
     // handover condition between the convolution and the other operations
     always @(*)
-        cover(up_state[UP_CLEAR] && dn_state[DN_READY]);
+        if (rst_done && cfg_done) begin
+            cover(up_state[UP_CLEAR] && dn_state[DN_READY]);
+        end
 
 
     // end condition with results ready to send
     always @(*)
-        cover(up_state[DN_CLEAR] && result_rdy);
+        if (rst_done && cfg_done) begin
+            cover(dn_state[DN_CLEAR] && result_rdy);
+        end
 
 
 `endif
