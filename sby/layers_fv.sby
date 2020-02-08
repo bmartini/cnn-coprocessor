@@ -1,0 +1,28 @@
+[tasks]
+bmc
+prove
+cover
+
+[options]
+bmc:   mode bmc
+prove: mode prove
+cover: mode cover
+
+[engines]
+smtbmc
+
+[script]
+read -formal layers_fv.v
+prep -top layers_fv
+
+[files]
+layers_fv.v
+../hdl/layers.v
+../hdl/cfg_parameters.vh
+../hdl/multiply_acc.v
+../hdl/group_mac.v
+../hdl/group_add.v
+../hdl/pool.v
+../hdl/bias_add.v
+../hdl/relu.v
+../hdl/rescale.v
