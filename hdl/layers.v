@@ -463,6 +463,19 @@ module layers
         past_exists <= 1'b1;
 
 
+    // coverage path is only valid if the module has done at least one restart
+    reg  rst_done = 1'b0;
+    always @(posedge clk)
+        if (rst) rst_done <= 1'b1;
+
+
+
+    // coverage path is only valid if the module has done at least one configuration
+    reg  cfg_done = 1'b0;
+    always @(posedge clk)
+        if (cfg_valid) cfg_done <= 1'b1;
+
+
 
     function up_onehot;
         begin
@@ -503,24 +516,26 @@ module layers
         end
 
 
+    // the size of the pooling area can not be larger then the expected
+    // configured size
+    always @(*)
+        if (rst_done && cfg_done && ~dn_state[DN_RESET]) begin
+            assert(pool_cnt <= (pool_nb + 8'd1));
+        end
+
+
+    // configuration can not change without being sent values
+    always @(posedge clk)
+        if (past_exists && ($past( ~cfg_valid) || $past(cfg_addr != CFG_LAYERS))) begin
+            assume($stable(bypass));
+            assume($stable(pool_nb));
+            assume($stable(shift));
+        end
+
 
     //
     // Check that some fundamental use cases are reachable
     //
-
-
-    // coverage path is only valid if the module has done at least one restart
-    reg  rst_done = 1'b0;
-    always @(posedge clk)
-        if (rst) rst_done <= 1'b1;
-
-
-
-    // coverage path is only valid if the module has done at least one configuration
-    reg  cfg_done = 1'b0;
-    always @(posedge clk)
-        if (cfg_valid) cfg_done <= 1'b1;
-
 
 
     // handover condition between the convolution and the other operations
