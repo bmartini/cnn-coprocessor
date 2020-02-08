@@ -7,13 +7,14 @@ cover
 bmc:   mode bmc
 prove: mode prove
 cover: mode cover
-cover: depth 30
+cover: depth 40
 
 [engines]
 smtbmc
 
 [script]
 read -formal layers_fv.v
+chparam -set DEPTH_NB 2 layers_fv
 prep -top layers_fv
 
 [files]
