@@ -262,34 +262,73 @@ module layers
 
 
     always @(posedge clk) begin
-        mac_valid_6p        <= image_val & image_rdy & image_last;
-        mac_valid_5p        <= mac_valid_6p;
-        mac_valid_4p        <= mac_valid_5p;
-        mac_valid_3p        <= mac_valid_4p;
-        mac_valid_2p        <= mac_valid_3p;
-        mac_valid_1p        <= mac_valid_2p;
-        mac_valid           <= mac_valid_1p;
+        if (up_state[UP_RESET]) begin
+            mac_valid_6p        <= 1'b0;
+            mac_valid_5p        <= 1'b0;
+            mac_valid_4p        <= 1'b0;
+            mac_valid_3p        <= 1'b0;
+            mac_valid_2p        <= 1'b0;
+            mac_valid_1p        <= 1'b0;
+            mac_valid           <= 1'b0;
+        end
+        else begin
+            mac_valid_6p        <= image_val & image_rdy & image_last;
+            mac_valid_5p        <= mac_valid_6p;
+            mac_valid_4p        <= mac_valid_5p;
+            mac_valid_3p        <= mac_valid_4p;
+            mac_valid_2p        <= mac_valid_3p;
+            mac_valid_1p        <= mac_valid_2p;
+            mac_valid           <= mac_valid_1p;
+        end
+    end
 
-        add_valid_4p        <= up_state[UP_CLEAR] & dn_state[DN_READY];
-        add_valid_3p        <= add_valid_4p;
-        add_valid_2p        <= add_valid_3p;
-        add_valid_1p        <= add_valid_2p;
-        add_valid           <= add_valid_1p;
 
-        pool_valid_3p       <= add_valid;
-        pool_valid_2p       <= pool_valid_3p;
-        pool_valid_1p       <= pool_valid_2p;
-        pool_valid          <= pool_valid_1p;
 
-        bias_valid          <= pool_valid;
+    always @(posedge clk) begin
+        if (dn_state[DN_RESET]) begin
+            add_valid_4p        <= 1'b0;
+            add_valid_3p        <= 1'b0;
+            add_valid_2p        <= 1'b0;
+            add_valid_1p        <= 1'b0;
+            add_valid           <= 1'b0;
 
-        relu_valid_1p       <= bias_valid;
-        relu_valid          <= relu_valid_1p;
+            pool_valid_3p       <= 1'b0;
+            pool_valid_2p       <= 1'b0;
+            pool_valid_1p       <= 1'b0;
+            pool_valid          <= 1'b0;
 
-        rescale_valid_3p    <= relu_valid;
-        rescale_valid_2p    <= rescale_valid_3p;
-        rescale_valid_1p    <= rescale_valid_2p;
-        rescale_valid       <= rescale_valid_1p;
+            bias_valid          <= 1'b0;
+
+            relu_valid_1p       <= 1'b0;
+            relu_valid          <= 1'b0;
+
+            rescale_valid_3p    <= 1'b0;
+            rescale_valid_2p    <= 1'b0;
+            rescale_valid_1p    <= 1'b0;
+            rescale_valid       <= 1'b0;
+        end
+        else begin
+            add_valid_4p        <= up_state[UP_CLEAR] & dn_state[DN_READY];
+            add_valid_3p        <= add_valid_4p;
+            add_valid_2p        <= add_valid_3p;
+            add_valid_1p        <= add_valid_2p;
+            add_valid           <= add_valid_1p;
+
+            pool_valid_3p       <= add_valid;
+            pool_valid_2p       <= pool_valid_3p;
+            pool_valid_1p       <= pool_valid_2p;
+            pool_valid          <= pool_valid_1p;
+
+            bias_valid          <= pool_valid;
+
+            relu_valid_1p       <= bias_valid;
+            relu_valid          <= relu_valid_1p;
+
+            rescale_valid_3p    <= relu_valid;
+            rescale_valid_2p    <= rescale_valid_3p;
+            rescale_valid_1p    <= rescale_valid_2p;
+            rescale_valid       <= rescale_valid_1p;
+        end
     end
 
 
