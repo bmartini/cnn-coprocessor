@@ -464,6 +464,22 @@ module layers
         end
 
 
+
+    //
+    // Check that some fundamental use cases are reachable
+    //
+
+
+    // handover condition between the convolution and the other operations
+    always @(*)
+        cover(up_state[UP_CLEAR] && dn_state[DN_READY]);
+
+
+    // end condition with results ready to send
+    always @(*)
+        cover(up_state[DN_CLEAR] && result_rdy);
+
+
 `endif
 endmodule
 
