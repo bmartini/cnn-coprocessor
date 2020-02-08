@@ -411,6 +411,60 @@ module layers
 
 
 
+`ifdef FORMAL
+
+    reg  past_exists;
+    initial begin
+        restrict property (past_exists == 1'b0);
+        restrict property (rst);
+    end
+
+    // extend wait time unit the past can be accessed
+    always @(posedge clk)
+        past_exists <= 1'b1;
+
+
+
+    function up_onehot;
+        begin
+            up_onehot = 1'b0;
+
+            case (up_state)
+                4'b0001 : up_onehot = 1'b1;
+                4'b0010 : up_onehot = 1'b1;
+                4'b0100 : up_onehot = 1'b1;
+                4'b1000 : up_onehot = 1'b1;
+                default : up_onehot = 1'b0;
+            endcase
+        end
+    endfunction
+
+
+    function dn_onehot;
+        begin
+            dn_onehot = 1'b0;
+
+            case (dn_state)
+                6'b000001 : dn_onehot = 1'b1;
+                6'b000010 : dn_onehot = 1'b1;
+                6'b000100 : dn_onehot = 1'b1;
+                6'b001000 : dn_onehot = 1'b1;
+                6'b010000 : dn_onehot = 1'b1;
+                6'b100000 : dn_onehot = 1'b1;
+                default   : dn_onehot = 1'b0;
+            endcase
+        end
+    endfunction
+
+
+    always @(posedge clk)
+        if (past_exists) begin
+            assert(up_onehot());
+            assert(dn_onehot());
+        end
+
+
+`endif
 endmodule
 
 `default_nettype wire
