@@ -15,8 +15,8 @@ module layers_fv
     input  wire                                     rst,
 
     input  wire [CFG_DWIDTH-1:0]                    cfg_data,
-//    input  wire [CFG_AWIDTH-1:0]                    cfg_addr,
-//    input  wire                                     cfg_valid,
+    input  wire [CFG_AWIDTH-1:0]                    cfg_addr,
+    input  wire                                     cfg_valid,
 
     input  wire [GROUP_NB*KER_WIDTH*DEPTH_NB-1:0]   bias_bus,
     input  wire [GROUP_NB*KER_WIDTH*DEPTH_NB-1:0]   kernel_bus,
@@ -38,9 +38,6 @@ module layers_fv
 
 `include "cfg_parameters.vh"
 
-    //wire [CFG_DWIDTH-1:0]   cfg_data;
-    reg  [CFG_AWIDTH-1:0]   cfg_addr;
-    reg                     cfg_valid;
 
 
     layers #(
@@ -79,9 +76,8 @@ module layers_fv
         // ensure reset is triggered at the start
         restrict property (rst);
 
-        //restrict configuration to valid values and one configuration
-        cfg_addr    = CFG_LAYERS;
-        cfg_valid   = 1'b1;
+        // ensure config valid is triggered at the start
+        assume(cfg_valid);
     end
 
 
@@ -93,12 +89,18 @@ module layers_fv
         end
 
 
+    // restrict configuration values and one configuration
     always @(posedge clk)
-        cfg_valid <= 1'b0;
+        if ($past(cfg_valid) || ~cfg_valid) begin
+            assume( ~cfg_valid);
+        end
 
 
     // ask that the cfg data values are within valid range
     always @(*) begin
+        // for completeness
+        assume((cfg_data[CFG_DWIDTH-1:17] == 'b0));
+
         // for completeness
         assume((cfg_data[16] == 1'b0) || (cfg_data[16] == 1'b1));
 
@@ -107,6 +109,9 @@ module layers_fv
 
         // test only valid values of the shift value
         assume(cfg_data[ 7:0] <= (NUM_WIDTH-IMG_WIDTH));
+
+        // only need the address valid once and then don't care
+        assume(cfg_addr == CFG_LAYERS);
     end
 
 
