@@ -133,6 +133,13 @@ module layers_fv
         end
 
 
+    // image path will only lower last after a transaction
+    always @(posedge clk)
+        if ( ~rst && $past( ~rst) && $fell(image_last)) begin
+            assume($past(image_rdy) && $past(image_val));
+        end
+
+
     // image path will only lower ready after a transaction
     always @(posedge clk)
         if ( ~rst && $past( ~rst) && $fell(image_rdy)) begin
