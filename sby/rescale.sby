@@ -5,7 +5,7 @@ mode prove
 smtbmc
 
 [script]
-read -formal rescale.v
+read -formal -DRESCALE rescale.v
 prep -top rescale
 
 [files]
