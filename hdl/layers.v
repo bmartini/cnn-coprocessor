@@ -221,13 +221,10 @@ module layers
                 else dn_state_nx[DN_ADD] = 1'b1;
             end
             dn_state[DN_POOL] : begin
-                if (pool_cnt < pool_nb) begin
-                    dn_state_nx[DN_READY] = 1'b1;
-                end
-                else if (pool_cnt == pool_nb) begin
+                if (pool_cnt >= pool_nb) begin
                     dn_state_nx[DN_OPS] = 1'b1;
                 end
-                else dn_state_nx[DN_POOL] = 1'b1;
+                else dn_state_nx[DN_READY] = 1'b1;
             end
             dn_state[DN_OPS] : begin
                 if (rescale_valid) begin
