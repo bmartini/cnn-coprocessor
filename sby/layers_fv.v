@@ -104,25 +104,6 @@ module layers_fv
         end
 
 
-    // ask that the cfg data values are within valid range
-    always @(*) begin
-        // for completeness
-        assume((cfg_data[CFG_DWIDTH-1:17] == 'b0));
-
-        // for completeness
-        assume((cfg_data[16] == 1'b0) || (cfg_data[16] == 1'b1));
-
-        // test only very small maxpool area (should find a better way
-        assume(cfg_data[15:8] <= 4);
-
-        // test only valid values of the shift value
-        assume(cfg_data[ 7:0] <= (NUM_WIDTH-IMG_WIDTH));
-
-        // only need the address valid once and then don't care
-        assume(cfg_addr == CFG_LAYERS);
-    end
-
-
     //
     // Check the proper relationship between interface bus signals
     //

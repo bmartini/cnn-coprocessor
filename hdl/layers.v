@@ -453,11 +453,21 @@ module layers
 
 `ifdef FORMAL
 
+`ifdef LAYERS
+`define ASSUME assume
+`else
+`define ASSUME assert
+`endif
+
+
     reg  past_exists;
     initial begin
         restrict property (past_exists == 1'b0);
-        restrict property (rst);
+
+        // ensure reset is triggered at the start
+        restrict property (rst == 1'b1);
     end
+
 
     // extend wait time unit the past can be accessed
     always @(posedge clk)
@@ -480,8 +490,6 @@ module layers
         if (dn_state[DN_RESET]) dn_rst_done <= 1'b1;
 
 
-
-
     // coverage path is only valid if the module has done at least one configuration
     reg  cfg_pending = 1'b0;
     reg  cfg_done    = 1'b0;
@@ -496,6 +504,21 @@ module layers
             end
         end
 
+
+    // ask that the cfg data values are within valid range
+    always @(*) begin
+        // for completeness
+        `ASSUME((bypass == 1'b0) || (bypass == 1'b1));
+
+        // test only very small maxpool area (should find a better way
+        `ASSUME(pool_nb <= 4);
+
+        // test only valid values of the shift value
+        `ASSUME(shift <= (NUM_WIDTH-IMG_WIDTH));
+
+        // only need the address valid once and then don't care
+        `ASSUME(cfg_addr == CFG_LAYERS);
+    end
 
 
     function up_onehot;
@@ -605,9 +628,9 @@ module layers
     // configuration can not change without being sent values
     always @(posedge clk)
         if (past_exists && ($past( ~cfg_valid) || $past(cfg_addr != CFG_LAYERS))) begin
-            assume($stable(bypass));
-            assume($stable(pool_nb));
-            assume($stable(shift));
+            assert($stable(bypass));
+            assert($stable(pool_nb));
+            assert($stable(shift));
         end
 
 
