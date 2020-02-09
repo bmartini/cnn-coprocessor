@@ -342,8 +342,13 @@ module layers
         if (dn_state[DN_RESET]) begin
             pool_cnt <= 8'b0;
         end
+
         if (dn_state[DN_POOL]) begin
             pool_cnt <= pool_cnt + 8'b1;
+
+            if (pool_cnt == pool_nb) begin
+                pool_cnt <= 8'b0;
+            end
         end
     end
 
@@ -520,7 +525,7 @@ module layers
     // configured size
     always @(*)
         if (rst_done && cfg_done && ~dn_state[DN_RESET]) begin
-            assert(pool_cnt <= (pool_nb + 8'd1));
+            assert(pool_cnt <= pool_nb);
         end
 
 
