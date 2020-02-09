@@ -635,6 +635,59 @@ module layers
 
 
     //
+    // Check the proper relationship between interface bus signals
+    //
+
+    // image path holds data steady when stalled
+    always @(posedge clk)
+        if (past_exists && $past(image_val && ~image_rdy)) begin
+            `ASSUME($stable(image_bus));
+        end
+
+
+    // image path will only lower valid after a transaction
+    always @(posedge clk)
+        if (past_exists && $past( ~rst) && $fell(image_val)) begin
+            `ASSUME($past(image_rdy));
+        end
+
+
+    // image path will only lower last after a transaction
+    always @(posedge clk)
+        if (past_exists && $past( ~rst) && $fell(image_last)) begin
+            `ASSUME($past(image_rdy) && $past(image_val));
+        end
+
+
+    // image path will only lower ready after a transaction
+    always @(posedge clk)
+        if (past_exists && $past( ~rst) && $fell(image_rdy)) begin
+            assert($past(image_val));
+        end
+
+
+    // result path holds data steady when stalled
+    always @(posedge clk)
+        if (past_exists && $past( ~rst) && $past(result_val && ~result_rdy)) begin
+            assert($stable(result_bus));
+        end
+
+
+    // result path will only lower valid after a transaction
+    always @(posedge clk)
+        if (past_exists && $past( ~rst) && $fell(result_val)) begin
+            assert($past(result_rdy));
+        end
+
+
+    // result path will only lower ready after a transaction
+    always @(posedge clk)
+        if (past_exists && $past( ~rst) && $fell(result_rdy)) begin
+            `ASSUME($past(result_val));
+        end
+
+
+    //
     // Check that some fundamental use cases are reachable
     //
 
