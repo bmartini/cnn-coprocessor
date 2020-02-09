@@ -228,6 +228,91 @@ module str_gbox
     endgenerate
 
 
+`ifdef FORMAL
+
+`ifdef STR_GBOX
+`define ASSUME assume
+`else
+`define ASSUME assert
+`endif
+
+
+    reg  past_exists;
+    initial begin
+        restrict property (past_exists == 1'b0);
+
+        // ensure reset is triggered at the start
+        restrict property (rst == 1'b1);
+    end
+
+
+    // extend wait time unit the past can be accessed
+    always @(posedge clk)
+        past_exists <= 1'b1;
+
+
+
+    //
+    // Check the proper relationship between interface bus signals
+    //
+
+    // up path holds data steady when stalled
+    always @(posedge clk)
+        if (past_exists && $past(up_val && ~up_rdy)) begin
+            `ASSUME($stable(up_data));
+        end
+
+
+    // up path will only lower valid after a transaction
+    always @(posedge clk)
+        if (past_exists && $past( ~rst) && $fell(up_val)) begin
+            `ASSUME($past(up_rdy));
+        end
+
+
+    // up path will only lower last after a transaction
+    always @(posedge clk)
+        if (past_exists && $past( ~rst) && $fell(up_last)) begin
+            `ASSUME($past(up_rdy) && $past(up_val));
+        end
+
+
+    // up path will only lower ready after a transaction
+    always @(posedge clk)
+        if (past_exists && $past( ~rst) && $fell(up_rdy)) begin
+            assert($past(up_val));
+        end
+
+
+    // down path holds data steady when stalled
+    always @(posedge clk)
+        if (past_exists && $past( ~rst) && $past(dn_val && ~dn_rdy)) begin
+            assert($stable(dn_data));
+        end
+
+
+    // down path will only lower valid after a transaction
+    always @(posedge clk)
+        if (past_exists && $past( ~rst) && $fell(dn_val)) begin
+            assert($past(dn_rdy));
+        end
+
+
+    // down path will only lower last after a transaction
+    always @(posedge clk)
+        if (past_exists && $past( ~rst) && $fell(dn_last)) begin
+            assert($past(dn_rdy) && $past(dn_val));
+        end
+
+
+    // down path will only lower ready after a transaction
+    always @(posedge clk)
+        if (past_exists && $past( ~rst) && $fell(dn_rdy)) begin
+            `ASSUME($past(dn_val));
+        end
+
+
+`endif
 endmodule
 
 `default_nettype wire
