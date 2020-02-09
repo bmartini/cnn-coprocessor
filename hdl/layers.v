@@ -311,9 +311,9 @@ module layers
             add_valid_1p        <= add_valid_2p;
             add_valid           <= add_valid_1p;
 
-            pool_valid_3p       <= add_valid;
-            pool_valid_2p       <= pool_valid_3p;
-            pool_valid_1p       <= pool_valid_2p;
+            pool_valid_3p       <= add_valid;       // DN_ADD -> DN_POOL
+            pool_valid_2p       <= pool_valid_3p;   // DN_POOL-> (DN_READY | DN_OPS)
+            pool_valid_1p       <= pool_valid_2p & dn_state[DN_OPS];
             pool_valid          <= pool_valid_1p;
 
             bias_valid          <= pool_valid;
@@ -324,7 +324,7 @@ module layers
             rescale_valid_3p    <= relu_valid;
             rescale_valid_2p    <= rescale_valid_3p;
             rescale_valid_1p    <= rescale_valid_2p;
-            rescale_valid       <= rescale_valid_1p;
+            rescale_valid       <= rescale_valid_1p & dn_state[DN_OPS];
         end
     end
 
