@@ -144,6 +144,12 @@ module rescale
 
 `ifdef FORMAL
 
+`ifdef RESCALE
+`define ASSUME assume
+`else
+`define ASSUME assert
+`endif
+
     reg         past_exists;
     reg  [2:0]  past_wait;
     initial begin
@@ -158,7 +164,7 @@ module rescale
 
     // ask that the shift cfg values are within valid range
     always @(*) begin
-        assume(shift <= (NUM_WIDTH-IMG_WIDTH));
+        `ASSUME(shift <= (NUM_WIDTH-IMG_WIDTH));
     end
 
 

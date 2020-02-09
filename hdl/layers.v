@@ -221,13 +221,10 @@ module layers
                 else dn_state_nx[DN_ADD] = 1'b1;
             end
             dn_state[DN_POOL] : begin
-                if (pool_cnt < pool_nb) begin
-                    dn_state_nx[DN_READY] = 1'b1;
-                end
-                else if (pool_cnt == pool_nb) begin
+                if (pool_cnt >= pool_nb) begin
                     dn_state_nx[DN_OPS] = 1'b1;
                 end
-                else dn_state_nx[DN_POOL] = 1'b1;
+                else dn_state_nx[DN_READY] = 1'b1;
             end
             dn_state[DN_OPS] : begin
                 if (rescale_valid) begin
@@ -262,34 +259,73 @@ module layers
 
 
     always @(posedge clk) begin
-        mac_valid_6p        <= image_val & image_rdy & image_last;
-        mac_valid_5p        <= mac_valid_6p;
-        mac_valid_4p        <= mac_valid_5p;
-        mac_valid_3p        <= mac_valid_4p;
-        mac_valid_2p        <= mac_valid_3p;
-        mac_valid_1p        <= mac_valid_2p;
-        mac_valid           <= mac_valid_1p;
+        if (up_state[UP_RESET]) begin
+            mac_valid_6p        <= 1'b0;
+            mac_valid_5p        <= 1'b0;
+            mac_valid_4p        <= 1'b0;
+            mac_valid_3p        <= 1'b0;
+            mac_valid_2p        <= 1'b0;
+            mac_valid_1p        <= 1'b0;
+            mac_valid           <= 1'b0;
+        end
+        else begin
+            mac_valid_6p        <= image_val & image_rdy & image_last;
+            mac_valid_5p        <= mac_valid_6p;
+            mac_valid_4p        <= mac_valid_5p;
+            mac_valid_3p        <= mac_valid_4p;
+            mac_valid_2p        <= mac_valid_3p;
+            mac_valid_1p        <= mac_valid_2p;
+            mac_valid           <= mac_valid_1p;
+        end
+    end
 
-        add_valid_4p        <= up_state[UP_CLEAR] & dn_state[DN_READY];
-        add_valid_3p        <= add_valid_4p;
-        add_valid_2p        <= add_valid_3p;
-        add_valid_1p        <= add_valid_2p;
-        add_valid           <= add_valid_1p;
 
-        pool_valid_3p       <= add_valid;
-        pool_valid_2p       <= pool_valid_3p;
-        pool_valid_1p       <= pool_valid_2p;
-        pool_valid          <= pool_valid_1p;
 
-        bias_valid          <= pool_valid;
+    always @(posedge clk) begin
+        if (dn_state[DN_RESET]) begin
+            add_valid_4p        <= 1'b0;
+            add_valid_3p        <= 1'b0;
+            add_valid_2p        <= 1'b0;
+            add_valid_1p        <= 1'b0;
+            add_valid           <= 1'b0;
 
-        relu_valid_1p       <= bias_valid;
-        relu_valid          <= relu_valid_1p;
+            pool_valid_3p       <= 1'b0;
+            pool_valid_2p       <= 1'b0;
+            pool_valid_1p       <= 1'b0;
+            pool_valid          <= 1'b0;
 
-        rescale_valid_3p    <= relu_valid;
-        rescale_valid_2p    <= rescale_valid_3p;
-        rescale_valid_1p    <= rescale_valid_2p;
-        rescale_valid       <= rescale_valid_1p;
+            bias_valid          <= 1'b0;
+
+            relu_valid_1p       <= 1'b0;
+            relu_valid          <= 1'b0;
+
+            rescale_valid_3p    <= 1'b0;
+            rescale_valid_2p    <= 1'b0;
+            rescale_valid_1p    <= 1'b0;
+            rescale_valid       <= 1'b0;
+        end
+        else begin
+            add_valid_4p        <= up_state[UP_CLEAR] & dn_state[DN_READY];
+            add_valid_3p        <= add_valid_4p;
+            add_valid_2p        <= add_valid_3p;
+            add_valid_1p        <= add_valid_2p;
+            add_valid           <= add_valid_1p;
+
+            pool_valid_3p       <= add_valid;       // DN_ADD -> DN_POOL
+            pool_valid_2p       <= pool_valid_3p;   // DN_POOL-> (DN_READY | DN_OPS)
+            pool_valid_1p       <= pool_valid_2p & dn_state[DN_OPS];
+            pool_valid          <= pool_valid_1p;
+
+            bias_valid          <= pool_valid;
+
+            relu_valid_1p       <= bias_valid;
+            relu_valid          <= relu_valid_1p;
+
+            rescale_valid_3p    <= relu_valid;
+            rescale_valid_2p    <= rescale_valid_3p;
+            rescale_valid_1p    <= rescale_valid_2p;
+            rescale_valid       <= rescale_valid_1p & dn_state[DN_OPS];
+        end
     end
 
 
@@ -303,8 +339,12 @@ module layers
         if (dn_state[DN_RESET]) begin
             pool_cnt <= 8'b0;
         end
-        if (dn_state[DN_POOL]) begin
+        else if (dn_state[DN_POOL]) begin
             pool_cnt <= pool_cnt + 8'b1;
+
+            if (pool_cnt == pool_nb) begin
+                pool_cnt <= 8'b0;
+            end
         end
     end
 
@@ -411,6 +451,262 @@ module layers
 
 
 
+`ifdef FORMAL
+
+`ifdef LAYERS
+`define ASSUME assume
+`else
+`define ASSUME assert
+`endif
+
+
+    reg  past_exists;
+    initial begin
+        restrict property (past_exists == 1'b0);
+
+        // ensure reset is triggered at the start
+        restrict property (rst == 1'b1);
+    end
+
+
+    // extend wait time unit the past can be accessed
+    always @(posedge clk)
+        past_exists <= 1'b1;
+
+
+    // coverage path is only valid if the module has done at least one restart
+    reg  rst_done = 1'b0;
+    always @(posedge clk)
+        if (rst) rst_done <= 1'b1;
+
+
+    reg  up_rst_done = 1'b0;
+    always @(posedge clk)
+        if (up_state[UP_RESET]) up_rst_done <= 1'b1;
+
+
+    reg  dn_rst_done = 1'b0;
+    always @(posedge clk)
+        if (dn_state[DN_RESET]) dn_rst_done <= 1'b1;
+
+
+    // coverage path is only valid if the module has done at least one configuration
+    reg  cfg_pending = 1'b0;
+    reg  cfg_done    = 1'b0;
+    always @(posedge clk)
+        if (cfg_valid | cfg_pending) begin
+
+            cfg_done    <= 1'b0;
+            cfg_pending <= 1'b1;
+            if (dn_state[DN_READY] & (pool_cnt == 8'b0)) begin
+                cfg_done    <= 1'b1;
+                cfg_pending <= 1'b0;
+            end
+        end
+
+
+    // ask that the cfg data values are within valid range
+    always @(*) begin
+        // for completeness
+        `ASSUME((bypass == 1'b0) || (bypass == 1'b1));
+
+        // test only very small maxpool area (should find a better way)
+        `ASSUME(pool_nb <= 4);
+
+        // test only valid values of the shift value
+        `ASSUME(shift <= (NUM_WIDTH-IMG_WIDTH));
+
+        // only need the address valid once and then don't care
+        `ASSUME(cfg_addr == CFG_LAYERS);
+    end
+
+
+    function up_onehot;
+        begin
+            up_onehot = 1'b0;
+
+            case (up_state)
+                4'b0001 : up_onehot = 1'b1;
+                4'b0010 : up_onehot = 1'b1;
+                4'b0100 : up_onehot = 1'b1;
+                4'b1000 : up_onehot = 1'b1;
+                default : up_onehot = 1'b0;
+            endcase
+        end
+    endfunction
+
+
+    function dn_onehot;
+        begin
+            dn_onehot = 1'b0;
+
+            case (dn_state)
+                6'b000001 : dn_onehot = 1'b1;
+                6'b000010 : dn_onehot = 1'b1;
+                6'b000100 : dn_onehot = 1'b1;
+                6'b001000 : dn_onehot = 1'b1;
+                6'b010000 : dn_onehot = 1'b1;
+                6'b100000 : dn_onehot = 1'b1;
+                default   : dn_onehot = 1'b0;
+            endcase
+        end
+    endfunction
+
+
+    function up_onehot0;
+        reg up_valid;
+
+        begin
+            up_onehot0  = 1'b1;
+            up_valid    = 1'b1;
+
+            if (mac_valid_6p)   {up_onehot0, up_valid} = {up_valid, 1'b0};
+            if (mac_valid_5p)   {up_onehot0, up_valid} = {up_valid, 1'b0};
+            if (mac_valid_4p)   {up_onehot0, up_valid} = {up_valid, 1'b0};
+            if (mac_valid_3p)   {up_onehot0, up_valid} = {up_valid, 1'b0};
+            if (mac_valid_2p)   {up_onehot0, up_valid} = {up_valid, 1'b0};
+            if (mac_valid_1p)   {up_onehot0, up_valid} = {up_valid, 1'b0};
+            if (mac_valid)      {up_onehot0, up_valid} = {up_valid, 1'b0};
+        end
+    endfunction
+
+
+    function dn_onehot0;
+        reg dn_valid;
+
+        begin
+            dn_onehot0  = 1'b1;
+            dn_valid    = 1'b1;
+
+            if (add_valid_4p)       {dn_onehot0, dn_valid} = {dn_valid, 1'b0};
+            if (add_valid_3p)       {dn_onehot0, dn_valid} = {dn_valid, 1'b0};
+            if (add_valid_2p)       {dn_onehot0, dn_valid} = {dn_valid, 1'b0};
+            if (add_valid_1p)       {dn_onehot0, dn_valid} = {dn_valid, 1'b0};
+            if (add_valid)          {dn_onehot0, dn_valid} = {dn_valid, 1'b0};
+            if (pool_valid_3p)      {dn_onehot0, dn_valid} = {dn_valid, 1'b0};
+            if (pool_valid_2p)      {dn_onehot0, dn_valid} = {dn_valid, 1'b0};
+            if (pool_valid_1p)      {dn_onehot0, dn_valid} = {dn_valid, 1'b0};
+            if (pool_valid)         {dn_onehot0, dn_valid} = {dn_valid, 1'b0};
+            if (bias_valid)         {dn_onehot0, dn_valid} = {dn_valid, 1'b0};
+            if (relu_valid_1p)      {dn_onehot0, dn_valid} = {dn_valid, 1'b0};
+            if (relu_valid)         {dn_onehot0, dn_valid} = {dn_valid, 1'b0};
+            if (rescale_valid_3p)   {dn_onehot0, dn_valid} = {dn_valid, 1'b0};
+            if (rescale_valid_2p)   {dn_onehot0, dn_valid} = {dn_valid, 1'b0};
+            if (rescale_valid_1p)   {dn_onehot0, dn_valid} = {dn_valid, 1'b0};
+            if (rescale_valid)      {dn_onehot0, dn_valid} = {dn_valid, 1'b0};
+        end
+    endfunction
+
+
+    always @(*)
+        if (rst_done) begin
+            assert(up_onehot());
+            assert(dn_onehot());
+        end
+
+
+    always @(*)
+        if (up_rst_done) begin
+            assert(up_onehot0());
+        end
+
+
+    always @(*)
+        if (dn_rst_done) begin
+            assert(dn_onehot0());
+        end
+
+
+    // the size of the pooling area can not be larger then the expected
+    // configured size
+    always @(*)
+        if (dn_rst_done && cfg_done) begin
+            assert(pool_cnt <= pool_nb);
+        end
+
+
+    // configuration can not change without being sent values
+    always @(posedge clk)
+        if (past_exists && ($past( ~cfg_valid) || $past(cfg_addr != CFG_LAYERS))) begin
+            assert($stable(bypass));
+            assert($stable(pool_nb));
+            assert($stable(shift));
+        end
+
+
+    //
+    // Check the proper relationship between interface bus signals
+    //
+
+    // image path holds data steady when stalled
+    always @(posedge clk)
+        if (past_exists && $past(image_val && ~image_rdy)) begin
+            `ASSUME($stable(image_bus));
+        end
+
+
+    // image path will only lower valid after a transaction
+    always @(posedge clk)
+        if (past_exists && $past( ~rst) && $fell(image_val)) begin
+            `ASSUME($past(image_rdy));
+        end
+
+
+    // image path will only lower last after a transaction
+    always @(posedge clk)
+        if (past_exists && $past( ~rst) && $fell(image_last)) begin
+            `ASSUME($past(image_rdy) && $past(image_val));
+        end
+
+
+    // image path will only lower ready after a transaction
+    always @(posedge clk)
+        if (past_exists && $past( ~rst) && $fell(image_rdy)) begin
+            assert($past(image_val));
+        end
+
+
+    // result path holds data steady when stalled
+    always @(posedge clk)
+        if (past_exists && $past( ~rst) && $past(result_val && ~result_rdy)) begin
+            assert($stable(result_bus));
+        end
+
+
+    // result path will only lower valid after a transaction
+    always @(posedge clk)
+        if (past_exists && $past( ~rst) && $fell(result_val)) begin
+            assert($past(result_rdy));
+        end
+
+
+    // result path will only lower ready after a transaction
+    always @(posedge clk)
+        if (past_exists && $past( ~rst) && $fell(result_rdy)) begin
+            `ASSUME($past(result_val));
+        end
+
+
+    //
+    // Check that some fundamental use cases are reachable
+    //
+
+
+    // handover condition between the convolution and the other operations
+    always @(*)
+        if (rst_done && cfg_done) begin
+            cover(up_state[UP_CLEAR] && dn_state[DN_READY]);
+        end
+
+
+    // end condition with results ready to send
+    always @(*)
+        if (rst_done && cfg_done) begin
+            cover(dn_state[DN_CLEAR] && result_rdy);
+        end
+
+
+`endif
 endmodule
 
 `default_nettype wire
