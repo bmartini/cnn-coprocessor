@@ -474,11 +474,19 @@ module layers
         if (rst) rst_done <= 1'b1;
 
 
-
     // coverage path is only valid if the module has done at least one configuration
-    reg  cfg_done = 1'b0;
+    reg  cfg_pending = 1'b0;
+    reg  cfg_done    = 1'b0;
     always @(posedge clk)
-        if (cfg_valid) cfg_done <= 1'b1;
+        if (cfg_valid | cfg_pending) begin
+
+            cfg_done    <= 1'b0;
+            cfg_pending <= 1'b1;
+            if (dn_state[DN_READY] & (pool_cnt == 8'b0)) begin
+                cfg_done    <= 1'b1;
+                cfg_pending <= 1'b0;
+            end
+        end
 
 
 
