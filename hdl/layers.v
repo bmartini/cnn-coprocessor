@@ -470,6 +470,18 @@ module layers
         if (rst) rst_done <= 1'b1;
 
 
+    reg  up_rst_done = 1'b0;
+    always @(posedge clk)
+        if (up_state[UP_RESET]) up_rst_done <= 1'b1;
+
+
+    reg  dn_rst_done = 1'b0;
+    always @(posedge clk)
+        if (dn_state[DN_RESET]) dn_rst_done <= 1'b1;
+
+
+
+
     // coverage path is only valid if the module has done at least one configuration
     reg  cfg_pending = 1'b0;
     reg  cfg_done    = 1'b0;
@@ -518,17 +530,74 @@ module layers
     endfunction
 
 
+    function up_onehot0;
+        reg up_valid;
+
+        begin
+            up_onehot0  = 1'b1;
+            up_valid    = 1'b1;
+
+            if (mac_valid_6p)   {up_onehot0, up_valid} = {up_valid, 1'b0};
+            if (mac_valid_5p)   {up_onehot0, up_valid} = {up_valid, 1'b0};
+            if (mac_valid_4p)   {up_onehot0, up_valid} = {up_valid, 1'b0};
+            if (mac_valid_3p)   {up_onehot0, up_valid} = {up_valid, 1'b0};
+            if (mac_valid_2p)   {up_onehot0, up_valid} = {up_valid, 1'b0};
+            if (mac_valid_1p)   {up_onehot0, up_valid} = {up_valid, 1'b0};
+            if (mac_valid)      {up_onehot0, up_valid} = {up_valid, 1'b0};
+        end
+    endfunction
+
+
+    function dn_onehot0;
+        reg dn_valid;
+
+        begin
+            dn_onehot0  = 1'b1;
+            dn_valid    = 1'b1;
+
+            if (add_valid_4p)       {dn_onehot0, dn_valid} = {dn_valid, 1'b0};
+            if (add_valid_3p)       {dn_onehot0, dn_valid} = {dn_valid, 1'b0};
+            if (add_valid_2p)       {dn_onehot0, dn_valid} = {dn_valid, 1'b0};
+            if (add_valid_1p)       {dn_onehot0, dn_valid} = {dn_valid, 1'b0};
+            if (add_valid)          {dn_onehot0, dn_valid} = {dn_valid, 1'b0};
+            if (pool_valid_3p)      {dn_onehot0, dn_valid} = {dn_valid, 1'b0};
+            if (pool_valid_2p)      {dn_onehot0, dn_valid} = {dn_valid, 1'b0};
+            if (pool_valid_1p)      {dn_onehot0, dn_valid} = {dn_valid, 1'b0};
+            if (pool_valid)         {dn_onehot0, dn_valid} = {dn_valid, 1'b0};
+            if (bias_valid)         {dn_onehot0, dn_valid} = {dn_valid, 1'b0};
+            if (relu_valid_1p)      {dn_onehot0, dn_valid} = {dn_valid, 1'b0};
+            if (relu_valid)         {dn_onehot0, dn_valid} = {dn_valid, 1'b0};
+            if (rescale_valid_3p)   {dn_onehot0, dn_valid} = {dn_valid, 1'b0};
+            if (rescale_valid_2p)   {dn_onehot0, dn_valid} = {dn_valid, 1'b0};
+            if (rescale_valid_1p)   {dn_onehot0, dn_valid} = {dn_valid, 1'b0};
+            if (rescale_valid)      {dn_onehot0, dn_valid} = {dn_valid, 1'b0};
+        end
+    endfunction
+
+
     always @(posedge clk)
-        if (past_exists) begin
+        if (rst_done) begin
             assert(up_onehot());
             assert(dn_onehot());
+        end
+
+
+    always @(posedge clk)
+        if (up_rst_done) begin
+            assert(up_onehot0());
+        end
+
+
+    always @(posedge clk)
+        if (dn_rst_done) begin
+            assert(dn_onehot0());
         end
 
 
     // the size of the pooling area can not be larger then the expected
     // configured size
     always @(*)
-        if (rst_done && cfg_done && ~dn_state[DN_RESET]) begin
+        if (dn_rst_done && cfg_done) begin
             assert(pool_cnt <= pool_nb);
         end
 
