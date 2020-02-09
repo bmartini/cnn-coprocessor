@@ -339,8 +339,7 @@ module layers
         if (dn_state[DN_RESET]) begin
             pool_cnt <= 8'b0;
         end
-
-        if (dn_state[DN_POOL]) begin
+        else if (dn_state[DN_POOL]) begin
             pool_cnt <= pool_cnt + 8'b1;
 
             if (pool_cnt == pool_nb) begin
