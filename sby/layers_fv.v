@@ -72,27 +72,35 @@ module layers_fv
 
 
 
+    reg  past_exists;
     initial begin
+        restrict property (past_exists == 1'b0);
+
         // ensure reset is triggered at the start
-        restrict property (rst);
+        restrict property (rst == 1'b1);
 
         // ensure config valid is triggered at the start
-        assume(cfg_valid);
+        restrict property (cfg_valid == 1'b1);
     end
+
+
+    // wait untill the past can be accessed
+    always @(posedge clk)
+        past_exists <= 1'b1;
 
 
     // force the the reset low and keep it low after one reset, must be used
     // with the reset set to high in an initial block
     always @(posedge clk)
-        if ($past(rst) || ~rst) begin
-            assume( ~rst);
+        if (past_exists && ($past(rst) || ~rst)) begin
+            assume(rst == 1'b0);
         end
 
 
     // restrict configuration values and one configuration
     always @(posedge clk)
-        if ($past(cfg_valid) || ~cfg_valid) begin
-            assume( ~cfg_valid);
+        if (past_exists && ($past(cfg_valid) || ~cfg_valid)) begin
+            assume(cfg_valid == 1'b0);
         end
 
 
@@ -121,49 +129,49 @@ module layers_fv
 
     // image path holds data steady when stalled
     always @(posedge clk)
-        if ( ~rst && $past(image_val && ~image_rdy)) begin
+        if (past_exists && $past(image_val && ~image_rdy)) begin
             assume($stable(image_bus));
         end
 
 
     // image path will only lower valid after a transaction
     always @(posedge clk)
-        if ( ~rst && $past( ~rst) && $fell(image_val)) begin
+        if (past_exists && $past( ~rst) && $fell(image_val)) begin
             assume($past(image_rdy));
         end
 
 
     // image path will only lower last after a transaction
     always @(posedge clk)
-        if ( ~rst && $past( ~rst) && $fell(image_last)) begin
+        if (past_exists && $past( ~rst) && $fell(image_last)) begin
             assume($past(image_rdy) && $past(image_val));
         end
 
 
     // image path will only lower ready after a transaction
     always @(posedge clk)
-        if ( ~rst && $past( ~rst) && $fell(image_rdy)) begin
+        if (past_exists && $past( ~rst) && $fell(image_rdy)) begin
             assert($past(image_val));
         end
 
 
     // result path holds data steady when stalled
     always @(posedge clk)
-        if ( ~rst && $past( ~rst) && $past(result_val && ~result_rdy)) begin
+        if (past_exists && $past( ~rst) && $past(result_val && ~result_rdy)) begin
             assert($stable(result_bus));
         end
 
 
     // result path will only lower valid after a transaction
     always @(posedge clk)
-        if ( ~rst && $past( ~rst) && $fell(result_val)) begin
+        if (past_exists && $past( ~rst) && $fell(result_val)) begin
             assert($past(result_rdy));
         end
 
 
     // result path will only lower ready after a transaction
     always @(posedge clk)
-        if ( ~rst && $past( ~rst) && $fell(result_rdy)) begin
+        if (past_exists && $past( ~rst) && $fell(result_rdy)) begin
             assume($past(result_val));
         end
 
