@@ -510,7 +510,7 @@ module layers
         // for completeness
         `ASSUME((bypass == 1'b0) || (bypass == 1'b1));
 
-        // test only very small maxpool area (should find a better way
+        // test only very small maxpool area (should find a better way)
         `ASSUME(pool_nb <= 4);
 
         // test only valid values of the shift value
@@ -598,20 +598,20 @@ module layers
     endfunction
 
 
-    always @(posedge clk)
+    always @(*)
         if (rst_done) begin
             assert(up_onehot());
             assert(dn_onehot());
         end
 
 
-    always @(posedge clk)
+    always @(*)
         if (up_rst_done) begin
             assert(up_onehot0());
         end
 
 
-    always @(posedge clk)
+    always @(*)
         if (dn_rst_done) begin
             assert(dn_onehot0());
         end
