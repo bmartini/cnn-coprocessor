@@ -319,6 +319,10 @@ module str_gbox
 
             always @(posedge clk)
                 for (ii=0; ii<DATA_NB; ii=ii+1) begin
+                    if (dn_active & token[0]) begin
+                        dn_data[ii*DATA_UP_WIDTH +: DATA_UP_WIDTH] <= {DATA_UP_WIDTH{1'b0}};
+                    end
+
                     if (dn_active & token[ii]) begin
                         dn_data[ii*DATA_UP_WIDTH +: DATA_UP_WIDTH] <= up_data_i;
                     end
