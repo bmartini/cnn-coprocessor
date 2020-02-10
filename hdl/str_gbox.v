@@ -140,6 +140,55 @@ module str_gbox
                 if (dn_active) dn_data <= up_data_i;
 
 
+`ifdef FORMAL
+            reg  past_exists;
+            initial begin
+                past_exists = 1'b0;
+            end
+
+
+            // extend wait time unit the past can be accessed
+            always @(posedge clk)
+                past_exists <= 1'b1;
+
+
+
+            //
+            // Check that the down data is sourced from correct locations
+            //
+
+            // dn stream data sourced from up stream data
+            always @(posedge clk)
+                if (past_exists && $past(dn_val && dn_rdy && up_rdy)) begin
+                    assert(dn_data == $past(up_data));
+                end
+
+
+            // dn stream data sourced from skid register
+            always @(posedge clk)
+                if (past_exists && $past(dn_val && dn_rdy && ~up_rdy)) begin
+                    assert(dn_data == $past(skid_data));
+                end
+
+
+            //
+            // Check that the valid up data is always stored somewhere
+            //
+
+            // valid up stream data is passed to dn register when dn is not stalled
+            always @(posedge clk)
+                if (past_exists && $past( ~rst && up_val && up_rdy && ~dn_val)) begin
+                    assert(($past(up_data) == dn_data) && dn_val);
+                end
+
+
+            // valid up stream data is passed to skid register when dn is stalled
+            always @(posedge clk)
+                if (past_exists && $past( ~rst && up_val && up_rdy && dn_val && ~dn_rdy)) begin
+                    assert(($past(up_data) == skid_data) && dn_val);
+                end
+
+`endif
         end
         else if (DATA_UP_WIDTH > DATA_DN_WIDTH) begin : SERIAL_
 
