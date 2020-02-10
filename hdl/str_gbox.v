@@ -423,31 +423,26 @@ module str_gbox
                 past_exists <= 1'b1;
 
 
+            reg  [DATA_DN_WIDTH-1:0]    up_data_1p;
+            reg  [DATA_DN_WIDTH-1:0]    up_data_2p;
+            integer                     cnt;
+            reg                         cnt_done;
 
-            integer cnt;
-            integer cnt_1p;
-            integer cnt_2p;
-
-            reg                                 up_val_1p;
-            reg  [(DATA_UP_WIDTH*DATA_NB)-1:0]  up_data_1p;
-            reg  [(DATA_UP_WIDTH*DATA_NB)-1:0]  up_data_2p;
 
             always @(posedge clk) begin
                 if (rst) begin
                     cnt         <=  'b0;
-                    cnt_1p      <=  'b0;
-                    up_val_1p   <= 1'b0;
+                    cnt_done    <= 1'b0;
                 end
                 else begin
-                    up_val_1p   <= 1'b0;
+                    cnt_done    <= 1'b0;
 
                     if (up_val & up_rdy) begin
                         cnt <= cnt + 'd1;
 
                         if ((cnt >= (DATA_NB-1)) || up_last) begin
                             cnt         <= 'b0;
-                            cnt_1p      <= cnt;
-                            up_val_1p   <= 1'b1;
+                            cnt_done    <= 1'b1;
                         end
                     end
                 end
@@ -456,45 +451,23 @@ module str_gbox
 
             always @(posedge clk)
                 if (up_val & up_rdy) begin
+                    if (cnt == 0) begin
+                        up_data_1p <= {DATA_DN_WIDTH{1'b0}};
+                    end
+
                     up_data_1p[cnt*DATA_UP_WIDTH +: DATA_UP_WIDTH] <= up_data;
                 end
 
 
             always @(posedge clk)
-                if (up_val_1p) begin
+                if (cnt_done) begin
                     up_data_2p  <= up_data_1p;
-                    cnt_2p      <= cnt_1p;
                 end
-
-
-            function check_data (
-                    input [DATA_DN_WIDTH-1:0]   test_bus_a,
-                    input [DATA_DN_WIDTH-1:0]   test_bus_b,
-                    input integer               index
-                );
-                integer ii;
-
-                begin
-
-                    check_data = 1'b1;
-                    for (ii = 0; ii < (DATA_DN_WIDTH/DATA_UP_WIDTH); ii=ii+1) begin
-                        if (ii <= index) begin
-                            if (   test_bus_a[ii*DATA_UP_WIDTH +: DATA_UP_WIDTH]
-                                != test_bus_b[ii*DATA_UP_WIDTH +: DATA_UP_WIDTH]
-                                ) begin
-
-                                check_data = 1'b0;
-                            end
-                        end
-                    end
-                end
-            endfunction
-
 
 
             always @(posedge clk)
                 if (past_exists && $past(dn_val & dn_rdy)) begin
-                    assert(check_data($past(dn_data), up_data_2p, cnt_2p));
+                    assert($past(dn_data) == up_data_2p);
                 end
 
 `endif
