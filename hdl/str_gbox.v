@@ -35,18 +35,18 @@ module str_gbox
   #(parameter
     DATA_UP_WIDTH   = 2,
     DATA_DN_WIDTH   = 8)
-   (input  wire                     clk,
-    input  wire                     rst,
+   (input  logic                        clk,
+    input  logic                        rst,
 
-    input  wire [DATA_UP_WIDTH-1:0] up_data,
-    input  wire                     up_last,
-    input  wire                     up_val,
-    output wire                     up_rdy,
+    input  logic [DATA_UP_WIDTH-1:0]    up_data,
+    input  logic                        up_last,
+    input  logic                        up_val,
+    output logic                        up_rdy,
 
-    output wire [DATA_DN_WIDTH-1:0] dn_data,
-    output wire                     dn_last,
-    output wire                     dn_val,
-    input  wire                     dn_rdy
+    output logic [DATA_DN_WIDTH-1:0]    dn_data,
+    output logic                        dn_last,
+    output logic                        dn_val,
+    input  logic                        dn_rdy
 );
 
 
@@ -67,46 +67,80 @@ module str_gbox
      * Internal signals
      */
 
+    reg                         skid_val;
+    reg                         skid_last;
+    reg  [DATA_UP_WIDTH-1:0]    skid_data;
+
+    wire                        up_val_i;
+    wire                        up_last_i;
+    wire [DATA_UP_WIDTH-1:0]    up_data_i;
+
+    wire                        dn_active;
+
+
 
     /**
      * Implementation
      */
 
+
+    // skid_data always reflects downstream data last cycle
+    always @(posedge clk)
+        skid_data <= up_data_i;
+
+
+    // skid_val remembers if there is valid data in the skid register
+    // until it's consumed by the downstream
+    always @(posedge clk)
+        if (rst)    skid_val <= 1'b0;
+        else        skid_val <= up_val_i & ~dn_active;
+
+
+    always @(posedge clk)
+        if (rst)    skid_last <= 1'b0;
+        else        skid_last <= up_last_i & ~dn_active;
+
+
+    // down stream mux: if up_rdy not active, use last cycle's data and valid
+    assign up_data_i = up_rdy ? up_data : skid_data;
+
+    assign up_last_i = up_rdy ? up_last : skid_last;
+
+    assign up_val_i  = up_rdy ? up_val  : skid_val;
+
+
+    // do not stall pipeline until it is primed
+    assign dn_active = ~dn_val | dn_rdy;
+
+
     generate
         if (DATA_UP_WIDTH == DATA_DN_WIDTH) begin : PASS_
 
-            reg  [DATA_DN_WIDTH-1:0]    dn_data_i;
-            reg                         dn_last_i;
-            reg                         dn_val_i;
-
-
-            assign up_rdy   = dn_rdy;
-
-            assign dn_data  = dn_data_i;
-
-            assign dn_last  = dn_last_i & dn_rdy;
-
-            assign dn_val   = dn_val_i & dn_rdy;
+            // when down stream is ready or up stream has valid data, set
+            // upstream ready to high if the modules 'down' pipeline is not
+            // stalled
+            always @(posedge clk)
+                if      (rst)               up_rdy <= 1'b0;
+                else if (dn_rdy | up_val)   up_rdy <= dn_active;
 
 
             always @(posedge clk)
-                if (dn_rdy & up_val) begin
-                    dn_data_i <= up_data;
-                end
+                if      (rst)       dn_last <= 1'b0;
+                else if (dn_active) dn_last <= up_last_i;
 
 
             always @(posedge clk)
-                if      (rst)       dn_last_i <= 1'b0;
-                else if (dn_rdy)    dn_last_i <= up_val & up_last;
+                if      (rst)       dn_val <= 1'b0;
+                else if (dn_active) dn_val <= up_val_i;
 
 
             always @(posedge clk)
-                if      (rst)       dn_val_i <= 1'b0;
-                else if (dn_rdy)    dn_val_i <= up_val;
+                if (dn_active) dn_data <= up_data_i;
 
 
         end
         else if (DATA_UP_WIDTH > DATA_DN_WIDTH) begin : SERIAL_
+
 
             localparam DATA_NB = DATA_UP_WIDTH/DATA_DN_WIDTH;
 
@@ -117,44 +151,53 @@ module str_gbox
             reg  [DATA_NB-1:0]          serial_last;
             reg  [DATA_NB-1:0]          serial_valid;
 
+            wire                        up_active;
+            reg                         up_rdy_i;
 
-            assign up_rdy   = dn_rdy & token[0];
 
-            assign dn_data  = serial_data[0 +: DATA_DN_WIDTH];
 
-            assign dn_last  = serial_last[0] & dn_rdy;
+            assign up_active    = up_val_i & token[0];
 
-            assign dn_val   = serial_valid[0] & dn_rdy;
+            assign up_rdy       = up_rdy_i & token[0];
+
+
+            // set upstream ready to high if the modules 'down' pipeline is not
+            // stalled and the serial data if available to be written to
+            always @(posedge clk)
+                if      (rst)                           up_rdy_i <= 1'b0;
+                else if ((dn_rdy & token[0]) | up_val)  up_rdy_i <= dn_active;
+
+
 
             assign token_nx = {token, token};
 
 
             always @(posedge clk)
                 if (rst) token <= 'b1;
-                else if (dn_rdy) begin
+                else if (dn_active) begin
 
-                    if ( ~token[0] | (up_rdy & up_val)) begin
+                    if ( ~token[0] | up_active) begin
                         token <= token_nx[DATA_NB-1 +: DATA_NB];
                     end
                 end
 
 
             always @(posedge clk)
-                if (dn_rdy) begin
+                if (dn_active) begin
 
                     serial_data <= serial_data >> DATA_DN_WIDTH;
-                    if (up_rdy & up_val) begin
-                        serial_data <= up_data;
+                    if (up_active) begin
+                        serial_data <= up_data_i;
                     end
                 end
 
 
             always @(posedge clk)
                 if (rst) serial_last <= 'b0;
-                else if (dn_rdy) begin
+                else if (dn_active) begin
 
                     serial_last <= serial_last >> 1;
-                    if (up_rdy & up_val & up_last) begin
+                    if (up_active & up_last_i) begin
                         serial_last             <= 'b0;
                         serial_last[DATA_NB-1]  <= 1'b1;
                     end
@@ -163,13 +206,21 @@ module str_gbox
 
             always @(posedge clk)
                 if (rst) serial_valid <= 'b0;
-                else if (dn_rdy) begin
+                else if (dn_active) begin
 
                     serial_valid <= serial_valid >> 1;
-                    if (up_rdy & up_val) begin
+                    if (up_active) begin
                         serial_valid <= {DATA_NB{1'b1}};
                     end
                 end
+
+
+
+            assign dn_data  = serial_data[0 +: DATA_DN_WIDTH];
+
+            assign dn_last  = serial_last[0];
+
+            assign dn_val   = serial_valid[0];
 
 
         end
@@ -180,47 +231,45 @@ module str_gbox
             integer                     ii;
             wire [2*DATA_NB-1:0]        token_nx;
             reg  [DATA_NB-1:0]          token;
-            reg  [DATA_DN_WIDTH-1:0]    dn_data_i;
-            reg                         dn_last_i;
-            reg                         dn_val_i;
 
 
-            assign up_rdy   = dn_rdy;
+            // when down stream is ready or up stream has valid data, set
+            // upstream ready to high if the modules 'down' pipeline is not
+            // stalled
+            always @(posedge clk)
+                if      (rst)               up_rdy <= 1'b0;
+                else if (dn_rdy | up_val)   up_rdy <= dn_active;
 
-            assign dn_data  = dn_data_i;
 
-            assign dn_last  = dn_last_i & dn_rdy;
-
-            assign dn_val   = dn_val_i & dn_rdy;
 
             assign token_nx = {token, token};
 
 
             always @(posedge clk)
-                if (rst) dn_last_i <= 1'b0;
-                else if (dn_rdy) begin
-                    dn_last_i <= up_val & up_last;
+                if (rst) dn_last <= 1'b0;
+                else if (dn_active) begin
+                    dn_last <= up_val_i & up_last_i;
                 end
 
 
             always @(posedge clk)
-                if (rst) dn_val_i <= 1'b0;
-                else if (dn_rdy) begin
-                    dn_val_i <= (token[DATA_NB-1] & up_val) | (up_val & up_last);
+                if (rst) dn_val <= 1'b0;
+                else if (dn_active) begin
+                    dn_val <= (token[DATA_NB-1] & up_val_i) | (up_val_i & up_last_i);
                 end
 
 
             always @(posedge clk)
-                if (rst | (dn_rdy & up_val & up_last)) token <= 'b1;
-                else if (dn_rdy & up_val) begin
+                if (rst | (dn_active & up_val_i & up_last_i)) token <= 'b1;
+                else if (dn_active & up_val_i) begin
                     token <= token_nx[DATA_NB-1 +: DATA_NB];
                 end
 
 
             always @(posedge clk)
                 for (ii=0; ii<DATA_NB; ii=ii+1) begin
-                    if (dn_rdy & token[ii]) begin
-                        dn_data_i[ii*DATA_UP_WIDTH +: DATA_UP_WIDTH] <= up_data;
+                    if (dn_active & token[ii]) begin
+                        dn_data[ii*DATA_UP_WIDTH +: DATA_UP_WIDTH] <= up_data_i;
                     end
                 end
 
@@ -239,10 +288,10 @@ module str_gbox
 
     reg  past_exists;
     initial begin
-        restrict property (past_exists == 1'b0);
+        past_exists = 1'b0;
 
         // ensure reset is triggered at the start
-        restrict property (rst == 1'b1);
+        rst = 1'b1;
     end
 
 
@@ -315,6 +364,8 @@ module str_gbox
 `endif
 endmodule
 
+`ifndef YOSYS
 `default_nettype wire
+`endif
 
 `endif //  `ifndef _str_gbox_
