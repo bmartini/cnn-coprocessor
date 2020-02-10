@@ -6,8 +6,10 @@
  *  str_gbox
  *
  * Description:
- *  The AXIS Gear Box will serializes or deserializes a stream of data
- *  depending of the relative widths of the streams. Is only one register deep.
+ *  The STREAM Gear Box will serializes or deserializes a stream of data
+ *  depending of the relative widths of the streams. It is only one register
+ *  deep but does also register the ready flag and thus has implimented a skid
+ *  buffer.
  *
  *  Serializes the 'up' data word into multiple smaller 'down' data words. The
  *  module will stall when the dn_rdy flag deasserts.
@@ -298,6 +300,29 @@ module str_gbox
     // extend wait time unit the past can be accessed
     always @(posedge clk)
         past_exists <= 1'b1;
+
+
+
+    //
+    // Check that the skid register does not drop data
+    //
+
+    // skid register held steady when back pressure is being applied to up
+    // stream
+    always @(posedge clk)
+        if (past_exists && ~rst && $past( ~up_rdy)) begin
+            assert($stable(skid_data));
+            assert($stable(skid_val));
+            assert($stable(skid_last));
+        end
+
+
+    // skid register holds last up stream value when back pressure is applied
+    // to up stream
+    always @(posedge clk)
+        if ( ~rst && $fell(up_rdy)) begin
+            assert(skid_data == $past(up_data));
+        end
 
 
 
