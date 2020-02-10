@@ -115,6 +115,7 @@ module str_gbox
     assign dn_active = ~dn_val | dn_rdy;
 
 
+    genvar xx;
     generate
         if (DATA_UP_WIDTH == DATA_DN_WIDTH) begin : PASS_
 
@@ -274,6 +275,87 @@ module str_gbox
             assign dn_val   = serial_valid[0];
 
 
+`ifdef FORMAL
+            reg  past_exists;
+            reg  past_wait;
+            initial begin
+                past_exists = 1'b0;
+                past_wait   = 1'b0;
+            end
+
+
+            // extend wait time unit the past can be accessed
+            always @(posedge clk)
+                {past_exists, past_wait} <= {past_wait, 1'b1};
+
+
+            reg  [DATA_UP_WIDTH-1:0]    up_data_a;
+            reg  [DATA_UP_WIDTH-1:0]    up_data_b;
+            reg  [DATA_UP_WIDTH-1:0]    up_current;
+            reg  [DATA_DN_WIDTH-1:0]    up_str [0:DATA_NB-1];
+            reg                         up_wr;
+            reg                         up_rd;
+            integer                     cnt;
+            reg                         cnt_done;
+
+
+            always @(posedge clk)
+                if      (rst)               up_wr <= 1'b0;
+                else if (up_val & up_rdy)   up_wr <= ~up_wr;
+
+
+            always @(posedge clk)
+                if      (rst)       up_rd <= 1'b0;
+                else if (cnt_done)  up_rd <= ~up_rd;
+
+
+            always @(posedge clk)
+                if (up_val & up_rdy & ~up_wr)   up_data_a <= up_data;
+
+
+            always @(posedge clk)
+                if (up_val & up_rdy &  up_wr)   up_data_b <= up_data;
+
+
+            always @(posedge clk)
+                if (up_rd)  up_current <= up_data_b;
+                else        up_current <= up_data_a;
+
+
+            for (xx = 0; xx < DATA_NB; xx = xx + 1) begin
+
+                assign up_str[xx] = up_current[xx*DATA_DN_WIDTH +: DATA_DN_WIDTH];
+
+            end
+
+
+            always @(posedge clk) begin
+                if (rst) begin
+                    cnt         <=  'b0;
+                    cnt_done    <= 1'b0;
+                end
+                else begin
+                    cnt_done    <= 1'b0;
+
+                    if (dn_val & dn_rdy) begin
+                        cnt <= cnt + 'd1;
+
+                        if (cnt >= (DATA_NB-1)) begin
+                            cnt         <= 'b0;
+                            cnt_done    <= 1'b1;
+                        end
+                    end
+                end
+            end
+
+
+            always @(posedge clk)
+                if (past_exists && $past((dn_val & dn_rdy), 2)) begin
+                    assert($past(dn_data, 2) == up_str[$past(cnt, 2)]);
+                end
+
+
+`endif
         end
         else if (DATA_UP_WIDTH < DATA_DN_WIDTH) begin : DSERIAL_
 

@@ -51,7 +51,7 @@ fi
 
 # compile current unit
 echo "UUT = $UUT"
-iverilog -o ../$UUT ${UUT}_tb.v
+iverilog -g2009 -o ../$UUT ${UUT}_tb.v
 cd ..
 
 # run current simul/testbench
