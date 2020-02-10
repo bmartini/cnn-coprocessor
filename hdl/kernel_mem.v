@@ -172,8 +172,65 @@ module kernel_mem
         end
 
 
+`ifdef FORMAL
+
+`ifdef KERNEL_MEM
+`define ASSUME assume
+`else
+`define ASSUME assert
+`endif
+
+
+    reg  past_exists;
+    initial begin
+        past_exists = 1'b0;
+
+        // ensure reset is triggered at the start
+        rst = 1'b1;
+
+        // ensure cfg is sent
+        wr_cfg_set = 1'b1;;
+    end
+
+
+    // extend wait time unit the past can be accessed
+    always @(posedge clk)
+        past_exists <= 1'b1;
+
+
+    //
+    // Check the proper relationship between interface bus signals
+    //
+
+
+    // up path holds data steady when stalled
+    always @(posedge clk)
+        if (past_exists && $past(wr_data_val && ~wr_data_rdy)) begin
+            `ASSUME($stable(wr_data));
+        end
+
+
+    // up path will only lower valid after a transaction
+    always @(posedge clk)
+        if (past_exists && $past( ~rst) && $fell(wr_data_val)) begin
+            `ASSUME($past(wr_data_rdy));
+        end
+
+
+    // up path will only lower ready after a transaction
+    always @(posedge clk)
+        if (past_exists && ~rst && $past( ~rst) && $fell(wr_data_rdy)) begin
+            assert($past(wr_data_val));
+        end
+
+
+
+
+`endif
 endmodule
 
+`ifndef YOSYS
 `default_nettype wire
+`endif
 
 `endif //  `ifndef _kernel_mem_
