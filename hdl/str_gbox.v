@@ -8,7 +8,7 @@
  * Description:
  *  The STREAM Gear Box will serializes or deserializes a stream of data
  *  depending of the relative widths of the streams. It is only one register
- *  deep but does also register the ready flag and thus has implimented a skid
+ *  deep but does also register the ready flag and thus has implemented a skid
  *  buffer.
  *
  *  Serializes the 'up' data word into multiple smaller 'down' data words. The
@@ -299,6 +299,8 @@ module str_gbox
             reg                         cnt_done;
 
 
+            // ping pong buffer to capture the up data currently being sent
+            // down stream and any that is being stored in the skid buffer
             always @(posedge clk)
                 if      (rst)               up_wr <= 1'b0;
                 else if (up_val & up_rdy)   up_wr <= ~up_wr;
@@ -329,6 +331,9 @@ module str_gbox
             end
 
 
+            // counts out the down stream data as a position within the up
+            // stream word, use that position to compare the dn_data with is
+            // corresponding slice of the up_data word
             always @(posedge clk) begin
                 if (rst) begin
                     cnt         <=  'b0;
@@ -429,6 +434,9 @@ module str_gbox
             reg                         cnt_done;
 
 
+            // counts out the up stream data as a position within the down
+            // stream word, use that position to compare the up_data with is
+            // corresponding slice of the dn_data word
             always @(posedge clk) begin
                 if (rst) begin
                     cnt         <=  'b0;
