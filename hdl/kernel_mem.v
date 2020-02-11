@@ -156,7 +156,7 @@ module kernel_mem
         else if (rd_data_pop) begin
             rd_ptr <= rd_ptr + {{MEM_AWIDTH-1{1'b0}}, 1'b1};
 
-            if (rd_ptr == (MEM_DEPTH[MEM_AWIDTH-1:0]-1)) begin
+            if (rd_ptr >= (MEM_DEPTH[MEM_AWIDTH-1:0]-1)) begin
                 rd_ptr <= 'b0;
             end
 
@@ -194,6 +194,12 @@ module kernel_mem
     initial begin
         past_exists     = 1'b0;
         past_exists_2   = 1'b0;
+
+        `ASSUME(wr_ptr      < MEM_DEPTH);
+        `ASSUME(rd_ptr      < MEM_DEPTH);
+        `ASSUME(wr_end      < MEM_DEPTH);
+        `ASSUME(rd_end      < MEM_DEPTH);
+        `ASSUME(rd_start    < MEM_DEPTH);
     end
 
 

@@ -8,6 +8,7 @@ smtbmc
 read -formal -DKERNEL_MEM kernel_mem.v
 chparam -set DEPTH_NB 2 kernel_mem
 chparam -set MEM_AWIDTH 8 kernel_mem
+chparam -set MEM_DEPTH 200 kernel_mem
 prep -top kernel_mem
 
 [files]
