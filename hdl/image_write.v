@@ -335,6 +335,23 @@ module image_write
         end
 
 
+    //
+    // Check that some fundamental use cases are valid
+    //
+
+
+    reg  rst_done = 1'b0;
+    always @(posedge clk)
+        if (rst) rst_done <= 1'b1;
+
+
+    always @(*)
+        cover (rst_done && str_img_rdy && done
+                && (img_w_max  > 0)
+                && (img_h_max  > 0)
+                && (step_p_max > 0)
+                );
+
 
 `endif
 endmodule
