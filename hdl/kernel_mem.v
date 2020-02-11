@@ -190,16 +190,16 @@ module kernel_mem
 
 
     reg  past_exists;
-    reg  past_wait;
+    reg  past_exists_2;
     initial begin
-        past_exists = 1'b0;
-        past_wait   = 1'b0;
+        past_exists     = 1'b0;
+        past_exists_2   = 1'b0;
     end
 
 
     // extend wait time unit the past can be accessed
     always @(posedge clk)
-        {past_exists, past_wait} <= {past_wait, 1'b1};
+        {past_exists_2, past_exists} <= {past_exists, 1'b1};
 
 
     // pointers have to access valid positions in memory
@@ -225,14 +225,14 @@ module kernel_mem
 
     // new write config should not stop new kernels from being written
     always @(posedge clk)
-        if (past_exists && $past(wr_cfg_set) && ~wr_data_rdy) begin
+        if (past_exists && $past( ~rst) && $past(wr_cfg_set) && ~wr_data_rdy) begin
             `ASSUME($past( ~wr_data_rdy));
         end
 
 
     // rd_data only changes due to a 'rdy/pop' request from down stream
     always @(posedge clk)
-        if (past_exists
+        if (past_exists_2
         && $changed(rd_data)
         && $past( ~rd_cfg_set, 1)
         && $past( ~rd_cfg_set, 2)
@@ -244,7 +244,7 @@ module kernel_mem
 
     // rd_bias remains stable so long as no new read region is configured
     always @(posedge clk)
-        if (past_exists
+        if (past_exists_2
         && $past( ~rd_cfg_set, 1)
         && $past( ~rd_cfg_set, 2)
         ) begin
