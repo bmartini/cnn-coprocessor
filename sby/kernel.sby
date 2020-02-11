@@ -1,0 +1,17 @@
+[options]
+mode prove
+
+[engines]
+smtbmc
+
+[script]
+read -formal -DKERNEL kernel.v
+chparam -set DEPTH_NB 2 kernel
+chparam -set MEM_AWIDTH 8 kernel
+prep -top kernel
+
+[files]
+../hdl/cfg_parameters.vh
+../hdl/kernel.v
+../hdl/kernel_mem.v
+../hdl/str_gbox.v

@@ -153,8 +153,74 @@ module kernel
 
 
 
+`ifdef FORMAL
+
+`ifdef KERNEL
+`define ASSUME assume
+`else
+`define ASSUME assert
+`endif
+
+
+    reg  past_exists;
+    initial begin
+        past_exists = 1'b0;
+    end
+
+
+    // extend wait time unit the past can be accessed
+    always @(posedge clk)
+        past_exists <= 1'b1;
+
+
+
+    // ensures that the configuration is valid
+    always @(*) begin
+        `ASSUME(wr_cfg_end   < MEM_DEPTH);
+        `ASSUME(rd_cfg_end   < MEM_DEPTH);
+        `ASSUME(rd_cfg_start < MEM_DEPTH);
+
+        // the end addr is read inclusive and the first start addr contains the
+        // bias, if configured the same the last address in the region that is
+        // read will be the bias values which should only be read once just
+        // after the read region has been set
+        `ASSUME(rd_cfg_set && (rd_cfg_start == rd_cfg_end));
+    end
+
+
+
+    //
+    // Check the proper relationship between interface bus signals
+    //
+
+
+    // up path holds data steady when stalled
+    always @(posedge clk)
+        if (past_exists && $past(str_ker_val && ~str_ker_rdy)) begin
+            `ASSUME($stable(str_ker_bus));
+        end
+
+
+    // up path will only lower valid after a transaction
+    always @(posedge clk)
+        if (past_exists && $past( ~rst) && $fell(str_ker_val)) begin
+            `ASSUME($past(str_ker_rdy));
+        end
+
+
+    // up path will only lower ready after a transaction
+    always @(posedge clk)
+        if (past_exists && ~rst && $past( ~rst) && $fell(str_ker_rdy)) begin
+            assert($past(str_ker_val));
+        end
+
+
+
+`endif
 endmodule
 
+`ifndef YOSYS
 `default_nettype wire
+`endif
 
 `endif //  `ifndef _kernel_
