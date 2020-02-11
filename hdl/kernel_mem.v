@@ -202,6 +202,12 @@ module kernel_mem
         {past_exists_2, past_exists} <= {past_exists, 1'b1};
 
 
+
+    // prevent a memory thats larger then can be addressed
+    always @(*)
+        assert(MEM_DEPTH <= (1<<MEM_AWIDTH));
+
+
     // pointers have to access valid positions in memory
     always @(*) begin
         assert(wr_ptr < MEM_DEPTH);
