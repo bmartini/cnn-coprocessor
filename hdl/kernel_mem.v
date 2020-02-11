@@ -195,6 +195,7 @@ module kernel_mem
         past_exists     = 1'b0;
         past_exists_2   = 1'b0;
 
+        // start pointer and configured variables in a working state
         `ASSUME(wr_ptr      < MEM_DEPTH);
         `ASSUME(rd_ptr      < MEM_DEPTH);
         `ASSUME(wr_end      < MEM_DEPTH);
@@ -209,7 +210,7 @@ module kernel_mem
 
 
 
-    // prevent a memory thats larger then can be addressed
+    // prevent a memory that's larger then can be addressed
     always @(*)
         assert(MEM_DEPTH <= (1<<MEM_AWIDTH));
 
@@ -246,8 +247,8 @@ module kernel_mem
     always @(posedge clk)
         if (past_exists_2
         && $changed(rd_data)
-        && $past( ~rd_cfg_set, 1)
-        && $past( ~rd_cfg_set, 2)
+        && $past( ~rd_cfg_set, 1) // priming new read region
+        && $past( ~rd_cfg_set, 2) // priming new read region
         ) begin
 
             assert(rd_data_rdy);
@@ -257,8 +258,8 @@ module kernel_mem
     // rd_bias remains stable so long as no new read region is configured
     always @(posedge clk)
         if (past_exists_2
-        && $past( ~rd_cfg_set, 1)
-        && $past( ~rd_cfg_set, 2)
+        && $past( ~rd_cfg_set, 1) // priming new read region
+        && $past( ~rd_cfg_set, 2) // priming new read region
         ) begin
 
             assert($stable(rd_bias));
