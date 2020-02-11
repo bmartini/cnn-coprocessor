@@ -1,0 +1,14 @@
+[options]
+mode prove
+
+[engines]
+smtbmc
+
+[script]
+read -formal -DIMAGE_WRITE image_write.v
+chparam -set DEPTH_NB 4 image_write
+prep -top image_write
+
+[files]
+../hdl/cfg_parameters.vh
+../hdl/image_write.v
