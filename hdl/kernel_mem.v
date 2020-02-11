@@ -77,7 +77,7 @@ module kernel_mem
      */
 
 
-    // write to memory
+    // write to memory is only able to be done when 'not full'
     assign wr_data_rdy = ~((wr_ptr_wrap != wr_end_wrap) && (wr_ptr == wr_end));
 
 
@@ -90,6 +90,10 @@ module kernel_mem
             wr_end <= wr_cfg_end;
 
             if (wr_end >= wr_cfg_end) begin
+                // if the new wr end value is less then the old value this
+                // indicates the new wr region has extends past the end of the
+                // memory and wraps around
+
                 wr_end_wrap <= ~wr_end_wrap;
             end
         end
@@ -116,7 +120,10 @@ module kernel_mem
         end
 
 
-    // read from memory
+    // read 2 memory locations after a new read region has been configured. the
+    // first is to read the bias value that are stored in the 'zeroth' address
+    // of the region, the next is so the kernel values are presented to down
+    // stream in a 'fall through' manner.
     assign rd_data_pop = rd_data_1st | rd_data_2nd | rd_data_rdy;
 
 
@@ -166,6 +173,7 @@ module kernel_mem
         end
 
 
+    // bias values are only update after a new read region is configured
     always @(posedge clk)
         if (rd_data_2nd) begin
             rd_bias <= rd_data;
@@ -182,20 +190,67 @@ module kernel_mem
 
 
     reg  past_exists;
+    reg  past_wait;
     initial begin
         past_exists = 1'b0;
+        past_wait   = 1'b0;
 
         // ensure reset is triggered at the start
         rst = 1'b1;
 
         // ensure cfg is sent
-        wr_cfg_set = 1'b1;;
+        wr_cfg_set = 1'b1;
+        rd_cfg_set = 1'b1;
     end
 
 
     // extend wait time unit the past can be accessed
     always @(posedge clk)
-        past_exists <= 1'b1;
+        {past_exists, past_wait} <= {past_wait, 1'b1};
+
+
+    // pointers have to access valid positions in memory
+    always @(*) begin
+        assert(wr_ptr < MEM_DEPTH);
+        assert(rd_ptr < MEM_DEPTH);
+    end
+
+
+    // ensures that the configuration is valid
+    always @(*) begin
+        `ASSUME(wr_cfg_end   < MEM_DEPTH);
+        `ASSUME(rd_cfg_end   < MEM_DEPTH);
+        `ASSUME(rd_cfg_start < MEM_DEPTH);
+
+        // the end addr is read inclusive and the first start addr contains the
+        // bias, if configured the same the last address in the region that is
+        // read will be the bias values which should only be read once just
+        // after the read region has been set
+        `ASSUME(rd_cfg_set && (rd_cfg_start == rd_cfg_end));
+    end
+
+
+    // rd_data only changes due to a 'rdy/pop' request from down stream
+    always @(posedge clk)
+        if (past_exists
+        && $changed(rd_data)
+        && $past( ~rd_cfg_set, 1)
+        && $past( ~rd_cfg_set, 2)
+        ) begin
+
+            assert(rd_data_rdy);
+        end
+
+
+    // rd_bias remains stable so long as no new read region is configured
+    always @(posedge clk)
+        if (past_exists
+        && $past( ~rd_cfg_set, 1)
+        && $past( ~rd_cfg_set, 2)
+        ) begin
+
+            assert($stable(rd_bias));
+        end
 
 
     //
@@ -222,8 +277,6 @@ module kernel_mem
         if (past_exists && ~rst && $past( ~rst) && $fell(wr_data_rdy)) begin
             assert($past(wr_data_val));
         end
-
-
 
 
 `endif
