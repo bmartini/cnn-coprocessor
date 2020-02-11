@@ -285,6 +285,30 @@ module image_write
 
 
 
+    // maximum address that could be calculated must fit into the memory
+    // address space
+    always @(*) begin
+        `ASSUME ( (start + (img_w_max * step_p) + (img_h_max * step_p * step_r))
+                < (1<<MEM_AWIDTH)
+                );
+    end
+
+
+    // the loading of the modules configuration should only occur when not
+    // already involved in a process a configuration
+    always @(*)
+        if (next) begin
+            `ASSUME ( ~str_img_rdy);
+        end
+
+
+    // hard coded the widths of all the intermediate address registers, should
+    // probably change that at some point
+    always @(*) begin
+        assert(MEM_AWIDTH < 32);
+    end
+
+
     //
     // Check the proper relationship between interface bus signals
     //
