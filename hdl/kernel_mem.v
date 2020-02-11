@@ -194,13 +194,6 @@ module kernel_mem
     initial begin
         past_exists = 1'b0;
         past_wait   = 1'b0;
-
-        // ensure reset is triggered at the start
-        rst = 1'b1;
-
-        // ensure cfg is sent
-        wr_cfg_set = 1'b1;
-        rd_cfg_set = 1'b1;
     end
 
 
@@ -228,6 +221,13 @@ module kernel_mem
         // after the read region has been set
         `ASSUME(rd_cfg_set && (rd_cfg_start == rd_cfg_end));
     end
+
+
+    // new write config should not stop new kernels from being written
+    always @(posedge clk)
+        if (past_exists && $past(wr_cfg_set) && ~wr_data_rdy) begin
+            `ASSUME($past( ~wr_data_rdy));
+        end
 
 
     // rd_data only changes due to a 'rdy/pop' request from down stream
