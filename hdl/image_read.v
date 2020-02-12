@@ -82,6 +82,8 @@ module image_read
     reg  [3:0]                      state;
     reg  [3:0]                      state_nx;
 
+    reg                             next_rdy;
+
     reg  [31:0]                     cfg_img_w;  // image width of segment within buf
     reg  [15:0]                     cfg_img_h;  // image height of segment within buf
     reg  [15:0]                     cfg_img_d;  // image depth of segment within buf
@@ -226,6 +228,13 @@ module image_read
             cfg_conv_side   <= cfg_data[23:16];
             cfg_conv_step   <= cfg_data[15: 0];
         end
+
+
+    always @(posedge clk)
+        if      (rst)           next_rdy <= 1'b0;
+        else if (state[RESET])  next_rdy <= 1'b1;
+        else if (next)          next_rdy <= 1'b0;
+
 
 
 /* verilator lint_off WIDTH */
@@ -597,6 +606,14 @@ module image_read
     always @(posedge clk)
         past_exists <= 1'b1;
 
+
+
+    // the loading of the modules configuration should only occur when not
+    // already involved in a process a configuration
+    always @(*)
+        if (next) begin
+            `ASSUME(next_rdy);
+        end
 
 
 
