@@ -578,8 +578,66 @@ module image_read
 
 
 
+`ifdef FORMAL
+
+`ifdef IMAGE_READ
+`define ASSUME assume
+`else
+`define ASSUME assert
+`endif
+
+
+    reg  past_exists;
+    initial begin
+        past_exists = 1'b0;
+    end
+
+
+    // extend wait time unit the past can be accessed
+    always @(posedge clk)
+        past_exists <= 1'b1;
+
+
+
+
+    //
+    // Check the proper relationship between interface bus signals
+    //
+
+    // image (down) path holds data steady when stalled
+    always @(posedge clk)
+        if (past_exists && $past( ~rst) && $past(image_val && ~image_rdy)) begin
+            assert($stable(image_bus));
+        end
+
+
+    // image (down) path will only lower valid after a transaction
+    always @(posedge clk)
+        if (past_exists && $past( ~rst) && $fell(image_val)) begin
+            assert($past(image_rdy));
+        end
+
+
+    // image (down) path will only lower last after a transaction
+    always @(posedge clk)
+        if (past_exists && $past( ~rst) && $fell(image_last)) begin
+            assert($past(image_rdy) && $past(image_val));
+        end
+
+
+    // image (down) path will only lower ready after a transaction
+    always @(posedge clk)
+        if (past_exists && $past( ~rst) && $fell(image_rdy)) begin
+            `ASSUME($past(image_val));
+        end
+
+
+
+`endif
 endmodule
 
+`ifndef YOSYS
 `default_nettype wire
+`endif
 
 `endif //  `ifndef _image_read_

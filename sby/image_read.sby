@@ -1,0 +1,19 @@
+[tasks]
+prove
+cover
+
+[options]
+prove: mode prove
+cover: mode cover
+
+[engines]
+smtbmc
+
+[script]
+read -formal -DIMAGE_READ image_read.v
+prep -top image_read
+
+[files]
+../hdl/cfg_parameters.vh
+../hdl/fifo_simple.v
+../hdl/image_read.v
