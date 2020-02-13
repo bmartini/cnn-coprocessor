@@ -668,6 +668,34 @@ module image_read
 
 
 
+`ifdef IMAGE_READ
+
+    //
+    // Check that some fundamental use cases are valid
+    //
+
+    reg  rst_done = 1'b0;
+    always @(posedge clk)
+        if (rst) rst_done <= 1'b1;
+
+
+    always @(*)
+        cover (rst_done
+                && (conv_d_max > 0)
+                && (conv_w_max > 0)
+                && (conv_h_max > 0)
+                && (img_d > 0)
+                && (img_w > 0)
+                && (img_h > 0)
+                && state[ACTIVE]
+                && area_w_last && area_h_last
+                && maxp_w_last && maxp_h_last
+                && conv_w_last && conv_h_last & conv_d_last
+                );
+
+`endif
+
+
 `endif
 endmodule
 
