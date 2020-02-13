@@ -181,6 +181,13 @@ module fifo_simple
 
 `ifdef FORMAL
 
+`ifdef FIFO_SIMPLE
+`define ASSUME assume
+`else
+`define ASSUME assert
+`endif
+
+
     initial begin
         // ensure reset is triggered at the start
         restrict property (rst);
@@ -269,6 +276,9 @@ module fifo_simple
         end
 
 
+
+`ifdef FIFO_SIMPLE
+
     //
     // Check that some fundamental use cases are valid
     //
@@ -285,6 +295,7 @@ module fifo_simple
     always @(*)
         cover(f_full_state_reached && empty);
 
+`endif
 
 
 `endif

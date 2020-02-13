@@ -12,7 +12,7 @@ cover: mode cover
 smtbmc
 
 [script]
-read -formal fifo_simple.v
+read -formal  -DFIFO_SIMPLE fifo_simple.v
 chparam -set ADDR_WIDTH 3 fifo_simple
 prep -top fifo_simple
 
