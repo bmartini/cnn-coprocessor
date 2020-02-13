@@ -608,6 +608,18 @@ module image_read
 
 
 
+    // maximum address that could be calculated must fit into the memory
+    // address space
+    always @(*)
+        if (next_3p) begin
+            `ASSUME ((  conv_d_max
+                    + ((conv_w_max + maxp_w_max + area_w_max) *  img_d)
+                    + ((conv_h_max + maxp_h_max + area_h_max) * (img_d * img_w)))
+                    < (1<<MEM_AWIDTH)
+                    );
+        end
+
+
     // the loading of the modules configuration should only occur when not
     // already involved in a process a configuration
     always @(*)
@@ -615,6 +627,12 @@ module image_read
             `ASSUME(next_rdy);
         end
 
+
+    // hard coded the widths of all the intermediate address registers, should
+    // probably change that at some point
+    always @(*) begin
+        assert(MEM_AWIDTH < 32);
+    end
 
 
     //
