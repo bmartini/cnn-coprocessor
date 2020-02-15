@@ -88,7 +88,8 @@ module group_add
 
             // bad group number parameter
             initial begin
-                assert(0);
+                $display("ERROR <group_add>: group number must be set as '4'");
+                $finish;
             end
         end
     endgenerate
@@ -108,6 +109,10 @@ module group_add
     always @(posedge clk)
         {past_exists, past_wait} <= {past_wait, 1'b1};
 
+
+
+    always @(*)
+        assert(GROUP_NB == 4);
 
 
     //
