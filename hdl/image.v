@@ -298,6 +298,19 @@ module image
 
 
 
+    // loading of the write modules configuration
+    always @(posedge clk)
+        if (past_exists && $past( ~rst) && $fell(cfg_wr_set)) begin
+            assert($past(cfg_wr_rdy));
+        end
+
+
+    // loading of the read modules configuration
+    always @(posedge clk)
+        if (past_exists && $past( ~rst) && $fell(cfg_rd_set)) begin
+            assert($past(cfg_rd_rdy));
+        end
+
 
     //
     // Check the proper relationship between interface bus signals

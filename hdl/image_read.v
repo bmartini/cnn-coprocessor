@@ -622,7 +622,7 @@ module image_read
     // the loading of the modules configuration should only occur when not
     // already involved in a process a configuration
     always @(posedge clk)
-        if (past_exists && $fell(next)) begin
+        if (past_exists && $past( ~rst) && $fell(next)) begin
             `ASSUME($past(next_rdy));
         end
 
