@@ -65,8 +65,11 @@ module image
      */
 
     reg                             cfg_wr_m0;
+    reg                             cfg_wr_m0_i;
     reg                             cfg_wr_m1;
+    reg                             cfg_wr_m1_i;
     reg                             cfg_wr_set;
+    wire                            cfg_wr_rdy;
 
     reg                             cfg_rd_m0;
     reg                             cfg_rd_m0_i;
@@ -95,17 +98,33 @@ module image
      */
 
 
-    always @(posedge clk) begin
-        cfg_wr_set  <= 1'b0;
 
+    // write path configuration
+    always @(posedge clk) begin
+        if      (rst)                                   cfg_wr_set  <= 1'b0;
+        else if (cfg_valid & (cfg_addr == CFG_IMG_WR))  cfg_wr_set  <= 1'b1;
+        else if (cfg_wr_rdy)                            cfg_wr_set  <= 1'b0;
+    end
+
+
+    always @(posedge clk) begin
         if (cfg_valid & (cfg_addr == CFG_IMG_WR)) begin
-            cfg_wr_m0   <= ~cfg_data[0];
-            cfg_wr_m1   <=  cfg_data[0];
-            cfg_wr_set  <= 1'b1;
+            cfg_wr_m0_i <= ~cfg_data[0];
+            cfg_wr_m1_i <=  cfg_data[0];
         end
     end
 
 
+    always @(posedge clk) begin
+        if (cfg_wr_set & cfg_wr_rdy) begin
+            cfg_wr_m0   <= cfg_wr_m0_i;
+            cfg_wr_m1   <= cfg_wr_m1_i;
+        end
+    end
+
+
+
+    // read path configuration
     always @(posedge clk) begin
         if      (rst)                                   cfg_rd_set  <= 1'b0;
         else if (cfg_valid & (cfg_addr == CFG_IMG_RD))  cfg_rd_set  <= 1'b1;
@@ -167,6 +186,7 @@ module image
         .cfg_valid      (cfg_valid),
 
         .next           (cfg_wr_set),
+        .next_rdy       (cfg_wr_rdy),
 
         .str_img_bus    (str_wr_bus),
         .str_img_val    (str_wr_val),
