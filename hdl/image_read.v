@@ -49,6 +49,7 @@ module image_read
 
     // load next cfg values and start generating addresses
     input  wire                             next,
+    output reg                              next_rdy,
 
     output wire                             rd_val,
     output wire [MEM_AWIDTH-1:0]            rd_addr,
@@ -81,8 +82,6 @@ module image_read
 
     reg  [3:0]                      state;
     reg  [3:0]                      state_nx;
-
-    reg                             next_rdy;
 
     reg  [31:0]                     cfg_img_w;  // image width of segment within buf
     reg  [15:0]                     cfg_img_h;  // image height of segment within buf
@@ -241,7 +240,7 @@ module image_read
     always @(posedge clk) begin
         next_1p <= 1'b0;
 
-        if (next) begin
+        if (next & next_rdy) begin
             next_1p     <= 1'b1;
 
             img_w       <= cfg_img_w + 'd1; // cfg 0 is 1 pixel image
@@ -610,7 +609,7 @@ module image_read
 
     // maximum address that could be calculated must fit into the memory
     // address space
-    always @(*)
+    always @(posedge clk)
         if (next_3p) begin
             `ASSUME ((  conv_d_max
                     + ((conv_w_max + maxp_w_max + area_w_max) *  img_d)
@@ -622,9 +621,9 @@ module image_read
 
     // the loading of the modules configuration should only occur when not
     // already involved in a process a configuration
-    always @(*)
-        if (next) begin
-            `ASSUME(next_rdy);
+    always @(posedge clk)
+        if (past_exists && $fell(next)) begin
+            `ASSUME($past(next_rdy));
         end
 
 

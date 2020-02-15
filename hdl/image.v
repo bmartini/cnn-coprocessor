@@ -69,8 +69,11 @@ module image
     reg                             cfg_wr_set;
 
     reg                             cfg_rd_m0;
+    reg                             cfg_rd_m0_i;
     reg                             cfg_rd_m1;
+    reg                             cfg_rd_m1_i;
     reg                             cfg_rd_set;
+    wire                            cfg_rd_rdy;
 
     wire [IMG_WIDTH*DEPTH_NB-1:0]   str_wr_bus;
     wire                            str_wr_val;
@@ -104,12 +107,24 @@ module image
 
 
     always @(posedge clk) begin
-        cfg_rd_set  <= 1'b0;
+        if      (rst)                                   cfg_rd_set  <= 1'b0;
+        else if (cfg_valid & (cfg_addr == CFG_IMG_RD))  cfg_rd_set  <= 1'b1;
+        else if (cfg_rd_rdy)                            cfg_rd_set  <= 1'b0;
+    end
 
+
+    always @(posedge clk) begin
         if (cfg_valid & (cfg_addr == CFG_IMG_RD)) begin
-            cfg_rd_m0   <= ~cfg_data[0];
-            cfg_rd_m1   <=  cfg_data[0];
-            cfg_rd_set  <= 1'b1;
+            cfg_rd_m0_i <= ~cfg_data[0];
+            cfg_rd_m1_i <=  cfg_data[0];
+        end
+    end
+
+
+    always @(posedge clk) begin
+        if (cfg_rd_set & cfg_rd_rdy) begin
+            cfg_rd_m0   <= cfg_rd_m0_i;
+            cfg_rd_m1   <= cfg_rd_m1_i;
         end
     end
 
@@ -228,6 +243,7 @@ module image
         .cfg_valid  (cfg_valid),
 
         .next       (cfg_rd_set),
+        .next_rdy   (cfg_rd_rdy),
 
         .rd_val     (rd_val),
         .rd_addr    (rd_addr),
