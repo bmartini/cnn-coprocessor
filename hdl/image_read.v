@@ -607,6 +607,7 @@ module image_read
 
 
 
+`ifdef IMAGE_READ
     // maximum address that could be calculated must fit into the memory
     // address space
     always @(posedge clk)
@@ -617,6 +618,7 @@ module image_read
                     < (1<<MEM_AWIDTH)
                     );
         end
+`endif
 
 
     // the loading of the modules configuration should only occur when not

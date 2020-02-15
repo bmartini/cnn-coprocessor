@@ -316,6 +316,7 @@ module image_write
 
 
 
+`ifdef IMAGE_WRITE
     // maximum address that could be calculated must fit into the memory
     // address space
     always @(posedge clk) begin
@@ -325,6 +326,7 @@ module image_write
                     );
         end
     end
+`endif
 
 
     // the loading of the modules configuration should only occur when not
@@ -368,6 +370,9 @@ module image_write
         end
 
 
+
+`ifdef IMAGE_WRITE
+
     //
     // Check that some fundamental use cases are valid
     //
@@ -384,6 +389,7 @@ module image_write
                 && (img_h_max  > 0)
                 && (step_p_max > 0)
                 );
+`endif
 
 
 `endif
