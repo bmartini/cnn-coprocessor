@@ -42,6 +42,7 @@ module image_write
 
     // load next cfg values and start sending data image_mem
     input  wire                             next,
+    output reg                              next_rdy,
 
     input  wire [IMG_WIDTH*DEPTH_NB-1:0]    str_img_bus,
     input  wire                             str_img_val,
@@ -78,6 +79,7 @@ module image_write
     reg  [31:0]                     step_p;
     reg  [31:0]                     step_r;
 
+    reg                             rst_complete;
     reg                             next_1p;
     wire                            done;
 
@@ -110,6 +112,13 @@ module image_write
     reg                             addr_val_3p;
     reg                             addr_val_4p;
     reg                             addr_val_5p;
+
+    reg                             addr_last_1p;
+    reg                             addr_last_2p;
+    reg                             addr_last_3p;
+    reg                             addr_last_4p;
+    reg                             addr_last_5p;
+    wire                            wr_last;
 
     reg  [IMG_WIDTH*DEPTH_NB-1:0]   str_img_bus_1p;
     reg  [IMG_WIDTH*DEPTH_NB-1:0]   str_img_bus_2p;
@@ -147,7 +156,7 @@ module image_write
     always @(posedge clk) begin
         next_1p <= 1'b0;
 
-        if (next) begin
+        if (next & next_rdy) begin
             next_1p     <= 1'b1;
 
             img_w_max   <= cfg_img_w; // cfg 0 is 1 pixel image width
@@ -161,6 +170,17 @@ module image_write
         end
     end
 /* verilator lint_on WIDTH */
+
+
+    always @(posedge clk)
+        if  (rst)   rst_complete <= 1'b1;
+        else        rst_complete <= 1'b0;
+
+
+    always @(posedge clk)
+        if      (rst)                       next_rdy <= 1'b0;
+        else if (rst_complete | wr_last)    next_rdy <= 1'b1;
+        else if (next)                      next_rdy <= 1'b0;
 
 
 
@@ -248,6 +268,15 @@ module image_write
 
 
     always @(posedge clk) begin
+        addr_last_1p <= str_img_val & str_img_rdy & done;
+        addr_last_2p <= addr_last_1p;
+        addr_last_3p <= addr_last_2p;
+        addr_last_4p <= addr_last_3p;
+        addr_last_5p <= addr_last_4p;
+    end
+
+
+    always @(posedge clk) begin
         str_img_bus_1p <= str_img_bus;
         str_img_bus_2p <= str_img_bus_1p;
         str_img_bus_3p <= str_img_bus_2p;
@@ -255,6 +284,8 @@ module image_write
         str_img_bus_5p <= str_img_bus_4p;
     end
 
+
+    assign wr_last  = addr_last_5p;
 
     assign wr_val   = addr_val_5p;
 
@@ -287,18 +318,20 @@ module image_write
 
     // maximum address that could be calculated must fit into the memory
     // address space
-    always @(*) begin
-        `ASSUME ( (start + (img_w_max * step_p) + (img_h_max * step_p * step_r))
-                < (1<<MEM_AWIDTH)
-                );
+    always @(posedge clk) begin
+        if (next_1p) begin
+            `ASSUME ( (start + (img_w_max * step_p) + (img_h_max * step_p * step_r))
+                    < (1<<MEM_AWIDTH)
+                    );
+        end
     end
 
 
     // the loading of the modules configuration should only occur when not
     // already involved in a process a configuration
-    always @(*)
-        if (next) begin
-            `ASSUME ( ~str_img_rdy);
+    always @(posedge clk)
+        if (past_exists && $fell(next)) begin
+            `ASSUME($past(next_rdy));
         end
 
 
