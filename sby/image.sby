@@ -1,0 +1,18 @@
+[options]
+mode prove
+
+[engines]
+smtbmc
+
+[script]
+read -formal -DIMAGE image.v
+prep -top image
+
+[files]
+../hdl/cfg_parameters.vh
+../hdl/fifo_simple.v
+../hdl/str_gbox.v
+../hdl/image_write.v
+../hdl/image_mem.v
+../hdl/image_read.v
+../hdl/image.v

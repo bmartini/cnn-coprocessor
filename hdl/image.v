@@ -279,7 +279,7 @@ module image
 
 `ifdef FORMAL
 
-`ifdef IMAGE_WRITE
+`ifdef IMAGE
 `define ASSUME assume
 `else
 `define ASSUME assert
