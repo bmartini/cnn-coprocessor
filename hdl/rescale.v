@@ -232,6 +232,8 @@ module rescale
 `endif
 endmodule
 
+`ifndef YOSYS
 `default_nettype wire
+`endif
 
 `endif //  `ifndef _rescale_

@@ -168,6 +168,8 @@ module group_mac
 `endif
 endmodule
 
+`ifndef YOSYS
 `default_nettype wire
+`endif
 
 `endif //  `ifndef _group_mac_

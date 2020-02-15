@@ -301,6 +301,8 @@ module fifo_simple
 `endif
 endmodule
 
+`ifndef YOSYS
 `default_nettype wire
+`endif
 
 `endif //  `ifndef _fifo_simple_

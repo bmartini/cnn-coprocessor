@@ -107,4 +107,8 @@ module relu
 `endif
 endmodule
 
+`ifndef YOSYS
+`default_nettype wire
+`endif
+
 `endif //  `ifndef _relu_
