@@ -1,0 +1,19 @@
+[tasks]
+multi
+single
+
+[options]
+mode prove
+
+[engines]
+smtbmc
+
+[script]
+read -formal -DIMAGE_MEM image_mem.v
+multi:  chparam -set DEPTH_NB 8 image_mem
+single: chparam -set DEPTH_NB 4 image_mem
+chparam -set GROUP_NB 4 image_mem
+prep -top image_mem
+
+[files]
+../hdl/image_mem.v

@@ -49,6 +49,7 @@ module image_read
 
     // load next cfg values and start generating addresses
     input  wire                             next,
+    output reg                              next_rdy,
 
     output wire                             rd_val,
     output wire [MEM_AWIDTH-1:0]            rd_addr,
@@ -228,11 +229,18 @@ module image_read
         end
 
 
+    always @(posedge clk)
+        if      (rst)           next_rdy <= 1'b0;
+        else if (state[RESET])  next_rdy <= 1'b1;
+        else if (next)          next_rdy <= 1'b0;
+
+
+
 /* verilator lint_off WIDTH */
     always @(posedge clk) begin
         next_1p <= 1'b0;
 
-        if (next) begin
+        if (next & next_rdy) begin
             next_1p     <= 1'b1;
 
             img_w       <= cfg_img_w + 'd1; // cfg 0 is 1 pixel image
@@ -578,8 +586,122 @@ module image_read
 
 
 
+`ifdef FORMAL
+
+`ifdef IMAGE_READ
+`define ASSUME assume
+`else
+`define ASSUME assert
+`endif
+
+
+    reg  past_exists;
+    initial begin
+        past_exists = 1'b0;
+    end
+
+
+    // extend wait time unit the past can be accessed
+    always @(posedge clk)
+        past_exists <= 1'b1;
+
+
+
+`ifdef IMAGE_READ
+    // maximum address that could be calculated must fit into the memory
+    // address space
+    always @(posedge clk)
+        if (next_3p) begin
+            `ASSUME ((  conv_d_max
+                    + ((conv_w_max + maxp_w_max + area_w_max) *  img_d)
+                    + ((conv_h_max + maxp_h_max + area_h_max) * (img_d * img_w)))
+                    < (1<<MEM_AWIDTH)
+                    );
+        end
+`endif
+
+
+    // the loading of the modules configuration should only occur when not
+    // already involved in a process a configuration
+    always @(posedge clk)
+        if (past_exists && $past( ~rst) && $fell(next)) begin
+            `ASSUME($past(next_rdy));
+        end
+
+
+    // hard coded the widths of all the intermediate address registers, should
+    // probably change that at some point
+    always @(*) begin
+        assert(MEM_AWIDTH < 32);
+    end
+
+
+    //
+    // Check the proper relationship between interface bus signals
+    //
+
+    // image (down) path holds data steady when stalled
+    always @(posedge clk)
+        if (past_exists && $past( ~rst) && $past(image_val && ~image_rdy)) begin
+            assert($stable(image_bus));
+        end
+
+
+    // image (down) path will only lower valid after a transaction
+    always @(posedge clk)
+        if (past_exists && $past( ~rst) && $fell(image_val)) begin
+            assert($past(image_rdy));
+        end
+
+
+    // image (down) path will only lower last after a transaction
+    always @(posedge clk)
+        if (past_exists && $past( ~rst) && $fell(image_last)) begin
+            assert($past(image_rdy) && $past(image_val));
+        end
+
+
+    // image (down) path will only lower ready after a transaction
+    always @(posedge clk)
+        if (past_exists && $past( ~rst) && $fell(image_rdy)) begin
+            `ASSUME($past(image_val));
+        end
+
+
+
+`ifdef IMAGE_READ
+
+    //
+    // Check that some fundamental use cases are valid
+    //
+
+    reg  rst_done = 1'b0;
+    always @(posedge clk)
+        if (rst) rst_done <= 1'b1;
+
+
+    always @(*)
+        cover (rst_done
+                && (conv_d_max > 0)
+                && (conv_w_max > 0)
+                && (conv_h_max > 0)
+                && (img_d > 0)
+                && (img_w > 0)
+                && (img_h > 0)
+                && state[ACTIVE]
+                && area_w_last && area_h_last
+                && maxp_w_last && maxp_h_last
+                && conv_w_last && conv_h_last & conv_d_last
+                );
+
+`endif
+
+
+`endif
 endmodule
 
+`ifndef YOSYS
 `default_nettype wire
+`endif
 
 `endif //  `ifndef _image_read_

@@ -164,8 +164,9 @@ module image_read_tb;
             "%d %d",
             $time, rst,
 
-            "\t<next %d>",
+            "\t<next %b %b>",
             next,
+            uut.next_rdy,
 
 //            "\t<cfg img>: w %d, h %d, d %d",
 //            uut.img_w,

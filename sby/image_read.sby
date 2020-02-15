@@ -1,10 +1,8 @@
 [tasks]
-bmc
 prove
 cover
 
 [options]
-bmc:   mode bmc
 prove: mode prove
 cover: mode cover
 
@@ -12,9 +10,10 @@ cover: mode cover
 smtbmc
 
 [script]
-read -formal  -DFIFO_SIMPLE fifo_simple.v
-chparam -set ADDR_WIDTH 3 fifo_simple
-prep -top fifo_simple
+read -formal -DIMAGE_READ image_read.v
+prep -top image_read
 
 [files]
+../hdl/cfg_parameters.vh
 ../hdl/fifo_simple.v
+../hdl/image_read.v

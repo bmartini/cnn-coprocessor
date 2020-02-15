@@ -76,6 +76,7 @@ module image_write_tb;
     reg                             cfg_valid;
 
     reg                             next;
+    wire                            next_rdy;
 
     reg  [IMG_WIDTH*DEPTH_NB-1:0]   str_img_bus;
     reg                             str_img_val;
@@ -107,6 +108,7 @@ module image_write_tb;
         .cfg_valid      (cfg_valid),
 
         .next           (next),
+        .next_rdy       (next_rdy),
 
         .str_img_bus    (str_img_bus),
         .str_img_val    (str_img_val),
@@ -142,8 +144,9 @@ module image_write_tb;
             "%d %d",
             $time, rst,
 
-            "\t<nx %d>",
+            "\t<nx %b %b>",
             next,
+            next_rdy,
 
             "\t<str>: d %d, v %b, r: %b",
             str_img_bus[0 +: IMG_WIDTH],

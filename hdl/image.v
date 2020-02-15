@@ -65,12 +65,18 @@ module image
      */
 
     reg                             cfg_wr_m0;
+    reg                             cfg_wr_m0_i;
     reg                             cfg_wr_m1;
+    reg                             cfg_wr_m1_i;
     reg                             cfg_wr_set;
+    wire                            cfg_wr_rdy;
 
     reg                             cfg_rd_m0;
+    reg                             cfg_rd_m0_i;
     reg                             cfg_rd_m1;
+    reg                             cfg_rd_m1_i;
     reg                             cfg_rd_set;
+    wire                            cfg_rd_rdy;
 
     wire [IMG_WIDTH*DEPTH_NB-1:0]   str_wr_bus;
     wire                            str_wr_val;
@@ -92,24 +98,52 @@ module image
      */
 
 
-    always @(posedge clk) begin
-        cfg_wr_set  <= 1'b0;
 
+    // write path configuration
+    always @(posedge clk) begin
+        if      (rst)                                   cfg_wr_set  <= 1'b0;
+        else if (cfg_valid & (cfg_addr == CFG_IMG_WR))  cfg_wr_set  <= 1'b1;
+        else if (cfg_wr_rdy)                            cfg_wr_set  <= 1'b0;
+    end
+
+
+    always @(posedge clk) begin
         if (cfg_valid & (cfg_addr == CFG_IMG_WR)) begin
-            cfg_wr_m0   <= ~cfg_data[0];
-            cfg_wr_m1   <=  cfg_data[0];
-            cfg_wr_set  <= 1'b1;
+            cfg_wr_m0_i <= ~cfg_data[0];
+            cfg_wr_m1_i <=  cfg_data[0];
         end
     end
 
 
     always @(posedge clk) begin
-        cfg_rd_set  <= 1'b0;
+        if (cfg_wr_set & cfg_wr_rdy) begin
+            cfg_wr_m0   <= cfg_wr_m0_i;
+            cfg_wr_m1   <= cfg_wr_m1_i;
+        end
+    end
 
+
+
+    // read path configuration
+    always @(posedge clk) begin
+        if      (rst)                                   cfg_rd_set  <= 1'b0;
+        else if (cfg_valid & (cfg_addr == CFG_IMG_RD))  cfg_rd_set  <= 1'b1;
+        else if (cfg_rd_rdy)                            cfg_rd_set  <= 1'b0;
+    end
+
+
+    always @(posedge clk) begin
         if (cfg_valid & (cfg_addr == CFG_IMG_RD)) begin
-            cfg_rd_m0   <= ~cfg_data[0];
-            cfg_rd_m1   <=  cfg_data[0];
-            cfg_rd_set  <= 1'b1;
+            cfg_rd_m0_i <= ~cfg_data[0];
+            cfg_rd_m1_i <=  cfg_data[0];
+        end
+    end
+
+
+    always @(posedge clk) begin
+        if (cfg_rd_set & cfg_rd_rdy) begin
+            cfg_rd_m0   <= cfg_rd_m0_i;
+            cfg_rd_m1   <= cfg_rd_m1_i;
         end
     end
 
@@ -152,6 +186,7 @@ module image
         .cfg_valid      (cfg_valid),
 
         .next           (cfg_wr_set),
+        .next_rdy       (cfg_wr_rdy),
 
         .str_img_bus    (str_wr_bus),
         .str_img_val    (str_wr_val),
@@ -228,6 +263,7 @@ module image
         .cfg_valid  (cfg_valid),
 
         .next       (cfg_rd_set),
+        .next_rdy   (cfg_rd_rdy),
 
         .rd_val     (rd_val),
         .rd_addr    (rd_addr),
@@ -241,8 +277,100 @@ module image
 
 
 
+`ifdef FORMAL
+
+`ifdef IMAGE
+`define ASSUME assume
+`else
+`define ASSUME assert
+`endif
+
+
+    reg  past_exists;
+    initial begin
+        past_exists = 1'b0;
+    end
+
+
+    // extend wait time unit the past can be accessed
+    always @(posedge clk)
+        past_exists <= 1'b1;
+
+
+
+    // loading of the write modules configuration
+    always @(posedge clk)
+        if (past_exists && $past( ~rst) && $fell(cfg_wr_set)) begin
+            assert($past(cfg_wr_rdy));
+        end
+
+
+    // loading of the read modules configuration
+    always @(posedge clk)
+        if (past_exists && $past( ~rst) && $fell(cfg_rd_set)) begin
+            assert($past(cfg_rd_rdy));
+        end
+
+
+    //
+    // Check the proper relationship between interface bus signals
+    //
+
+
+    // stream (up) path holds data steady when stalled
+    always @(posedge clk)
+        if (past_exists && $past(str_img_val && ~str_img_rdy)) begin
+            `ASSUME($stable(str_img_bus));
+        end
+
+
+    // stream (up) path will only lower valid after a transaction
+    always @(posedge clk)
+        if (past_exists && $past( ~rst) && $fell(str_img_val)) begin
+            `ASSUME($past(str_img_rdy));
+        end
+
+
+    // stream (up) path will only lower ready after a transaction
+    always @(posedge clk)
+        if (past_exists && ~rst && $past( ~rst) && $fell(str_img_rdy)) begin
+            assert($past(str_img_val));
+        end
+
+
+    // image (down) path holds data steady when stalled
+    always @(posedge clk)
+        if (past_exists && $past( ~rst) && $past(image_val && ~image_rdy)) begin
+            assert($stable(image_bus));
+        end
+
+
+    // image (down) path will only lower valid after a transaction
+    always @(posedge clk)
+        if (past_exists && $past( ~rst) && $fell(image_val)) begin
+            assert($past(image_rdy));
+        end
+
+
+    // image (down) path will only lower last after a transaction
+    always @(posedge clk)
+        if (past_exists && $past( ~rst) && $fell(image_last)) begin
+            assert($past(image_rdy) && $past(image_val));
+        end
+
+
+    // image (down) path will only lower ready after a transaction
+    always @(posedge clk)
+        if (past_exists && $past( ~rst) && $fell(image_rdy)) begin
+            `ASSUME($past(image_val));
+        end
+
+
+`endif
 endmodule
 
+`ifndef YOSYS
 `default_nettype wire
+`endif
 
 `endif //  `ifndef _image_

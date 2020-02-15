@@ -63,6 +63,38 @@ module image_mem
 
 
 
+`ifdef FORMAL
+
+    reg  past_exists;
+    reg  past_exists_2;
+    initial begin
+        past_exists     = 1'b0;
+        past_exists_2   = 1'b0;
+    end
+
+
+    // extend wait time unit the past can be accessed
+    always @(posedge clk)
+        {past_exists_2, past_exists} <= {past_exists, 1'b1};
+
+
+    // the lower bits of the read address is used to MUX the bank thus the
+    // number of banks must be 2^N
+    always @(*) begin
+        assert(  ( 1 == BANK_NB)
+              || ( 2 == BANK_NB)
+              || ( 4 == BANK_NB)
+              || ( 8 == BANK_NB)
+              || (16 == BANK_NB)
+              || (32 == BANK_NB)
+              || (64 == BANK_NB)
+              );
+    end
+
+`endif
+
+
+
     /**
      * Internal signals
      */
@@ -119,6 +151,32 @@ module image_mem
                 rd_data <= rd_data_2p;
 
 
+
+`ifdef FORMAL
+
+            // writing data takes precedence over a read, the read will instead
+            // be dropped
+            always @(posedge clk)
+                if (past_exists && $past(wr_val & rd_val)) begin
+                    assert(addr_1p == $past(wr_addr));
+                end
+
+
+            // writing to a memory location will change its contains to be that
+            // which was written
+            always @(posedge clk)
+                if (past_exists_2 && $past(( ~rst & wr_val), 2)) begin
+                    assert(bank[$past(wr_addr, 2)] == $past(wr_data, 2));
+                end
+
+
+            // read output of memory will remain unchanged if not read from
+            always @(posedge clk)
+                if (past_exists && $past( ~rd_val_1p)) begin
+                    assert($stable(rd_data_2p));
+                end
+
+`endif
         end
         else begin : BANK_MULTI_
 
@@ -145,6 +203,19 @@ module image_mem
                     if      (wr_val_1p) bank[addr_1p] <= wr_data_1p[b*BANK_DWIDTH +: BANK_DWIDTH];
                     else if (rd_val_1p) rd_data_2p[b] <= bank[addr_1p];
 
+`ifdef FORMAL
+
+                // writing to a memory location will change its contains to be that
+                // which was written
+                always @(posedge clk)
+                    if (past_exists_2 && $past(( ~rst & wr_val), 2)) begin
+                        assert
+                            (bank[$past(wr_addr[0             +: BANK_AWIDTH], 2)]
+                            ==    $past(wr_data[b*BANK_DWIDTH +: BANK_DWIDTH], 2)
+                            );
+                    end
+
+`endif
             end
 
 
@@ -158,6 +229,26 @@ module image_mem
                 rd_data <= rd_data_2p[mux_2p];
 
 
+`ifdef FORMAL
+
+            // writing data takes precedence over a read, the read will instead
+            // be dropped
+            always @(posedge clk)
+                if (past_exists && $past(wr_val & rd_val)) begin
+                    assert(addr_1p == $past(wr_addr[0 +: BANK_AWIDTH]));
+                end
+
+
+            // read output of memory will remain unchanged if not read from
+            integer ii;
+            always @(posedge clk)
+                if (past_exists && $past( ~rd_val_1p)) begin
+                    for (ii = 0; ii < BANK_NB; ii = ii + 1) begin
+                        assert($stable(rd_data_2p[ii]));
+                    end
+                end
+
+`endif
         end
     endgenerate
 
@@ -165,6 +256,8 @@ module image_mem
 
 endmodule
 
+`ifndef YOSYS
 `default_nettype wire
+`endif
 
 `endif //  `ifndef _image_mem_
