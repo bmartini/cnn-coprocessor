@@ -7,6 +7,11 @@
 # uut dirs
 uut/
 
+# dut files
+dut/*_tb
+dut/*.vcd
+dut/obj_dir/
+
 # SymbiYosys work dirs
 sby/*/
 
