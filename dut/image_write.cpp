@@ -29,6 +29,12 @@ void reset(Vimage_write *dut, VerilatedVcdC *wave, vluint64_t timestamp) {
   dut->rst = 0;
 }
 
+void set_cfg(Vimage_write *dut, uint8_t valid, uint16_t addr, uint32_t data) {
+  dut->cfg_addr = addr;
+  dut->cfg_data = data;
+  dut->cfg_valid = valid;
+}
+
 int main(int argc, char **argv) {
   WData cnt[8] = {0};
   vluint64_t timestamp = 0;
@@ -49,24 +55,22 @@ int main(int argc, char **argv) {
 
   tick(dut, wave, ++timestamp);
 
-  dut->cfg_addr = 9; // CFG_IW_IMG_W
-  dut->cfg_data = 0x00000009;
-  dut->cfg_valid = 1;
+  // CFG_IW_IMG_W
+  set_cfg(dut, 1, 9, 0x00000009);
   tick(dut, wave, ++timestamp);
 
-  dut->cfg_addr = 10; // CFG_IW_START
-  dut->cfg_data = 0x00000004;
-  dut->cfg_valid = 1;
+  // CFG_IW_START
+  set_cfg(dut, 1, 10, 0x00000004);
   tick(dut, wave, ++timestamp);
 
-  dut->cfg_addr = 11; // CFG_IW_STEP
-  dut->cfg_data = 0x00030009;
-  dut->cfg_valid = 1;
+  // CFG_IW_STEP
+  set_cfg(dut, 1, 11, 0x00030009);
   tick(dut, wave, ++timestamp);
 
-  dut->cfg_addr = 0;
-  dut->cfg_data = 0;
-  dut->cfg_valid = 0;
+  // release config bus
+  set_cfg(dut, 0, 0, 0);
+  tick(dut, wave, ++timestamp);
+  tick(dut, wave, ++timestamp);
   tick(dut, wave, ++timestamp);
 
   dut->next = 1;
