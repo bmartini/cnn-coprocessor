@@ -6,8 +6,6 @@
 #include <stdlib.h>
 
 void tick(Vimage_write *dut, VerilatedVcdC *wave, vluint64_t timestamp) {
-  printf("%lu\n", (timestamp * 10 - 2));
-
   dut->eval();
   wave->dump(timestamp * 10 - 2);
 
@@ -87,14 +85,15 @@ int main(int argc, char **argv) {
   for (int x = 0; x < 350; x++) {
     dut->str_img_bus[0] = cnt[0];
     dut->str_img_val = 1;
-    tick(dut, wave, ++timestamp);
 
     if (dut->str_img_rdy) {
-      // after the tick we sample the rdy to see if the data was moved into the
-      // pipeline, if both rdy & val are high we increment to the 'next' data
+      // sample the rdy to see if the data will be moved into the pipeline, if
+      // both rdy & val are high we increment to the 'next' data
 
       cnt[0]++;
     }
+
+    tick(dut, wave, ++timestamp);
   }
 
   // memset(dut->str_img_bus, 0, sizeof(dut->str_img_bus));
