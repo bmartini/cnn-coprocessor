@@ -71,7 +71,12 @@ int main(int argc, char **argv) {
   tick(dut, wave, ++timestamp);
   tick(dut, wave, ++timestamp);
 
+  // wait on next
   dut->next = 1;
+  while (dut->next_rdy == 0) {
+    // wait until next_rdy is high
+    tick(dut, wave, ++timestamp);
+  }
   tick(dut, wave, ++timestamp);
 
   dut->next = 0;
