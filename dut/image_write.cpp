@@ -33,6 +33,18 @@ void set_cfg(Vimage_write *dut, uint8_t valid, uint16_t addr, uint32_t data) {
   dut->cfg_valid = valid;
 }
 
+void set_str_img(Vimage_write *dut, uint8_t valid, WData *data) {
+  dut->str_img_bus[0] = data[0];
+  dut->str_img_bus[1] = data[1];
+  dut->str_img_bus[2] = data[2];
+  dut->str_img_bus[3] = data[3];
+  dut->str_img_bus[4] = data[4];
+  dut->str_img_bus[5] = data[5];
+  dut->str_img_bus[6] = data[6];
+  dut->str_img_bus[7] = data[7];
+  dut->str_img_val = valid;
+}
+
 int main(int argc, char **argv) {
   WData cnt[8] = {0};
   vluint64_t timestamp = 0;
@@ -86,16 +98,19 @@ int main(int argc, char **argv) {
     tick(dut, wave, ++timestamp);
   }
 
-  cnt[0]++;
+  for (int x = 0; x < 8; x++) {
+    cnt[x] += (x + 1);
+  }
   for (int x = 0; x < 350; x++) {
-    dut->str_img_bus[0] = cnt[0];
-    dut->str_img_val = 1;
+    set_str_img(dut, 1, cnt);
 
     if (dut->str_img_rdy) {
       // sample the rdy to see if the data will be moved into the pipeline, if
       // both rdy & val are high we increment to the 'next' data
 
-      cnt[0]++;
+      for (int x = 0; x < 8; x++) {
+        cnt[x]++;
+      }
     }
 
     tick(dut, wave, ++timestamp);
