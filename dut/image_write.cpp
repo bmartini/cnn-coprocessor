@@ -5,9 +5,43 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+uint32_t cfg_data = 0;
+uint8_t cfg_addr = 0;
+uint8_t cfg_valid = 0;
+
+uint8_t next = 0;
+uint8_t next_rdy = 0;
+
+uint8_t str_img_val = 0;
+uint8_t str_img_rdy = 0;
+WData str_img_bus[8] = {0};
+
+uint8_t wr_val = 0;
+uint16_t wr_addr = 0;
+WData wr_data[8] = {0};
+
+void update_ports(Vimage_write *dut) {
+  cfg_data = dut->cfg_data;
+  cfg_addr = dut->cfg_addr;
+  cfg_valid = dut->cfg_valid;
+
+  next = dut->next;
+  next_rdy = dut->next_rdy;
+
+  str_img_val = dut->str_img_val;
+  str_img_rdy = dut->str_img_rdy;
+  memcpy(&str_img_bus[0], dut->str_img_bus, sizeof(str_img_bus));
+
+  wr_val = dut->wr_val;
+  wr_addr = dut->wr_addr;
+  memcpy(&wr_data[0], dut->wr_data, sizeof(wr_data));
+}
+
 void tick(Vimage_write *dut, VerilatedVcdC *wave, vluint64_t timestamp) {
   dut->eval();
   wave->dump(timestamp * 10 - 2);
+
+  update_ports(dut);
 
   dut->clk = 1;
   dut->eval();
