@@ -53,13 +53,7 @@ void tick(Vimage_write *dut, VerilatedVcdC *wave, vluint64_t timestamp) {
   wave->flush();
 }
 
-void reset(Vimage_write *dut, VerilatedVcdC *wave, vluint64_t timestamp) {
-  dut->rst = 1;
-
-  tick(dut, wave, timestamp);
-
-  dut->rst = 0;
-}
+void set_rst(Vimage_write *dut, uint8_t rst) { dut->rst = rst; }
 
 void set_cfg(Vimage_write *dut, uint8_t valid, uint16_t addr, uint32_t data) {
   dut->cfg_addr = addr;
@@ -90,8 +84,10 @@ int main(int argc, char **argv) {
   dut->trace(wave, 99);
   wave->open("image_write.vcd");
 
-  reset(dut, wave, ++timestamp);
-
+  set_rst(dut, 1);
+  tick(dut, wave, ++timestamp);
+  set_rst(dut, 0);
+  tick(dut, wave, ++timestamp);
   tick(dut, wave, ++timestamp);
 
   // CFG_IW_IMG_W
