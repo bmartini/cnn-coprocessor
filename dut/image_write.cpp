@@ -131,24 +131,20 @@ int main(int argc, char **argv) {
   for (int x = 0; x < 8; x++) {
     cnt[x] += (x + 1);
   }
+
   for (int x = 0; x < 350; x++) {
     set_str_img(dut, 1, cnt);
+    tick(dut, wave, ++timestamp);
 
-    if (dut->str_img_rdy) {
-      // sample the rdy to see if the data will be moved into the pipeline, if
+    if (str_img_rdy) {
+      // sample the rdy to see if the data has been moved into the pipeline, if
       // both rdy & val are high we increment to the 'next' data
 
       for (int x = 0; x < 8; x++) {
         cnt[x]++;
       }
     }
-
-    tick(dut, wave, ++timestamp);
   }
-
-  // memset(dut->str_img_bus, 0, sizeof(dut->str_img_bus));
-  // dut->str_img_val = 0;
-  // tick(dut, wave, ++timestamp);
 
   wave->close();
 
