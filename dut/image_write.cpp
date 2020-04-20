@@ -14,11 +14,11 @@ uint8_t next_rdy = 0;
 
 uint8_t str_img_val = 0;
 uint8_t str_img_rdy = 0;
-WData str_img_bus[8] = {0};
+uint32_t str_img_bus[8] = {0};
 
 uint8_t wr_val = 0;
 uint16_t wr_addr = 0;
-WData wr_data[8] = {0};
+uint32_t wr_data[8] = {0};
 
 void update_ports(Vimage_write *dut) {
   cfg_data = dut->cfg_data;
@@ -67,20 +67,13 @@ void set_cfg(Vimage_write *dut, uint8_t valid, uint16_t addr, uint32_t data) {
   dut->cfg_valid = valid;
 }
 
-void set_str_img(Vimage_write *dut, uint8_t valid, WData *data) {
-  dut->str_img_bus[0] = data[0];
-  dut->str_img_bus[1] = data[1];
-  dut->str_img_bus[2] = data[2];
-  dut->str_img_bus[3] = data[3];
-  dut->str_img_bus[4] = data[4];
-  dut->str_img_bus[5] = data[5];
-  dut->str_img_bus[6] = data[6];
-  dut->str_img_bus[7] = data[7];
+void set_str_img(Vimage_write *dut, uint8_t valid, uint32_t *data) {
+  memcpy(dut->str_img_bus, data, sizeof(dut->str_img_bus));
   dut->str_img_val = valid;
 }
 
 int main(int argc, char **argv) {
-  WData cnt[8] = {0};
+  uint32_t cnt[8] = {0};
   vluint64_t timestamp = 0;
 
   // Initialize Verilators variables
