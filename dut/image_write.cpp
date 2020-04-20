@@ -67,6 +67,8 @@ void set_cfg(Vimage_write *dut, uint8_t valid, uint16_t addr, uint32_t data) {
   dut->cfg_valid = valid;
 }
 
+void set_next(Vimage_write *dut, uint8_t next) { dut->next = next; }
+
 void set_str_img(Vimage_write *dut, uint8_t valid, uint32_t *data) {
   memcpy(dut->str_img_bus, data, sizeof(dut->str_img_bus));
   dut->str_img_val = valid;
@@ -110,15 +112,16 @@ int main(int argc, char **argv) {
   tick(dut, wave, ++timestamp);
   tick(dut, wave, ++timestamp);
 
-  // wait on next
-  dut->next = 1;
-  while (dut->next_rdy == 0) {
-    // wait until next_rdy is high
-    tick(dut, wave, ++timestamp);
-  }
+  // register next configuration
+  set_next(dut, 1);
   tick(dut, wave, ++timestamp);
 
-  dut->next = 0;
+  while (!next_rdy) {
+    // wait on next handshake if next_rdy is not high
+    tick(dut, wave, ++timestamp);
+  }
+
+  set_next(dut, 0);
   tick(dut, wave, ++timestamp);
 
   for (int x = 0; x < 5; x++) {
