@@ -20,6 +20,25 @@ uint8_t wr_val = 0;
 uint16_t wr_addr = 0;
 uint32_t wr_data[8] = {0};
 
+void prep(Vimage_write *dut, const std::string port, const void *value) {
+
+  if ("rst" == port) {
+    dut->rst = *(static_cast<const uint8_t *>(value));
+  } else if ("cfg_data" == port) {
+    dut->cfg_data = *(static_cast<const uint32_t *>(value));
+  } else if ("cfg_addr" == port) {
+    dut->cfg_addr = *(static_cast<const uint8_t *>(value));
+  } else if ("cfg_valid" == port) {
+    dut->cfg_valid = *(static_cast<const uint8_t *>(value));
+  } else if ("next" == port) {
+    dut->next = *(static_cast<const uint8_t *>(value));
+  } else if ("str_img_val" == port) {
+    dut->str_img_val = *(static_cast<const uint8_t *>(value));
+  } else if ("str_img_bus" == port) {
+    memcpy(dut->str_img_bus, value, sizeof(dut->str_img_bus));
+  }
+}
+
 void update_ports(Vimage_write *dut) {
   cfg_data = dut->cfg_data;
   cfg_addr = dut->cfg_addr;
@@ -53,19 +72,19 @@ void tick(Vimage_write *dut, VerilatedVcdC *wave, vluint64_t timestamp) {
   wave->flush();
 }
 
-void set_rst(Vimage_write *dut, uint8_t rst) { dut->rst = rst; }
+void set_rst(Vimage_write *dut, uint8_t rst) { prep(dut, "rst", &rst); }
 
 void set_cfg(Vimage_write *dut, uint8_t valid, uint16_t addr, uint32_t data) {
-  dut->cfg_addr = addr;
-  dut->cfg_data = data;
-  dut->cfg_valid = valid;
+  prep(dut, "cfg_addr", &addr);
+  prep(dut, "cfg_data", &data);
+  prep(dut, "cfg_valid", &valid);
 }
 
-void set_next(Vimage_write *dut, uint8_t next) { dut->next = next; }
+void set_next(Vimage_write *dut, uint8_t next) { prep(dut, "next", &next); }
 
 void set_str_img(Vimage_write *dut, uint8_t valid, uint32_t *data) {
-  memcpy(dut->str_img_bus, data, sizeof(dut->str_img_bus));
-  dut->str_img_val = valid;
+  prep(dut, "str_img_bus", &data);
+  prep(dut, "str_img_val", &valid);
 }
 
 int main(int argc, char **argv) {
