@@ -11,6 +11,7 @@ uut/
 dut/*_tb
 dut/*.vcd
 dut/obj_dir/
+dut/*.so
 
 # SymbiYosys work dirs
 sby/*/
