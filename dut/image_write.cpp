@@ -5,6 +5,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+typedef Vimage_write TB;
+
 uint32_t cfg_data = 0;
 uint8_t cfg_addr = 0;
 uint8_t cfg_valid = 0;
@@ -20,7 +22,11 @@ uint8_t wr_val = 0;
 uint16_t wr_addr = 0;
 uint32_t wr_data[8] = {0};
 
-void prep(Vimage_write *dut, const std::string port, const void *value) {
+TB *dut;
+VerilatedVcdC *wave;
+vluint64_t timestamp;
+
+void prep(const std::string port, const void *value) {
 
   if ("rst" == port) {
     dut->rst = *(static_cast<const uint8_t *>(value));
@@ -39,7 +45,7 @@ void prep(Vimage_write *dut, const std::string port, const void *value) {
   }
 }
 
-void update_ports(Vimage_write *dut) {
+void update() {
   cfg_data = dut->cfg_data;
   cfg_addr = dut->cfg_addr;
   cfg_valid = dut->cfg_valid;
@@ -56,11 +62,13 @@ void update_ports(Vimage_write *dut) {
   memcpy(&wr_data[0], dut->wr_data, sizeof(wr_data));
 }
 
-void tick(Vimage_write *dut, VerilatedVcdC *wave, vluint64_t timestamp) {
+void tick() {
+  timestamp++;
+
   dut->eval();
   wave->dump(timestamp * 10 - 2);
 
-  update_ports(dut);
+  update();
 
   dut->clk = 1;
   dut->eval();
@@ -72,75 +80,75 @@ void tick(Vimage_write *dut, VerilatedVcdC *wave, vluint64_t timestamp) {
   wave->flush();
 }
 
-void set_rst(Vimage_write *dut, uint8_t rst) { prep(dut, "rst", &rst); }
+void set_rst(uint8_t rst) { prep("rst", &rst); }
 
-void set_cfg(Vimage_write *dut, uint8_t valid, uint16_t addr, uint32_t data) {
-  prep(dut, "cfg_addr", &addr);
-  prep(dut, "cfg_data", &data);
-  prep(dut, "cfg_valid", &valid);
+void set_cfg(uint8_t valid, uint16_t addr, uint32_t data) {
+  prep("cfg_addr", &addr);
+  prep("cfg_data", &data);
+  prep("cfg_valid", &valid);
 }
 
-void set_next(Vimage_write *dut, uint8_t next) { prep(dut, "next", &next); }
+void set_next(uint8_t next) { prep("next", &next); }
 
-void set_str_img(Vimage_write *dut, uint8_t valid, uint32_t *data) {
-  prep(dut, "str_img_bus", &data);
-  prep(dut, "str_img_val", &valid);
+void set_str_img(uint8_t valid, uint32_t *data) {
+  prep("str_img_bus", &data);
+  prep("str_img_val", &valid);
 }
 
 int main(int argc, char **argv) {
   uint32_t cnt[8] = {0};
-  vluint64_t timestamp = 0;
+  timestamp = 0;
 
   // Initialize Verilators variables
   Verilated::commandArgs(argc, argv);
 
   // Instantiate design
-  Vimage_write *dut = new Vimage_write;
+  dut = new TB;
 
   // Generate a trace
   Verilated::traceEverOn(true);
-  VerilatedVcdC *wave = new VerilatedVcdC;
+  wave = new VerilatedVcdC;
   dut->trace(wave, 99);
   wave->open("image_write.vcd");
 
-  set_rst(dut, 1);
-  tick(dut, wave, ++timestamp);
-  set_rst(dut, 0);
-  tick(dut, wave, ++timestamp);
-  tick(dut, wave, ++timestamp);
+  set_rst(1);
+  tick();
+  set_rst(0);
+  tick();
+  tick();
 
   // CFG_IW_IMG_W
-  set_cfg(dut, 1, 9, 0x00000009);
-  tick(dut, wave, ++timestamp);
+  set_cfg(1, 9, 0x00000009);
+  tick();
 
   // CFG_IW_START
-  set_cfg(dut, 1, 10, 0x00000004);
-  tick(dut, wave, ++timestamp);
+  set_cfg(1, 10, 0x00000004);
+  tick();
 
   // CFG_IW_STEP
-  set_cfg(dut, 1, 11, 0x00030009);
-  tick(dut, wave, ++timestamp);
+  set_cfg(1, 11, 0x00030009);
+  tick();
 
   // release config bus
-  set_cfg(dut, 0, 0, 0);
-  tick(dut, wave, ++timestamp);
-  tick(dut, wave, ++timestamp);
-  tick(dut, wave, ++timestamp);
+  set_cfg(0, 0, 0);
+  tick();
+  tick();
+  tick();
 
   // register next configuration
-  set_next(dut, 1);
-  tick(dut, wave, ++timestamp);
+  set_next(1);
+  tick();
 
   while (!next_rdy) {
     // wait on next handshake if next_rdy is not high
-    tick(dut, wave, ++timestamp);
+    tick();
   }
 
-  set_next(dut, 0);
-  tick(dut, wave, ++timestamp);
+  set_next(0);
+  tick();
 
   for (int x = 0; x < 5; x++) {
-    tick(dut, wave, ++timestamp);
+    tick();
   }
 
   for (int x = 0; x < 8; x++) {
@@ -148,8 +156,8 @@ int main(int argc, char **argv) {
   }
 
   for (int x = 0; x < 350; x++) {
-    set_str_img(dut, 1, cnt);
-    tick(dut, wave, ++timestamp);
+    set_str_img(1, cnt);
+    tick();
 
     if (str_img_rdy) {
       // sample the rdy to see if the data has been moved into the pipeline, if
