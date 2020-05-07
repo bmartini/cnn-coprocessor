@@ -28,18 +28,28 @@ void prep(const std::string port, const std::vector<uint32_t> &value) {
 
 py::dict update() {
 
+  py::list str_img_bus;
+  for (auto &item : dut->str_img_bus) {
+    str_img_bus.append(item);
+  }
+
+  py::list wr_data;
+  for (auto &item : dut->wr_data) {
+    wr_data.append(item);
+  }
+
   return py::dict (
-    "rst"_a=dut->rst,
-    "cfg_data"_a=dut->cfg_data,
-    "cfg_addr"_a=dut->cfg_addr,
-    "cfg_valid"_a=dut->cfg_valid,
-    "next"_a=dut->next,
-    "next_rdy"_a=dut->next_rdy,
-    "str_img_bus"_a=dut->str_img_bus,
-    "str_img_val"_a=dut->str_img_val,
-    "str_img_rdy"_a=dut->str_img_rdy,
-    "wr_val"_a=dut->wr_val,
-    "wr_addr"_a=dut->wr_addr,
-    "wr_data"_a=dut->wr_data
+    "rst"_a = dut->rst,
+    "cfg_data"_a = dut->cfg_data,
+    "cfg_addr"_a = dut->cfg_addr,
+    "cfg_valid"_a = dut->cfg_valid,
+    "next"_a = dut->next,
+    "next_rdy"_a = dut->next_rdy,
+    "str_img_bus"_a = str_img_bus,
+    "str_img_val"_a = dut->str_img_val,
+    "str_img_rdy"_a = dut->str_img_rdy,
+    "wr_val"_a = dut->wr_val,
+    "wr_addr"_a = dut->wr_addr,
+    "wr_data"_a = wr_data
   );
 }
