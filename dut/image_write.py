@@ -4,7 +4,7 @@ Testbench for the image_write module.
 """
 
 from typing import Generator
-import testbench as dut
+import testbench as dut # type: ignore
 
 
 def concat_cfg2(left: int, right: int ) -> int:
@@ -15,7 +15,7 @@ def concat_cfg2(left: int, right: int ) -> int:
 
 
 def image_addr(start_addr: int, step_pixel: int, img_height: int,
-               img_width: int, step_row: int) -> Generator[str, None, None]:
+               img_width: int, step_row: int) -> Generator[int, None, None]:
     """ Address calculation model """
 
     for depth in range(0, step_pixel):  # step over row

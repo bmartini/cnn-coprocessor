@@ -12,6 +12,8 @@ dut/*_tb
 dut/*.vcd
 dut/obj_dir/
 dut/*.so
+dut/.mypy_cache
+
 
 # SymbiYosys work dirs
 sby/*/
