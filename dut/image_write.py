@@ -7,6 +7,13 @@ from typing import Generator
 import testbench as dut
 
 
+def concat_cfg2(left: int, right: int ) -> int:
+    shift_left = left << 16
+    mask_right = right & 0x0000ffff
+
+    return (shift_left | mask_right)
+
+
 def image_addr(start_addr: int, step_pixel: int, img_height: int,
                img_width: int, step_row: int) -> Generator[str, None, None]:
     """ Address calculation model """
@@ -40,23 +47,24 @@ def setup():
         dut.tick()
 
 
-def config():
+def config(start_addr: int, step_pixel: int, img_height: int,
+           img_width: int, step_row: int) -> None:
     """ send configuration """
 
     # CFG_IW_IMG_W
-    dut.prep("cfg_data", [0x00000009])
+    dut.prep("cfg_data", [(img_width-1)])
     dut.prep("cfg_addr", [9])
     dut.prep("cfg_valid", [1])
     io = dut.tick()
 
     # CFG_IW_START
-    dut.prep("cfg_data", [0x00000004])
+    dut.prep("cfg_data", [concat_cfg2(start_addr, (img_height-1))])
     dut.prep("cfg_addr", [10])
     dut.prep("cfg_valid", [1])
     io = dut.tick()
 
     # CFG_IW_STEP
-    dut.prep("cfg_data", [0x00030009])
+    dut.prep("cfg_data", [concat_cfg2((step_pixel-1), (step_row-1))])
     dut.prep("cfg_addr", [11])
     dut.prep("cfg_valid", [1])
     io = dut.tick()
@@ -82,6 +90,7 @@ def config():
         io = dut.tick()
 
 
+
 # cfg values
 img_width = 10  # image width
 img_height = 5  # image height
@@ -98,7 +107,8 @@ dut.init()
 
 setup()
 
-config()
+config(start_addr, step_pixel, img_height, img_width, step_row)
+
 
 str_data = list(range(1, 9))
 wr_data = list(range(1, 9))
