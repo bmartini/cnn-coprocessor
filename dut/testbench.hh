@@ -9,27 +9,33 @@ namespace py = pybind11;
 TB *dut;
 VerilatedVcdC *wave;
 vluint64_t timestamp;
+bool trace_on;
 
 void prep(const std::string, const std::vector<uint32_t> &);
 
 py::dict update();
 
-void init() {
+void init(const bool trace = true) {
   printf("Initialize DUT simulation\n");
   timestamp = 0;
+  trace_on = trace;
 
   // Instantiate design
   dut = new TB;
 
-  // Generate a trace
-  Verilated::traceEverOn(true);
-  wave = new VerilatedVcdC;
-  dut->trace(wave, 99);
-  wave->open("image_write.vcd");
+  if (trace_on) {
+    // Generate a trace
+    Verilated::traceEverOn(true);
+    wave = new VerilatedVcdC;
+    dut->trace(wave, 99);
+    wave->open("image_write.vcd");
+  }
 }
 
 void finish() {
-  wave->close();
+  if (trace_on) {
+    wave->close();
+  }
 
   delete dut;
   printf("Finish DUT simulation\n");
@@ -39,18 +45,24 @@ py::dict tick() {
   timestamp++;
 
   dut->eval();
-  wave->dump(timestamp * 10 - 2);
+  if (trace_on) {
+    wave->dump(timestamp * 10 - 2);
+  }
 
   py::dict IO = update();
 
   dut->clk = 1;
   dut->eval();
-  wave->dump(timestamp * 10);
+  if (trace_on) {
+    wave->dump(timestamp * 10);
+  }
 
   dut->clk = 0;
   dut->eval();
-  wave->dump(timestamp * 10 + 5);
-  wave->flush();
+  if (trace_on) {
+    wave->dump(timestamp * 10 + 5);
+    wave->flush();
+  }
 
   return IO;
 }
@@ -58,7 +70,7 @@ py::dict tick() {
 PYBIND11_MODULE(testbench, m) {
   m.doc() = "Python interface for a Verilator Design Under Test (dut)";
 
-  m.def("init", &init, "Initialize DUT simulation");
+  m.def("init", &init, "Initialize DUT simulation", py::arg("trace") = true);
   m.def("finish", &finish, "Finish DUT simulation");
   m.def("prep", &prep, "Prepare input values to be sampled on next posedge");
   m.def("tick", &tick,
