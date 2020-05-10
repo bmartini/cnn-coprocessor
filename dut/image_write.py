@@ -3,76 +3,119 @@
 Testbench for the image_write module.
 """
 
+from typing import Generator
 import testbench as dut
 
 
+def image_addr(start_addr: int, step_pixel: int, img_height: int,
+               img_width: int, step_row: int) -> Generator[str, None, None]:
+    """ Address calculation model """
+
+    for depth in range(0, step_pixel):  # step over row
+        for height in range(0, img_height):  # step over row
+            for width in range(0, img_width):  # step over row
+                addr = (start_addr + depth) \
+                    + (height * step_pixel * step_row) \
+                    + (width * step_pixel)
+
+                yield addr
+
+
+def setup():
+    """ Set starting DUT values and reset module """
+
+    dut.prep("cfg_data", [0])
+    dut.prep("cfg_addr", [0])
+    dut.prep("cfg_valid", [0])
+    dut.prep("next", [0])
+    dut.prep("str_img_val", [0])
+    dut.prep("str_img_bus", [0, 0, 0, 0, 0, 0, 0, 0])
+
+    # reset module
+    dut.prep("rst", [1])
+    dut.tick()
+
+    dut.prep("rst", [0])
+    for _ in range(2):
+        dut.tick()
+
+
+def config():
+    """ send configuration """
+
+    # CFG_IW_IMG_W
+    dut.prep("cfg_data", [0x00000009])
+    dut.prep("cfg_addr", [9])
+    dut.prep("cfg_valid", [1])
+    io = dut.tick()
+
+    # CFG_IW_START
+    dut.prep("cfg_data", [0x00000004])
+    dut.prep("cfg_addr", [10])
+    dut.prep("cfg_valid", [1])
+    io = dut.tick()
+
+    # CFG_IW_STEP
+    dut.prep("cfg_data", [0x00030009])
+    dut.prep("cfg_addr", [11])
+    dut.prep("cfg_valid", [1])
+    io = dut.tick()
+
+    dut.prep("cfg_data", [0])
+    dut.prep("cfg_addr", [0])
+    dut.prep("cfg_valid", [0])
+    for _ in range(3):
+        io = dut.tick()
+
+    # register next configuration
+    dut.prep("next", [1])
+    io = dut.tick()
+
+    while not io["next_rdy"]:
+        # wait on next handshake if next_rdy is not high
+        io = dut.tick()
+
+    dut.prep("next", [0])
+    io = dut.tick()
+
+    for _ in range(5):
+        io = dut.tick()
+
+
+# cfg values
+img_width = 10  # image width
+img_height = 5  # image height
+
+start_addr = 0  # starting offset
+
+step_pixel = 4  # distance to step to next pixel
+step_row = 10   # distance to step to next row
+
+
+model = image_addr(start_addr, step_pixel, img_height, img_width, step_row)
+
 dut.init()
 
-dut.prep("cfg_data", [0])
-dut.prep("cfg_addr", [0])
-dut.prep("cfg_valid", [0])
-dut.prep("next", [0])
-dut.prep("str_img_val", [0])
-dut.prep("str_img_bus", [0, 0, 0, 0, 0, 0, 0, 0])
+setup()
 
-# reset module
-dut.prep("rst", [1])
-IO = dut.tick()
+config()
 
-dut.prep("rst", [0])
-for _ in range(2):
-    IO = dut.tick()
-
-
-# CFG_IW_IMG_W
-dut.prep("cfg_data", [0x00000009])
-dut.prep("cfg_addr", [9])
-dut.prep("cfg_valid", [1])
-IO = dut.tick()
-
-# CFG_IW_START
-dut.prep("cfg_data", [0x00000004])
-dut.prep("cfg_addr", [10])
-dut.prep("cfg_valid", [1])
-IO = dut.tick()
-
-# CFG_IW_STEP
-dut.prep("cfg_data", [0x00030009])
-dut.prep("cfg_addr", [11])
-dut.prep("cfg_valid", [1])
-IO = dut.tick()
-
-dut.prep("cfg_data", [0])
-dut.prep("cfg_addr", [0])
-dut.prep("cfg_valid", [0])
-for _ in range(3):
-    IO = dut.tick()
-
-# register next configuration
-dut.prep("next", [1])
-IO = dut.tick()
-
-while not IO["next_rdy"]:
-    # wait on next handshake if next_rdy is not high
-    IO = dut.tick()
-
-dut.prep("next", [0])
-IO = dut.tick()
-
-for _ in range(5):
-    IO = dut.tick()
-
-
-TEST_DATA = list(range(1, 9))
+str_data = list(range(1, 9))
+wr_data = list(range(1, 9))
 for _ in range(350):
     dut.prep("str_img_val", [1])
-    dut.prep("str_img_bus", TEST_DATA)
-    IO = dut.tick()
+    dut.prep("str_img_bus", str_data)
 
-    if IO['str_img_rdy'] == 1:
+    io = dut.tick()
+
+    if io['str_img_rdy'] == 1:
         # sample the rdy to see if the data has been moved into the pipeline,
         # if both rdy & val are high we increment to the 'next' data
-        TEST_DATA = [n+1 for n in TEST_DATA]
+        str_data = [n+1 for n in str_data]
 
+    if io['wr_val'] == 1:
+        assert io['wr_addr'] == next(model)
+        assert io['wr_data'] == wr_data
+        wr_data = [n+1 for n in wr_data]
 
 dut.finish()
