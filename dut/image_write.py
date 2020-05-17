@@ -4,18 +4,18 @@ Testbench for the image_write module.
 """
 
 from typing import Generator
-import testbench as dut # type: ignore
+import testbench as dut  # type: ignore
 
 
-def concat_cfg2(left: int, right: int ) -> int:
+def concat_cfg2(left: int, right: int) -> int:
     shift_left = left << 16
     mask_right = right & 0x0000ffff
 
     return (shift_left | mask_right)
 
 
-def image_addr(start_addr: int, step_pixel: int, img_height: int,
-               img_width: int, step_row: int) -> Generator[int, None, None]:
+def model_write(start_addr: int, step_pixel: int, img_height: int,
+                img_width: int, step_row: int) -> Generator[int, None, None]:
     """ Address calculation model """
 
     for depth in range(0, step_pixel):  # step over row
@@ -90,7 +90,6 @@ def config(start_addr: int, step_pixel: int, img_height: int,
         io = dut.tick()
 
 
-
 # cfg values
 img_width = 10  # image width
 img_height = 5  # image height
@@ -101,7 +100,7 @@ step_pixel = 4  # distance to step to next pixel
 step_row = 10   # distance to step to next row
 
 
-model = image_addr(start_addr, step_pixel, img_height, img_width, step_row)
+model = model_write(start_addr, step_pixel, img_height, img_width, step_row)
 
 dut.init()
 
