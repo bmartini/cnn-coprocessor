@@ -11,7 +11,7 @@ VerilatedVcdC *wave;
 vluint64_t timestamp;
 bool trace_on;
 
-void prep(const std::string, const std::vector<uint32_t> &);
+void prep(const std::string, const std::vector<uint64_t> &);
 
 py::dict update();
 
@@ -28,7 +28,7 @@ void init(const bool trace = true) {
     Verilated::traceEverOn(true);
     wave = new VerilatedVcdC;
     dut->trace(wave, 99);
-    wave->open("image_write.vcd");
+    wave->open("testbench.vcd");
   }
 }
 

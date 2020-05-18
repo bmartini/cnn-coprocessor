@@ -5,7 +5,7 @@
 typedef Vimage_write TB;
 #include "testbench.hh"
 
-void prep(const std::string port, const std::vector<uint32_t> &value) {
+void prep(const std::string port, const std::vector<uint64_t> &value) {
 
   if ("rst" == port) {
     dut->rst = static_cast<uint8_t>(value[0]);
@@ -20,7 +20,9 @@ void prep(const std::string port, const std::vector<uint32_t> &value) {
   } else if ("str_img_val" == port) {
     dut->str_img_val = static_cast<const uint8_t>(value[0]);
   } else if ("str_img_bus" == port) {
-    std::copy(value.begin(), value.end(), dut->str_img_bus);
+    for (std::size_t i = 0; i != value.size(); ++i) {
+      dut->str_img_bus[i] = static_cast<const uint8_t>(value[i]);
+    }
   } else {
     printf("WARNING: requested port \'%s\' not found.\n", port.c_str());
   }

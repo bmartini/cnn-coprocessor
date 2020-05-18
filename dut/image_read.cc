@@ -5,7 +5,7 @@
 typedef Vimage_read TB;
 #include "testbench.hh"
 
-void prep(const std::string port, const std::vector<uint32_t> &value) {
+void prep(const std::string port, const std::vector<uint64_t> &value) {
 
   if ("rst" == port) {
     dut->rst = static_cast<uint8_t>(value[0]);
@@ -18,7 +18,7 @@ void prep(const std::string port, const std::vector<uint32_t> &value) {
   } else if ("next" == port) {
     dut->next = static_cast<const uint8_t>(value[0]);
   } else if ("rd_data" == port) {
-    dut->rd_data = static_cast<const uint32_t>(value[0]);
+    dut->rd_data = static_cast<const uint64_t>(value[0]);
   } else if ("image_rdy" == port) {
     dut->image_val = static_cast<const uint8_t>(value[0]);
   } else {
