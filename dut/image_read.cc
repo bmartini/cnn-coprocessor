@@ -20,7 +20,7 @@ void prep(const std::string port, const std::vector<uint64_t> &value) {
   } else if ("rd_data" == port) {
     dut->rd_data = static_cast<const uint64_t>(value[0]);
   } else if ("image_rdy" == port) {
-    dut->image_val = static_cast<const uint8_t>(value[0]);
+    dut->image_rdy = static_cast<const uint8_t>(value[0]);
   } else {
     printf("WARNING: requested port \'%s\' not found.\n", port.c_str());
   }
