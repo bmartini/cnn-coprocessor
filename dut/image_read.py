@@ -155,27 +155,27 @@ def config(img: Dict[str, int],
 
     # CFG_IR_IMG_W
     dut.prep("cfg_data", [concat_cfg1(img['width']-1)])
-    dut.prep("cfg_addr", [9])
+    dut.prep("cfg_addr", [5])
     dut.prep("cfg_valid", [1])
     io = dut.tick()
 
-    # CFG_IR_DH
+    # CFG_IR_IMG_DH
     dut.prep("cfg_data", [concat_cfg2((img['depth']-1), (img['height']-1))])
-    dut.prep("cfg_addr", [10])
+    dut.prep("cfg_addr", [6])
     dut.prep("cfg_valid", [1])
     io = dut.tick()
 
     # CFG_IR_PAD
     dut.prep("cfg_data", [concat_cfg4(pad['left'], pad['right'],
                                       pad['top'], pad['bottom'])])
-    dut.prep("cfg_addr", [11])
+    dut.prep("cfg_addr", [7])
     dut.prep("cfg_valid", [1])
     io = dut.tick()
 
     # CFG_IR_CONV
-    dut.prep("cfg_data", [concat_cfg4(0, (maxp_side-1),
-                                      (conv['side']-1), (conv['step']-1))])
-    dut.prep("cfg_addr", [11])
+    dut.prep("cfg_data", [concat_cfg4((maxp_side-1), (conv['side']-1),
+                                      0, (conv['step']-1))])
+    dut.prep("cfg_addr", [8])
     dut.prep("cfg_valid", [1])
     io = dut.tick()
 
@@ -195,9 +195,6 @@ def config(img: Dict[str, int],
 
     dut.prep("next", [0])
     io = dut.tick()
-
-    for _ in range(5):
-        io = dut.tick()
 
 
 # cfg values
@@ -233,24 +230,22 @@ config(
     {'side': conv_side, 'step': conv_step})
 
 
-"""
-str_data = list(range(1, 9))
-wr_data = list(range(1, 9))
-for _ in range(350):
-    dut.prep("str_img_val", [1])
-    dut.prep("str_img_bus", str_data)
+rd_data_2p = 1
+rd_data_1p = 0
+rd_data = 0
 
+dut.prep("image_rdy", [1])
+
+for _ in range(350):
     io = dut.tick()
 
-    if io['str_img_rdy'] == 1:
-        # sample the rdy to see if the data has been moved into the pipeline,
-        # if both rdy & val are high we increment to the 'next' data
-        str_data = [n+1 for n in str_data]
+    if io['rd_val'] == 0:
+        dut.prep("rd_data", [0])
+    else:
+        rd_data = rd_data_1p
+        rd_data_1p = rd_data_2p
+        rd_data_2p = rd_data_2p + 1
+        dut.prep("rd_data", [rd_data])
 
-    if io['wr_val'] == 1:
-        assert io['wr_addr'] == next(model)
-        assert io['wr_data'] == wr_data
-        wr_data = [n+1 for n in wr_data]
-"""
 
 dut.finish()

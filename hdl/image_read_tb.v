@@ -164,6 +164,11 @@ module image_read_tb;
             "%d %d",
             $time, rst,
 
+            "\t<cfg %x %x %b>",
+            cfg_data,
+            cfg_addr,
+            cfg_valid,
+
             "\t<next %b %b>",
             next,
             uut.next_rdy,
