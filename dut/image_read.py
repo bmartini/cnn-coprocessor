@@ -240,11 +240,9 @@ for _ in range(6):
     io = dut.tick()
 
 
-for _ in range(2304):
+# start generating software model addresses
+for model_addr in model:
     io = dut.tick()
-
-    # start generating software model addresses
-    model_addr = next(model)
 
     if io['rd_val'] == 0:
         assert model_addr == None
