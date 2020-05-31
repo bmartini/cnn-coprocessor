@@ -230,7 +230,7 @@ config(
     {'side': conv_side, 'step': conv_step})
 
 
-rd_data_2p = 1
+rd_data_2p = 0
 rd_data_1p = 0
 rd_data = 0
 
@@ -240,7 +240,7 @@ for _ in range(6):
     io = dut.tick()
 
 
-for _ in range(350):
+for _ in range(2304):
     io = dut.tick()
 
     # start generating software model addresses
@@ -253,8 +253,19 @@ for _ in range(350):
         assert model_addr == io['rd_addr']
         rd_data = rd_data_1p
         rd_data_1p = rd_data_2p
-        rd_data_2p = rd_data_2p + 1
+        rd_data_2p = io['rd_addr']
         dut.prep("rd_data", [rd_data])
+
+
+io = dut.tick()
+while io['image_last'] == 0:
+    io = dut.tick()
+
+
+dut.prep("image_rdy", [0])
+for _ in range(20):
+    io = dut.tick()
+
 
 
 dut.finish()
