@@ -234,14 +234,23 @@ rd_data_2p = 1
 rd_data_1p = 0
 rd_data = 0
 
+
 dut.prep("image_rdy", [1])
+for _ in range(6):
+    io = dut.tick()
+
 
 for _ in range(350):
     io = dut.tick()
 
+    # start generating software model addresses
+    model_addr = next(model)
+
     if io['rd_val'] == 0:
+        assert model_addr == None
         dut.prep("rd_data", [0])
     else:
+        assert model_addr == io['rd_addr']
         rd_data = rd_data_1p
         rd_data_1p = rd_data_2p
         rd_data_2p = rd_data_2p + 1
