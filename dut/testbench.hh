@@ -6,6 +6,10 @@
 using namespace pybind11::literals;
 namespace py = pybind11;
 
+#ifndef CLOCK
+#define CLOCK clk
+#endif
+
 TB *dut;
 VerilatedVcdC *wave;
 vluint64_t timestamp;
@@ -51,13 +55,13 @@ py::dict tick() {
 
   py::dict IO = update();
 
-  dut->clk = 1;
+  dut->CLOCK = 1;
   dut->eval();
   if (trace_on) {
     wave->dump(timestamp * 10);
   }
 
-  dut->clk = 0;
+  dut->CLOCK = 0;
   dut->eval();
   if (trace_on) {
     wave->dump(timestamp * 10 + 5);
