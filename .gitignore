@@ -8,11 +8,11 @@
 uut/
 
 # dut files
-dut/*_tb
 dut/*.vcd
-dut/obj_dir/
-dut/*.so
+dut/*.fst
+dut/__pycache__/
 dut/.mypy_cache
+dut/.pytest_cache/
 
 
 # SymbiYosys work dirs
