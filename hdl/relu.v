@@ -19,8 +19,7 @@
 `default_nettype none
 
 module relu
-  #(parameter
-    NUM_WIDTH = 16)
+  #(parameter   NUM_WIDTH = 16)
    (input  wire                 clk,
     input  wire                 bypass,
 

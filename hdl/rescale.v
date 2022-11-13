@@ -25,13 +25,9 @@
 `default_nettype none
 
 module rescale
-  #(parameter
-    NUM_WIDTH   = 33,
-    NUM_AWIDTH  = $clog2(NUM_WIDTH), // do not overwrite
-
-    IMG_WIDTH   = 16)
+  #(parameter   NUM_WIDTH   = 33,
+    parameter   IMG_WIDTH   = 16)
    (input  wire                 clk,
-
     input  wire [7:0]           shift,
 
     input  wire [NUM_WIDTH-1:0] up_data,
@@ -47,12 +43,14 @@ module rescale
     localparam signed [IMG_WIDTH-1:0] IMG_MAX = ({1'b0, {IMG_WIDTH-1{1'b1}}});
     localparam signed [IMG_WIDTH-1:0] IMG_MIN = ({1'b1, {IMG_WIDTH-1{1'b0}}});
 
-    localparam NUM_WIDTH_MAX = NUM_WIDTH;
+    localparam NUM_AWIDTH = NUM_WIDTH > 0 ? $clog2(NUM_WIDTH) : 1;
+    localparam IMG_WIDTH_LESS_ONE = IMG_WIDTH - 1;
 
 
+    // test to determine if number is greater the the max allowed
     function grater_than_max (
-            input [NUM_WIDTH-1:0]   number,
-            input [NUM_AWIDTH-1:0]  overflow
+            input [NUM_WIDTH-1:0]   number,     // number to be tested
+            input [NUM_AWIDTH-1:0]  overflow    // bit address of upper bound of image number
         );
         reg   [NUM_AWIDTH-1:0]  ii;
 
@@ -67,11 +65,11 @@ module rescale
     endfunction
 
 
+    // test to determine if number is less than the min allowed
     function less_than_min (
-            input [NUM_WIDTH-1:0]   number,
-            input [NUM_AWIDTH-1:0]  overflow
+            input [NUM_WIDTH-1:0]   number,     // number to be tested
+            input [NUM_AWIDTH-1:0]  overflow    // bit address of upper bound of image number
         );
-
         reg   [NUM_AWIDTH-1:0]  ii;
 
         begin
@@ -110,7 +108,7 @@ module rescale
 
         // calculate the bit address in the up stream number that contains the
         // top/left most bit of the down (image) number
-        overflow_1p <= (IMG_WIDTH[NUM_AWIDTH-1:0] - 'b1) + shift[NUM_AWIDTH-1:0];
+        overflow_1p <= NUM_AWIDTH'(IMG_WIDTH_LESS_ONE) + NUM_AWIDTH'(shift);
     end
 
 
