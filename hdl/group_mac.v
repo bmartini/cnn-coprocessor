@@ -22,18 +22,18 @@
 `default_nettype none
 
 module group_mac
-  #(parameter
-    GROUP_NB    = 4,
-    IMG_WIDTH   = 16,
-    KER_WIDTH   = 16)
-   (input  wire                                         clk,
-    input  wire                                         rst,
+  #(parameter   GROUP_NB        = 4,
+    parameter   IMG_WIDTH       = 16,
+    parameter   KER_WIDTH       = 16,
+    localparam  RESULT_WIDTH    = IMG_WIDTH+KER_WIDTH+1)
+   (input  wire                             clk,
+    input  wire                             rst,
 
-    input  wire [GROUP_NB*IMG_WIDTH-1:0]                img,
-    input  wire [GROUP_NB*KER_WIDTH-1:0]                ker,
-    input  wire                                         val,
+    input  wire [GROUP_NB*IMG_WIDTH-1:0]    img,
+    input  wire [GROUP_NB*KER_WIDTH-1:0]    ker,
+    input  wire                             val,
 
-    output wire [GROUP_NB*(IMG_WIDTH+KER_WIDTH+1)-1:0]  result
+    output wire [GROUP_NB*RESULT_WIDTH-1:0] result
 );
 
 
