@@ -90,7 +90,7 @@ def _mac_addition(accumulate: int, product: int) -> int:
 
 class Checker:
     def __init__(self) -> None:
-        self._reset: int = 0
+        self._reset: bool = 0
         self._product: int = 0
         self._result: int = 0
 

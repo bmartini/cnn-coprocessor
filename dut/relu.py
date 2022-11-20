@@ -112,7 +112,6 @@ def context(design):
 
 def test_pipeline_depth(context):
     """Test that module pipeline depth is 4 clock cycles deep."""
-
     vpw.prep("up_data", vpw.pack(Param.NUM_WIDTH, 5))
     vpw.tick()
     vpw.prep("up_data", vpw.pack(Param.NUM_WIDTH, 0))
@@ -129,7 +128,6 @@ def test_pipeline_depth(context):
 
 def test_number_positive_bypass_false(context):
     """Test when up stream number is positive value with no bypass requested."""
-
     vpw.prep("bypass", [0])
     vpw.prep("up_data", vpw.pack(Param.NUM_WIDTH, 500))
 
@@ -139,7 +137,6 @@ def test_number_positive_bypass_false(context):
 
 def test_number_positive_bypass_true(context):
     """Test when up stream number is positive with bypass being requested."""
-
     vpw.prep("bypass", [1])
     vpw.prep("up_data", vpw.pack(Param.NUM_WIDTH, 700))
 
@@ -149,7 +146,6 @@ def test_number_positive_bypass_true(context):
 
 def test_number_negative_bypass_false(context):
     """Test when up stream number is negative value with no bypass requested."""
-
     vpw.prep("bypass", [0])
     vpw.prep("up_data", vpw.pack(Param.NUM_WIDTH, -500))
 
@@ -159,7 +155,6 @@ def test_number_negative_bypass_false(context):
 
 def test_number_negative_bypass_true(context):
     """Test when up stream number is negative with bypass being requested."""
-
     vpw.prep("bypass", [1])
     vpw.prep("up_data", vpw.pack(Param.NUM_WIDTH, -700))
 
@@ -169,7 +164,6 @@ def test_number_negative_bypass_true(context):
 
 def test_bypass_random_number(context):
     """Test many random numbers with a random bypass value."""
-
     checker = Checker()
     vpw.register(checker)
 

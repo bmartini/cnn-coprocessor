@@ -139,7 +139,6 @@ def context(design):
 
 def test_pipeline_depth(context):
     """Test that module pipeline depth is 4 clock cycles deep."""
-
     vpw.prep("up_data", vpw.pack(Param.NUM_WIDTH, 5))
     vpw.tick()
     vpw.prep("up_data", vpw.pack(Param.NUM_WIDTH, 0))
@@ -156,7 +155,6 @@ def test_pipeline_depth(context):
 
 def test_image_maximum(context):
     """Test when up stream number is greater than what can be represented to by down stream."""
-
     vpw.prep("up_data", vpw.pack(Param.NUM_WIDTH, 75000))
 
     io = vpw.idle(10)  # wait for longer then the pipelined depth of module
@@ -165,7 +163,6 @@ def test_image_maximum(context):
 
 def test_image_minimum(context):
     """Test when up stream number is less than what can be represented to by down stream."""
-
     vpw.prep("up_data", vpw.pack(Param.NUM_WIDTH, -75000))
 
     io = vpw.idle(10)  # wait for longer then the pipelined depth of module
@@ -174,7 +171,6 @@ def test_image_minimum(context):
 
 def test_dynamic_shift(context):
     """Test when up stream number is less than what can be represented to by down stream."""
-
     checker = Checker()
     vpw.register(checker)
 
@@ -190,7 +186,6 @@ def test_dynamic_shift(context):
 
 def test_shift_random_number(context):
     """Test many random numbers for every valid shift value."""
-
     checker = Checker()
     vpw.register(checker)
 

@@ -142,7 +142,7 @@ def design():
 
 @pytest.fixture
 def context(design):
-    vpw.init(design, trace=True)
+    vpw.init(design, trace=False)
 
     vpw.prep("up_data", vpw.pack(Param.GROUP_NB*Param.NUM_WIDTH, 0))
     vpw.idle(2)

@@ -96,7 +96,7 @@ def _mac_addition(accumulate: int, product: int) -> int:
 
 class Checker:
     def __init__(self) -> None:
-        self._reset: int = 0
+        self._reset: bool = False
         self._img = vpw.Slice("img", Param.IMG_WIDTH, Param.GROUP_NB)
         self._ker = vpw.Slice("ker", Param.KER_WIDTH, Param.GROUP_NB)
         self._result = vpw.Slice("result", _RESULT_WIDTH, Param.GROUP_NB)
