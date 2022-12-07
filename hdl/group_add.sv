@@ -23,10 +23,10 @@ module group_add
   #(parameter
     GROUP_NB    = 4,
     NUM_WIDTH   = 16)
-   (input  wire                             clk,
+   (input  wire                                 clk,
 
-    input  wire [NUM_WIDTH*GROUP_NB-1:0]    up_data,
-    output reg  [NUM_WIDTH-1:0]             dn_data
+    input  wire     [NUM_WIDTH*GROUP_NB-1:0]    up_data,
+    output logic    [NUM_WIDTH-1:0]             dn_data
 );
 
 
@@ -49,7 +49,7 @@ module group_add
      * Internal signals
      */
 
-    reg  [NUM_WIDTH*GROUP_NB-1:0]   up_data_r;
+    logic   [NUM_WIDTH*GROUP_NB-1:0]    up_data_r;
 
 
     /**
@@ -57,18 +57,18 @@ module group_add
      */
 
 
-    always @(posedge clk)
+    always_ff @(posedge clk)
         up_data_r <= up_data;
 
 
     generate
         if (GROUP_NB == 4) begin : GROUP_4_
 
-            (* use_dsp48 = "no" *) reg  [NUM_WIDTH-1:0] dn_data_3p  [0:1];
-            (* use_dsp48 = "no" *) reg  [NUM_WIDTH-1:0] dn_data_2p  [0:1];
-            (* use_dsp48 = "no" *) reg  [NUM_WIDTH-1:0] dn_data_1p;
+            (* use_dsp48 = "no" *) logic    [NUM_WIDTH-1:0] dn_data_3p  [2];
+            (* use_dsp48 = "no" *) logic    [NUM_WIDTH-1:0] dn_data_2p  [2];
+            (* use_dsp48 = "no" *) logic    [NUM_WIDTH-1:0] dn_data_1p;
 
-            always @(posedge clk) begin
+            always_ff @(posedge clk) begin
                 dn_data_3p[0]   <= addition(up_data_r[0*NUM_WIDTH +: NUM_WIDTH],
                                             up_data_r[1*NUM_WIDTH +: NUM_WIDTH]);
 
@@ -99,20 +99,20 @@ module group_add
 `ifdef FORMAL
 
     reg         past_exists;
-    reg  [2:0]  past_wait;
+    reg  [4:0]  past_wait;
     initial begin
         restrict property (past_exists == 1'b0);
         restrict property (past_wait   ==  'b0);
     end
 
     // extend wait time unit the past can be accessed
-    always @(posedge clk)
+    always_ff @(posedge clk)
         {past_exists, past_wait} <= {past_wait, 1'b1};
 
 
 
-    always @(*)
-        assert(GROUP_NB == 4);
+    always_comb
+        GROUP_NUMBER: assert(GROUP_NB == 4);
 
 
     //
@@ -134,9 +134,9 @@ module group_add
     endfunction
 
 
-    always @(posedge clk)
+    always_ff @(posedge clk)
         if (past_exists) begin
-            assert(dn_data == sum_bus($past(up_data, 5)));
+            SUM_UPSTREAM: assert(dn_data == sum_bus($past(up_data, 5)));
         end
 
 

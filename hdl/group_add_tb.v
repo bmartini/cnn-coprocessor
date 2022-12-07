@@ -15,7 +15,7 @@
 //`define VERBOSE
 
 
-`include "group_add.v"
+`include "group_add.sv"
 
 module group_add_tb;
 

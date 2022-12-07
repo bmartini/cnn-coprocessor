@@ -17,7 +17,7 @@
 
 
 `include "group_mac.v"
-`include "group_add.v"
+`include "group_add.sv"
 `include "pool.v"
 `include "bias_add.sv"
 `include "relu.v"
