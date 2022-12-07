@@ -20,14 +20,13 @@
 `default_nettype none
 
 module bias_add
-  #(parameter
-    NUM_WIDTH = 16)
-   (input  wire                 clk,
+  #(parameter   NUM_WIDTH = 16)
+   (input  wire                     clk,
 
-    input  wire [NUM_WIDTH-1:0] bias,
+    input  wire     [NUM_WIDTH-1:0] bias,
 
-    input  wire [NUM_WIDTH-1:0] up_data,
-    output reg  [NUM_WIDTH-1:0] dn_data
+    input  wire     [NUM_WIDTH-1:0] up_data,
+    output logic    [NUM_WIDTH-1:0] dn_data
 );
 
 
@@ -57,7 +56,7 @@ module bias_add
      */
 
 
-    always @(posedge clk)
+    always_ff @(posedge clk)
         dn_data <= addition(bias, up_data);
 
 
@@ -69,12 +68,12 @@ module bias_add
     end
 
     // extend wait time unit the past can be accessed
-    always @(posedge clk)
+    always_ff @(posedge clk)
         past_exists <= 1'b1;
 
 
     // signed integer addition
-    always @(posedge clk)
+    always_ff @(posedge clk)
         if (past_exists) begin
             assert(dn_data == ($past($signed(bias) + $signed(up_data))));
         end

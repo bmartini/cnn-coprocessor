@@ -19,7 +19,7 @@
 `include "group_mac.v"
 `include "group_add.v"
 `include "pool.v"
-`include "bias_add.v"
+`include "bias_add.sv"
 `include "relu.v"
 `include "rescale.v"
 

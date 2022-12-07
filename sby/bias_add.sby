@@ -6,8 +6,8 @@ depth 3
 smtbmc
 
 [script]
-read -formal bias_add.v
+read -formal bias_add.sv
 prep -top bias_add
 
 [files]
-../hdl/bias_add.v
+../hdl/bias_add.sv
