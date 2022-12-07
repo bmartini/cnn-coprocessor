@@ -16,7 +16,7 @@
  */
 
 
-`include "group_mac.v"
+`include "group_mac.sv"
 `include "group_add.sv"
 `include "pool.v"
 `include "bias_add.sv"

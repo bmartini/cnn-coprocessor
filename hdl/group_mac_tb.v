@@ -15,7 +15,7 @@
 //`define VERBOSE
 
 
-`include "group_mac.v"
+`include "group_mac.sv"
 
 module group_mac_tb;
 
