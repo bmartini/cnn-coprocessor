@@ -17,7 +17,7 @@
  */
 
 
-`include "multiply_acc.v"
+`include "multiply_acc.sv"
 
 `default_nettype none
 

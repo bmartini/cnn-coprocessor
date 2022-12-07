@@ -5,8 +5,8 @@ mode prove
 smtbmc
 
 [script]
-read -formal multiply_acc.v
+read -formal multiply_acc.sv
 prep -top multiply_acc
 
 [files]
-../hdl/multiply_acc.v
+../hdl/multiply_acc.sv

@@ -5,18 +5,17 @@
 `default_nettype none
 
 module multiply_acc
-  #(parameter
-    IMG_WIDTH   = 16,
-    KER_WIDTH   = 16)
+  #(parameter   IMG_WIDTH   = 16,
+    parameter   KER_WIDTH   = 16)
    (
-    input  wire                         clk,
-    input  wire                         rst,
+    input  wire                             clk,
+    input  wire                             rst,
 
-    input  wire [IMG_WIDTH-1:0]         img,
-    input  wire [KER_WIDTH-1:0]         ker,
-    input  wire                         val,
+    input  wire     [IMG_WIDTH-1:0]         img,
+    input  wire     [KER_WIDTH-1:0]         ker,
+    input  wire                             val,
 
-    output reg  [IMG_WIDTH+KER_WIDTH:0] result
+    output logic    [IMG_WIDTH+KER_WIDTH:0] result
 );
 
 
@@ -41,17 +40,17 @@ module multiply_acc
     endfunction
 
 
-    reg  [IMG_WIDTH-1:0]            img_2p;
-    reg  [IMG_WIDTH-1:0]            img_1p;
+    logic   [IMG_WIDTH-1:0]             img_2p;
+    logic   [IMG_WIDTH-1:0]             img_1p;
 
-    reg  [KER_WIDTH-1:0]            ker_2p;
-    reg  [KER_WIDTH-1:0]            ker_1p;
+    logic   [KER_WIDTH-1:0]             ker_2p;
+    logic   [KER_WIDTH-1:0]             ker_1p;
 
-    reg  [IMG_WIDTH+KER_WIDTH-1:0]  product_3p;
-    reg  [IMG_WIDTH+KER_WIDTH:0]    result_4p;
+    logic   [IMG_WIDTH+KER_WIDTH-1:0]   product_3p;
+    logic   [IMG_WIDTH+KER_WIDTH:0]     result_4p;
 
 
-    always @(posedge clk) begin
+    always_ff @(posedge clk) begin
         img_1p  <= 'b0;
         ker_1p  <= 'b0;
 
@@ -63,9 +62,9 @@ module multiply_acc
 
 
 `ifdef ALTERA_FPGA
-    always @(posedge clk or posedge rst)
+    always_ff @(posedge clk or posedge rst)
 `else //!ALTERA_FPGA
-    always @(posedge clk)
+    always_ff @(posedge clk)
 `endif
         if (rst) begin
             img_2p      <= 'b0;
@@ -94,7 +93,7 @@ module multiply_acc
     end
 
     // extend wait time unit the past can be accessed
-    always @(posedge clk)
+    always_ff @(posedge clk)
         {past_exists, past_wait} <= {past_wait, 1'b1};
 
 
@@ -105,7 +104,7 @@ module multiply_acc
 
 
     // check that arithmetic is correct
-    always @(posedge clk)
+    always_ff @(posedge clk)
         if (past_exists && $past( ~rst)) begin
             assert( $signed(product_3p)
                 == ($signed($past(img_2p)) * $signed($past(ker_2p))));
@@ -117,14 +116,14 @@ module multiply_acc
 
 
     // result cannot change without new valid data
-    always @(posedge clk)
+    always_ff @(posedge clk)
         if (past_exists && $past( ~rst) && $past( ~val, 5)) begin
             assert($stable(result));
         end
 
 
     // result and data pipeline is reset to zero after a reset signal
-    always @(posedge clk)
+    always_ff @(posedge clk)
         if (past_exists && ~rst && $past(rst)) begin
             assert(result      == 'b0);
             assert(img_1p      == 'b0);
