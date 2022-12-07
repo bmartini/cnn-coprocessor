@@ -15,7 +15,7 @@
 //`define VERBOSE
 
 
-`include "pool.v"
+`include "pool.sv"
 
 module pool_tb;
 
