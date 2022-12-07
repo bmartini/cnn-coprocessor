@@ -16,6 +16,7 @@
  *  Berin Martini (berin.martini@gmail.com)
  */
 
+`include "str_gbox.sv"
 `include "kernel.v"
 `include "image.v"
 `include "layers.v"

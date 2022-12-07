@@ -34,21 +34,20 @@
 `default_nettype none
 
 module str_gbox
-  #(parameter
-    DATA_UP_WIDTH   = 2,
-    DATA_DN_WIDTH   = 8)
-   (input  logic                        clk,
-    input  logic                        rst,
+  #(parameter   DATA_UP_WIDTH   = 2,
+    parameter   DATA_DN_WIDTH   = 8)
+   (input  wire                         clk,
+    input  wire                         rst,
 
-    input  logic [DATA_UP_WIDTH-1:0]    up_data,
-    input  logic                        up_last,
-    input  logic                        up_val,
+    input  wire  [DATA_UP_WIDTH-1:0]    up_data,
+    input  wire                         up_last,
+    input  wire                         up_val,
     output logic                        up_rdy,
 
     output logic [DATA_DN_WIDTH-1:0]    dn_data,
     output logic                        dn_last,
     output logic                        dn_val,
-    input  logic                        dn_rdy
+    input  wire                         dn_rdy
 );
 
 
@@ -69,15 +68,15 @@ module str_gbox
      * Internal signals
      */
 
-    reg                         skid_val;
-    reg                         skid_last;
-    reg  [DATA_UP_WIDTH-1:0]    skid_data;
+    logic                       skid_val;
+    logic                       skid_last;
+    logic   [DATA_UP_WIDTH-1:0] skid_data;
 
-    wire                        up_val_i;
-    wire                        up_last_i;
-    wire [DATA_UP_WIDTH-1:0]    up_data_i;
+    logic                       up_val_i;
+    logic                       up_last_i;
+    logic   [DATA_UP_WIDTH-1:0] up_data_i;
 
-    wire                        dn_active;
+    logic                       dn_active;
 
 
 
@@ -87,18 +86,18 @@ module str_gbox
 
 
     // skid_data always reflects downstream data last cycle
-    always @(posedge clk)
+    always_ff @(posedge clk)
         skid_data <= up_data_i;
 
 
     // skid_val remembers if there is valid data in the skid register
     // until it's consumed by the downstream
-    always @(posedge clk)
+    always_ff @(posedge clk)
         if (rst)    skid_val <= 1'b0;
         else        skid_val <= up_val_i & ~dn_active;
 
 
-    always @(posedge clk)
+    always_ff @(posedge clk)
         if (rst)    skid_last <= 1'b0;
         else        skid_last <= up_last_i & ~dn_active;
 
@@ -122,22 +121,22 @@ module str_gbox
             // when down stream is ready or up stream has valid data, set
             // upstream ready to high if the modules 'down' pipeline is not
             // stalled
-            always @(posedge clk)
+            always_ff @(posedge clk)
                 if      (rst)               up_rdy <= 1'b0;
                 else if (dn_rdy | up_val)   up_rdy <= dn_active;
 
 
-            always @(posedge clk)
+            always_ff @(posedge clk)
                 if      (rst)       dn_last <= 1'b0;
                 else if (dn_active) dn_last <= up_last_i;
 
 
-            always @(posedge clk)
+            always_ff @(posedge clk)
                 if      (rst)       dn_val <= 1'b0;
                 else if (dn_active) dn_val <= up_val_i;
 
 
-            always @(posedge clk)
+            always_ff @(posedge clk)
                 if (dn_active) dn_data <= up_data_i;
 
 
@@ -149,7 +148,7 @@ module str_gbox
 
 
             // extend wait time unit the past can be accessed
-            always @(posedge clk)
+            always_ff @(posedge clk)
                 past_exists <= 1'b1;
 
 
@@ -159,15 +158,15 @@ module str_gbox
             //
 
             // dn stream data sourced from up stream data
-            always @(posedge clk)
-                if (past_exists && $past(dn_val && dn_rdy && up_rdy)) begin
+            always_ff @(posedge clk)
+                if (past_exists && $past( ~rst && dn_val && dn_rdy && up_rdy)) begin
                     assert(dn_data == $past(up_data));
                 end
 
 
             // dn stream data sourced from skid register
-            always @(posedge clk)
-                if (past_exists && $past(dn_val && dn_rdy && ~up_rdy)) begin
+            always_ff @(posedge clk)
+                if (past_exists && $past( ~rst && dn_val && dn_rdy && ~up_rdy)) begin
                     assert(dn_data == $past(skid_data));
                 end
 
@@ -177,14 +176,14 @@ module str_gbox
             //
 
             // valid up stream data is passed to dn register when dn is not stalled
-            always @(posedge clk)
+            always_ff @(posedge clk)
                 if (past_exists && $past( ~rst && up_val && up_rdy && ~dn_val)) begin
                     assert(($past(up_data) == dn_data) && dn_val);
                 end
 
 
             // valid up stream data is passed to skid register when dn is stalled
-            always @(posedge clk)
+            always_ff @(posedge clk)
                 if (past_exists && $past( ~rst && up_val && up_rdy && dn_val && ~dn_rdy)) begin
                     assert(($past(up_data) == skid_data) && dn_val);
                 end
@@ -197,14 +196,14 @@ module str_gbox
             localparam DATA_NB = DATA_UP_WIDTH/DATA_DN_WIDTH;
 
 
-            wire [2*DATA_NB-1:0]        token_nx;
-            reg  [DATA_NB-1:0]          token;
-            reg  [DATA_UP_WIDTH-1:0]    serial_data;
-            reg  [DATA_NB-1:0]          serial_last;
-            reg  [DATA_NB-1:0]          serial_valid;
+            logic   [2*DATA_NB-1:0]     token_nx;
+            logic   [DATA_NB-1:0]       token;
+            logic   [DATA_UP_WIDTH-1:0] serial_data;
+            logic   [DATA_NB-1:0]       serial_last;
+            logic   [DATA_NB-1:0]       serial_valid;
 
-            wire                        up_active;
-            reg                         up_rdy_i;
+            logic                       up_active;
+            logic                       up_rdy_i;
 
 
 
@@ -215,7 +214,7 @@ module str_gbox
 
             // set upstream ready to high if the modules 'down' pipeline is not
             // stalled and the serial data if available to be written to
-            always @(posedge clk)
+            always_ff @(posedge clk)
                 if      (rst)                           up_rdy_i <= 1'b0;
                 else if ((dn_rdy & token[0]) | up_val)  up_rdy_i <= dn_active;
 
@@ -224,7 +223,7 @@ module str_gbox
             assign token_nx = {token, token};
 
 
-            always @(posedge clk)
+            always_ff @(posedge clk)
                 if (rst) token <= 'b1;
                 else if (dn_active) begin
 
@@ -234,7 +233,7 @@ module str_gbox
                 end
 
 
-            always @(posedge clk)
+            always_ff @(posedge clk)
                 if (dn_active) begin
 
                     serial_data <= serial_data >> DATA_DN_WIDTH;
@@ -244,7 +243,7 @@ module str_gbox
                 end
 
 
-            always @(posedge clk)
+            always_ff @(posedge clk)
                 if (rst) serial_last <= 'b0;
                 else if (dn_active) begin
 
@@ -256,7 +255,7 @@ module str_gbox
                 end
 
 
-            always @(posedge clk)
+            always_ff @(posedge clk)
                 if (rst) serial_valid <= 'b0;
                 else if (dn_active) begin
 
@@ -285,41 +284,41 @@ module str_gbox
 
 
             // extend wait time unit the past can be accessed
-            always @(posedge clk)
+            always_ff @(posedge clk)
                 {past_exists, past_wait} <= {past_wait, 1'b1};
 
 
-            reg  [DATA_UP_WIDTH-1:0]    up_data_a;
-            reg  [DATA_UP_WIDTH-1:0]    up_data_b;
-            reg  [DATA_UP_WIDTH-1:0]    up_current;
-            reg  [DATA_DN_WIDTH-1:0]    up_str [0:DATA_NB-1];
-            reg                         up_wr;
-            reg                         up_rd;
+            logic   [DATA_UP_WIDTH-1:0] up_data_a;
+            logic   [DATA_UP_WIDTH-1:0] up_data_b;
+            logic   [DATA_UP_WIDTH-1:0] up_current;
+            logic   [DATA_DN_WIDTH-1:0] up_str [DATA_NB];
+            logic                       up_wr;
+            logic                       up_rd;
+            logic                       cnt_done;
             integer                     cnt;
-            reg                         cnt_done;
 
 
             // ping pong buffer to capture the up data currently being sent
             // down stream and any that is being stored in the skid buffer
-            always @(posedge clk)
+            always_ff @(posedge clk)
                 if      (rst)               up_wr <= 1'b0;
                 else if (up_val & up_rdy)   up_wr <= ~up_wr;
 
 
-            always @(posedge clk)
+            always_ff @(posedge clk)
                 if      (rst)       up_rd <= 1'b0;
                 else if (cnt_done)  up_rd <= ~up_rd;
 
 
-            always @(posedge clk)
+            always_ff @(posedge clk)
                 if (up_val & up_rdy & ~up_wr)   up_data_a <= up_data;
 
 
-            always @(posedge clk)
+            always_ff @(posedge clk)
                 if (up_val & up_rdy &  up_wr)   up_data_b <= up_data;
 
 
-            always @(posedge clk)
+            always_ff @(posedge clk)
                 if (up_rd)  up_current <= up_data_b;
                 else        up_current <= up_data_a;
 
@@ -334,7 +333,7 @@ module str_gbox
             // counts out the down stream data as a position within the up
             // stream word, use that position to compare the dn_data with is
             // corresponding slice of the up_data word
-            always @(posedge clk) begin
+            always_ff @(posedge clk) begin
                 if (rst) begin
                     cnt         <=  'b0;
                     cnt_done    <= 1'b0;
@@ -354,8 +353,8 @@ module str_gbox
             end
 
 
-            always @(posedge clk)
-                if (past_exists && $past((dn_val & dn_rdy), 2)) begin
+            always_ff @(posedge clk)
+                if (past_exists && $past( ~rst) && $past((dn_val & dn_rdy), 2)) begin
                     assert($past(dn_data, 2) == up_str[$past(cnt, 2)]);
                 end
 
@@ -366,15 +365,15 @@ module str_gbox
 
             localparam DATA_NB = DATA_DN_WIDTH/DATA_UP_WIDTH;
 
-            integer                     ii;
-            wire [2*DATA_NB-1:0]        token_nx;
-            reg  [DATA_NB-1:0]          token;
+            integer                 ii;
+            logic   [2*DATA_NB-1:0] token_nx;
+            logic   [DATA_NB-1:0]   token;
 
 
             // when down stream is ready or up stream has valid data, set
             // upstream ready to high if the modules 'down' pipeline is not
             // stalled
-            always @(posedge clk)
+            always_ff @(posedge clk)
                 if      (rst)               up_rdy <= 1'b0;
                 else if (dn_rdy | up_val)   up_rdy <= dn_active;
 
@@ -383,28 +382,28 @@ module str_gbox
             assign token_nx = {token, token};
 
 
-            always @(posedge clk)
+            always_ff @(posedge clk)
                 if (rst) dn_last <= 1'b0;
                 else if (dn_active) begin
                     dn_last <= up_val_i & up_last_i;
                 end
 
 
-            always @(posedge clk)
+            always_ff @(posedge clk)
                 if (rst) dn_val <= 1'b0;
                 else if (dn_active) begin
                     dn_val <= (token[DATA_NB-1] & up_val_i) | (up_val_i & up_last_i);
                 end
 
 
-            always @(posedge clk)
+            always_ff @(posedge clk)
                 if (rst | (dn_active & up_val_i & up_last_i)) token <= 'b1;
                 else if (dn_active & up_val_i) begin
                     token <= token_nx[DATA_NB-1 +: DATA_NB];
                 end
 
 
-            always @(posedge clk)
+            always_ff @(posedge clk)
                 for (ii=0; ii<DATA_NB; ii=ii+1) begin
                     if (dn_active & token[0]) begin
                         dn_data[ii*DATA_UP_WIDTH +: DATA_UP_WIDTH] <= {DATA_UP_WIDTH{1'b0}};
@@ -424,20 +423,20 @@ module str_gbox
 
 
             // extend wait time unit the past can be accessed
-            always @(posedge clk)
+            always_ff @(posedge clk)
                 past_exists <= 1'b1;
 
 
-            reg  [DATA_DN_WIDTH-1:0]    up_data_1p;
-            reg  [DATA_DN_WIDTH-1:0]    up_data_2p;
+            logic   [DATA_DN_WIDTH-1:0] up_data_1p;
+            logic   [DATA_DN_WIDTH-1:0] up_data_2p;
+            logic                       cnt_done;
             integer                     cnt;
-            reg                         cnt_done;
 
 
             // counts out the up stream data as a position within the down
             // stream word, use that position to compare the up_data with is
             // corresponding slice of the dn_data word
-            always @(posedge clk) begin
+            always_ff @(posedge clk) begin
                 if (rst) begin
                     cnt         <=  'b0;
                     cnt_done    <= 1'b0;
@@ -457,7 +456,7 @@ module str_gbox
             end
 
 
-            always @(posedge clk)
+            always_ff @(posedge clk)
                 if (up_val & up_rdy) begin
                     if (cnt == 0) begin
                         up_data_1p <= {DATA_DN_WIDTH{1'b0}};
@@ -467,14 +466,14 @@ module str_gbox
                 end
 
 
-            always @(posedge clk)
+            always_ff @(posedge clk)
                 if (cnt_done) begin
                     up_data_2p  <= up_data_1p;
                 end
 
 
-            always @(posedge clk)
-                if (past_exists && $past(dn_val & dn_rdy)) begin
+            always_ff @(posedge clk)
+                if (past_exists && $past(~rst & dn_val & dn_rdy)) begin
                     assert($past(dn_data) == up_data_2p);
                 end
 
@@ -503,7 +502,7 @@ module str_gbox
 
 
     // extend wait time unit the past can be accessed
-    always @(posedge clk)
+    always_ff @(posedge clk)
         past_exists <= 1'b1;
 
 
@@ -514,7 +513,7 @@ module str_gbox
 
     // skid register held steady when back pressure is being applied to up
     // stream
-    always @(posedge clk)
+    always_ff @(posedge clk)
         if (past_exists && ~rst && $past( ~up_rdy)) begin
             assert($stable(skid_data));
             assert($stable(skid_val));
@@ -524,7 +523,7 @@ module str_gbox
 
     // skid register holds last up stream value when back pressure is applied
     // to up stream
-    always @(posedge clk)
+    always_ff @(posedge clk)
         if ( ~rst && $fell(up_rdy)) begin
             assert(skid_data == $past(up_data));
         end
@@ -536,56 +535,56 @@ module str_gbox
     //
 
     // up path holds data steady when stalled
-    always @(posedge clk)
+    always_ff @(posedge clk)
         if (past_exists && $past(up_val && ~up_rdy)) begin
             `ASSUME($stable(up_data));
         end
 
 
     // up path will only lower valid after a transaction
-    always @(posedge clk)
+    always_ff @(posedge clk)
         if (past_exists && $past( ~rst) && $fell(up_val)) begin
             `ASSUME($past(up_rdy));
         end
 
 
     // up path will only lower last after a transaction
-    always @(posedge clk)
+    always_ff @(posedge clk)
         if (past_exists && $past( ~rst) && $fell(up_last)) begin
             `ASSUME($past(up_rdy) && $past(up_val));
         end
 
 
     // up path will only lower ready after a transaction
-    always @(posedge clk)
+    always_ff @(posedge clk)
         if (past_exists && $past( ~rst) && $fell(up_rdy)) begin
             assert($past(up_val));
         end
 
 
     // down path holds data steady when stalled
-    always @(posedge clk)
+    always_ff @(posedge clk)
         if (past_exists && $past( ~rst) && $past(dn_val && ~dn_rdy)) begin
             assert($stable(dn_data));
         end
 
 
     // down path will only lower valid after a transaction
-    always @(posedge clk)
+    always_ff @(posedge clk)
         if (past_exists && $past( ~rst) && $fell(dn_val)) begin
             assert($past(dn_rdy));
         end
 
 
     // down path will only lower last after a transaction
-    always @(posedge clk)
+    always_ff @(posedge clk)
         if (past_exists && $past( ~rst) && $fell(dn_last)) begin
             assert($past(dn_rdy) && $past(dn_val));
         end
 
 
     // down path will only lower ready after a transaction
-    always @(posedge clk)
+    always_ff @(posedge clk)
         if (past_exists && $past( ~rst) && $fell(dn_rdy)) begin
             `ASSUME($past(dn_val));
         end
