@@ -5,8 +5,8 @@ mode prove
 smtbmc
 
 [script]
-read -formal -DRESCALE rescale.v
+read -formal -DRESCALE rescale.sv
 prep -top rescale
 
 [files]
-../hdl/rescale.v
+../hdl/rescale.sv

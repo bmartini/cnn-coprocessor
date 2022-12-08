@@ -15,7 +15,7 @@
 `define VERBOSE
 
 
-`include "rescale.v"
+`include "rescale.sv"
 
 module rescale_tb;
 

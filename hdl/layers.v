@@ -21,7 +21,7 @@
 `include "pool.sv"
 `include "bias_add.sv"
 `include "relu.sv"
-`include "rescale.v"
+`include "rescale.sv"
 
 `default_nettype none
 

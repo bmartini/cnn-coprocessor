@@ -27,11 +27,11 @@
 module rescale
   #(parameter   NUM_WIDTH   = 33,
     parameter   IMG_WIDTH   = 16)
-   (input  wire                 clk,
-    input  wire [7:0]           shift,
+   (input  wire                     clk,
+    input  wire     [7:0]           shift,
 
-    input  wire [NUM_WIDTH-1:0] up_data,
-    output reg  [IMG_WIDTH-1:0] dn_data
+    input  wire     [NUM_WIDTH-1:0] up_data,
+    output logic    [IMG_WIDTH-1:0] dn_data
 );
 
 
@@ -52,7 +52,7 @@ module rescale
             input [NUM_WIDTH-1:0]   number,     // number to be tested
             input [NUM_AWIDTH-1:0]  overflow    // bit address of upper bound of image number
         );
-        reg   [NUM_AWIDTH-1:0]  ii;
+        logic   [NUM_AWIDTH-1:0] ii;
 
         begin
             grater_than_max = 1'b0;
@@ -70,7 +70,7 @@ module rescale
             input [NUM_WIDTH-1:0]   number,     // number to be tested
             input [NUM_AWIDTH-1:0]  overflow    // bit address of upper bound of image number
         );
-        reg   [NUM_AWIDTH-1:0]  ii;
+        logic   [NUM_AWIDTH-1:0] ii;
 
         begin
             less_than_min = 1'b0;
@@ -87,15 +87,15 @@ module rescale
      * Internal signals
      */
 
-    reg  [NUM_WIDTH-1:0]    up_data_1p;
-    reg  [NUM_AWIDTH-1:0]   overflow_1p;
+    logic   [NUM_WIDTH-1:0]     up_data_1p;
+    logic   [NUM_AWIDTH-1:0]    overflow_1p;
 
-    reg  [NUM_WIDTH-1:0]    rescale_data_1p;
-    reg  [IMG_WIDTH-1:0]    rescale_data_2p;
-    reg  [IMG_WIDTH-1:0]    rescale_data_3p;
+    logic   [NUM_WIDTH-1:0]     rescale_data_1p;
+    logic   [IMG_WIDTH-1:0]     rescale_data_2p;
+    logic   [IMG_WIDTH-1:0]     rescale_data_3p;
 
-    reg                     bound_max_2p;
-    reg                     bound_min_2p;
+    logic                       bound_max_2p;
+    logic                       bound_min_2p;
 
 
     /**
@@ -103,7 +103,7 @@ module rescale
      */
 
 
-    always @(posedge clk) begin
+    always_ff @(posedge clk) begin
         up_data_1p <= up_data;
 
         // calculate the bit address in the up stream number that contains the
@@ -113,29 +113,29 @@ module rescale
 
 
     // test upper limit
-    always @(posedge clk)
+    always_ff @(posedge clk)
         bound_max_2p <= grater_than_max(up_data_1p, overflow_1p);
 
 
     // test lower limit
-    always @(posedge clk)
+    always_ff @(posedge clk)
         bound_min_2p <= less_than_min(up_data_1p, overflow_1p);
 
 
-    always @(posedge clk) begin
+    always_ff @(posedge clk) begin
         // shift up_data to scale from num to img
         rescale_data_1p <= up_data >> shift;
         rescale_data_2p <= rescale_data_1p[0 +: IMG_WIDTH];
     end
 
 
-    always @(posedge clk)
+    always_ff @(posedge clk)
         if      (bound_min_2p)  rescale_data_3p <= IMG_MIN;
         else if (bound_max_2p)  rescale_data_3p <= IMG_MAX;
         else                    rescale_data_3p <= rescale_data_2p;
 
 
-    always @(posedge clk)
+    always_ff @(posedge clk)
         dn_data <= rescale_data_3p;
 
 
@@ -156,12 +156,12 @@ module rescale
     end
 
     // extend wait time unit the past can be accessed
-    always @(posedge clk)
+    always_ff @(posedge clk)
         {past_exists, past_wait} <= {past_wait, 1'b1};
 
 
     // ask that the shift cfg values are within valid range
-    always @(*) begin
+    always_comb begin
         `ASSUME(shift <= (NUM_WIDTH-IMG_WIDTH));
     end
 
@@ -187,7 +187,7 @@ module rescale
 
 
     // correctly constrains up stream number to max/min value of down stream data width
-    always @(posedge clk)
+    always_ff @(posedge clk)
         if (past_exists) begin
 
             if (shift_with_sign($past(up_data, 4), $past(shift, 4)) < $signed(IMG_MIN)) begin
@@ -201,7 +201,7 @@ module rescale
 
 
     // correctly shift and pass though up stream data when within bounds
-    always @(posedge clk)
+    always_ff @(posedge clk)
         if (past_exists
             && (shift_with_sign($past(up_data, 4), $past(shift, 4)) > $signed(IMG_MIN))
             && (shift_with_sign($past(up_data, 4), $past(shift, 4)) < $signed(IMG_MAX))
@@ -212,7 +212,7 @@ module rescale
 
 
     // positive & negative up stream numbers will retain sign
-    always @(posedge clk)
+    always_ff @(posedge clk)
         if (past_exists) begin
             assert(dn_data[IMG_WIDTH-1] == $past(up_data[NUM_WIDTH-1], 4));
         end
@@ -221,7 +221,7 @@ module rescale
     // current max/min calculation does not rely on IMG_(MIN|MAX) definitions
     // while the verification model does. this test helps check if the
     // parameters and max/min code have the same understanding and values
-    always @(posedge clk)
+    always_ff @(posedge clk)
         if (past_exists) begin
             assert($signed(IMG_MIN) <= $signed(dn_data) <= $signed(IMG_MAX));
         end
