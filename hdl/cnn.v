@@ -19,7 +19,7 @@
 `include "str_gbox.sv"
 `include "kernel.v"
 `include "image.v"
-`include "layers.v"
+`include "layers.sv"
 
 `default_nettype none
 
