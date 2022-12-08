@@ -20,7 +20,7 @@
 `include "group_add.sv"
 `include "pool.sv"
 `include "bias_add.sv"
-`include "relu.v"
+`include "relu.sv"
 `include "rescale.v"
 
 `default_nettype none
