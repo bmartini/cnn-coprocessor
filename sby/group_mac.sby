@@ -5,9 +5,9 @@ mode prove
 smtbmc
 
 [script]
-read -formal group_mac.v
+read -formal group_mac.sv
 prep -top group_mac
 
 [files]
-../hdl/group_mac.v
-../hdl/multiply_acc.v
+../hdl/group_mac.sv
+../hdl/multiply_acc.sv

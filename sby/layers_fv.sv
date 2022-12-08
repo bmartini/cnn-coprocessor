@@ -1,4 +1,4 @@
-`include "layers.v"
+`include "layers.sv"
 
 `default_nettype none
 
@@ -11,25 +11,25 @@ module layers_fv
     GROUP_NB    = 4,
     IMG_WIDTH   = 16,
     KER_WIDTH   = 16)
-   (input  wire                                     clk,
-    input  wire                                     rst,
+   (input  wire                                         clk,
+    input  wire                                         rst,
 
-    input  wire [CFG_DWIDTH-1:0]                    cfg_data,
-    input  wire [CFG_AWIDTH-1:0]                    cfg_addr,
-    input  wire                                     cfg_valid,
+    input  wire     [CFG_DWIDTH-1:0]                    cfg_data,
+    input  wire     [CFG_AWIDTH-1:0]                    cfg_addr,
+    input  wire                                         cfg_valid,
 
-    input  wire [GROUP_NB*KER_WIDTH*DEPTH_NB-1:0]   bias_bus,
-    input  wire [GROUP_NB*KER_WIDTH*DEPTH_NB-1:0]   kernel_bus,
-    output reg                                      kernel_rdy,
+    input  wire     [GROUP_NB*KER_WIDTH*DEPTH_NB-1:0]   bias_bus,
+    input  wire     [GROUP_NB*KER_WIDTH*DEPTH_NB-1:0]   kernel_bus,
+    output logic                                        kernel_rdy,
 
-    input  wire [GROUP_NB*IMG_WIDTH-1:0]            image_bus,
-    input  wire                                     image_last,
-    input  wire                                     image_val,
-    output wire                                     image_rdy,
+    input  wire     [GROUP_NB*IMG_WIDTH-1:0]            image_bus,
+    input  wire                                         image_last,
+    input  wire                                         image_val,
+    output logic                                        image_rdy,
 
-    output reg  [IMG_WIDTH*DEPTH_NB-1:0]            result_bus,
-    output wire                                     result_val,
-    input  wire                                     result_rdy
+    output logic    [IMG_WIDTH*DEPTH_NB-1:0]            result_bus,
+    output logic                                        result_val,
+    input  wire                                         result_rdy
 );
 
 

@@ -16,7 +16,7 @@
 `define _image_
 
 
-`include "str_gbox.v"
+`include "str_gbox.sv"
 `include "image_write.v"
 `include "image_mem.v"
 `include "image_read.v"

@@ -15,7 +15,7 @@
 //`define VERBOSE
 
 
-`include "str_gbox.v"
+`include "str_gbox.sv"
 
 module str_gbox_tb;
 

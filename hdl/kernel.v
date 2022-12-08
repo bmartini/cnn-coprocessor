@@ -17,7 +17,7 @@
  */
 
 
-`include "str_gbox.v"
+`include "str_gbox.sv"
 `include "kernel_mem.v"
 
 `default_nettype none

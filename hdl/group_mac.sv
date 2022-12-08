@@ -17,7 +17,7 @@
  */
 
 
-`include "multiply_acc.v"
+`include "multiply_acc.sv"
 
 `default_nettype none
 
@@ -26,14 +26,14 @@ module group_mac
     parameter   IMG_WIDTH       = 16,
     parameter   KER_WIDTH       = 16,
     localparam  RESULT_WIDTH    = IMG_WIDTH+KER_WIDTH+1)
-   (input  wire                             clk,
-    input  wire                             rst,
+   (input  wire                                 clk,
+    input  wire                                 rst,
 
-    input  wire [GROUP_NB*IMG_WIDTH-1:0]    img,
-    input  wire [GROUP_NB*KER_WIDTH-1:0]    ker,
-    input  wire                             val,
+    input  wire     [GROUP_NB*IMG_WIDTH-1:0]    img,
+    input  wire     [GROUP_NB*KER_WIDTH-1:0]    ker,
+    input  wire                                 val,
 
-    output wire [GROUP_NB*RESULT_WIDTH-1:0] result
+    output logic    [GROUP_NB*RESULT_WIDTH-1:0] result
 );
 
 
@@ -47,9 +47,9 @@ module group_mac
      */
     genvar i;
 
-    reg  [GROUP_NB*IMG_WIDTH-1:0]   img_r;
-    reg  [GROUP_NB*KER_WIDTH-1:0]   ker_r;
-    reg                             val_r;
+    logic   [GROUP_NB*IMG_WIDTH-1:0]    img_r;
+    logic   [GROUP_NB*KER_WIDTH-1:0]    ker_r;
+    logic                               val_r;
 
 
     /**
@@ -57,12 +57,12 @@ module group_mac
      */
 
 
-    always @(posedge clk)
+    always_ff @(posedge clk)
         if (rst)    val_r <= 1'b0;
         else        val_r <= val;
 
 
-    always @(posedge clk) begin
+    always_ff @(posedge clk) begin
         img_r <= img;
         ker_r <= ker;
     end
@@ -100,7 +100,7 @@ module group_mac
     end
 
     // extend wait time unit the past can be accessed
-    always @(posedge clk)
+    always_ff @(posedge clk)
         {past_exists, past_wait} <= {past_wait, 1'b1};
 
 
@@ -132,7 +132,7 @@ module group_mac
 
 
     // result must have changed with new valid data that are not zero
-    always @(posedge clk)
+    always_ff @(posedge clk)
         if (past_exists
             && $past(val, 6) && non_zero($past(img, 6), $past(ker, 6))
             && $past( ~rst, 6)
@@ -148,7 +148,7 @@ module group_mac
 
 
     // result will not change when new valid data is zero
-    always @(posedge clk)
+    always_ff @(posedge clk)
         if (past_exists
             && $past(val, 6) && ~non_zero($past(img, 6), $past(ker, 6))
             && $past( ~rst, 1)
@@ -159,7 +159,7 @@ module group_mac
 
 
     // result cannot change without new valid data
-    always @(posedge clk)
+    always_ff @(posedge clk)
         if (past_exists && $past( ~rst) && $past( ~val, 6)) begin
             assert($stable(result));
         end

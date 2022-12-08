@@ -20,15 +20,14 @@
 `default_nettype none
 
 module pool
-  #(parameter
-    NUM_WIDTH = 16)
-   (input  wire                 clk,
-    input  wire                 restart,
+  #(parameter   NUM_WIDTH = 16)
+   (input  wire                     clk,
+    input  wire                     restart,
 
-    input  wire [NUM_WIDTH-1:0] up_data,
-    input  wire                 up_valid,
+    input  wire     [NUM_WIDTH-1:0] up_data,
+    input  wire                     up_valid,
 
-    output reg  [NUM_WIDTH-1:0] dn_data
+    output logic    [NUM_WIDTH-1:0] dn_data
 );
 
 
@@ -47,16 +46,16 @@ module pool
     endfunction
 
 
-    reg  [NUM_WIDTH-1:0]    up_data_1p;
-    reg  [NUM_WIDTH-1:0]    up_data_2p;
-    reg  [NUM_WIDTH-1:0]    up_data_3p;
+    logic   [NUM_WIDTH-1:0] up_data_1p;
+    logic   [NUM_WIDTH-1:0] up_data_2p;
+    logic   [NUM_WIDTH-1:0] up_data_3p;
 
-    reg                     up_valid_1p;
-    reg                     up_valid_2p;
-    reg                     up_valid_3p;
+    logic                   up_valid_1p;
+    logic                   up_valid_2p;
+    logic                   up_valid_3p;
 
-    reg                     restart_1p;
-    reg                     restart_2p;
+    logic                   restart_1p;
+    logic                   restart_2p;
 
 
     /**
@@ -64,7 +63,7 @@ module pool
      */
 
 
-    always @(posedge clk) begin
+    always_ff @(posedge clk) begin
         if (restart) begin
             restart_1p <= 1'b1;
         end
@@ -74,7 +73,7 @@ module pool
     end
 
 
-    always @(posedge clk) begin
+    always_ff @(posedge clk) begin
         restart_2p  <= restart_1p;
 
         up_valid_1p <= up_valid;
@@ -83,7 +82,7 @@ module pool
     end
 
 
-    always @(posedge clk) begin
+    always_ff @(posedge clk) begin
         up_data_1p   <= 'b0;
 
         if (up_valid) begin
@@ -92,13 +91,13 @@ module pool
     end
 
 
-    always @(posedge clk)
+    always_ff @(posedge clk)
         if (up_valid_1p) begin
             up_data_2p <= up_data_1p;
         end
 
 
-    always @(posedge clk) begin
+    always_ff @(posedge clk) begin
         if (up_valid_2p) begin
             if (restart_2p || new_max(up_data_2p, up_data_3p)) begin
                 up_data_3p <= up_data_2p;
@@ -107,7 +106,7 @@ module pool
     end
 
 
-    always @(posedge clk)
+    always_ff @(posedge clk)
         if (up_valid_3p) begin
             dn_data <= up_data_3p;
         end
@@ -124,7 +123,7 @@ module pool
     end
 
     // extend wait time unit the past can be accessed
-    always @(posedge clk)
+    always_ff @(posedge clk)
         {past_exists, past_wait} <= {past_wait, 1'b1};
 
 
@@ -135,7 +134,7 @@ module pool
 
     // once a restart signal has been registered, its associated up stream data
     // will eventually replace the down stream data value
-    always @(posedge clk)
+    always_ff @(posedge clk)
         if (past_exists && $past(restart_1p, 3) && $past(up_valid_1p, 3)) begin
             assert(dn_data == $past(up_data_1p, 3));
         end
@@ -143,7 +142,7 @@ module pool
 
     // once driven high the restart signal will not be cleared until valid up
     // stream data is sent thus proving the restart command can be pre-loaded
-    always @(posedge clk)
+    always_ff @(posedge clk)
         if (past_exists && $fell(restart_1p)) begin
             assert($past(up_valid_1p));
         end
@@ -155,7 +154,7 @@ module pool
 
     // down stream data will always be equal to or greater than that which
     // rewrites it
-    always @(posedge clk)
+    always_ff @(posedge clk)
         if (past_exists && $past(up_valid_3p)) begin
             assert($signed(dn_data) >= $signed($past(up_data_3p)));
         end
@@ -163,7 +162,7 @@ module pool
 
     // data in the comparison store will only ever decrease in value due to a
     // restart
-    always @(posedge clk)
+    always_ff @(posedge clk)
         if (past_exists && ($signed(up_data_3p) < $signed($past(up_data_3p)))) begin
             assert($past(restart_2p & up_valid_2p));
         end

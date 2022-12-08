@@ -15,7 +15,7 @@
 //`define VERBOSE
 
 
-`include "relu.v"
+`include "relu.sv"
 
 module relu_tb;
 

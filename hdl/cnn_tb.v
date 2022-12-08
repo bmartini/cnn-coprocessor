@@ -15,7 +15,7 @@
 //`define VERBOSE
 
 
-`include "cnn.v"
+`include "cnn.sv"
 
 module cnn_tb;
 

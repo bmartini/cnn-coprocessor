@@ -15,7 +15,7 @@
 //`define VERBOSE
 
 
-`include "bias_add.v"
+`include "bias_add.sv"
 
 module bias_add_tb;
 

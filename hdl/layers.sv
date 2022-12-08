@@ -16,43 +16,42 @@
  */
 
 
-`include "group_mac.v"
-`include "group_add.v"
-`include "pool.v"
-`include "bias_add.v"
-`include "relu.v"
-`include "rescale.v"
+`include "group_mac.sv"
+`include "group_add.sv"
+`include "pool.sv"
+`include "bias_add.sv"
+`include "relu.sv"
+`include "rescale.sv"
 
 `default_nettype none
 
 module layers
-  #(parameter
-    CFG_DWIDTH  = 32,
-    CFG_AWIDTH  = 5,
+  #(parameter   CFG_DWIDTH  = 32,
+    parameter   CFG_AWIDTH  = 5,
 
-    DEPTH_NB    = 16,
-    GROUP_NB    = 4,
-    IMG_WIDTH   = 16,
-    KER_WIDTH   = 16)
-   (input  wire                                     clk,
-    input  wire                                     rst,
+    parameter   DEPTH_NB    = 16,
+    parameter   GROUP_NB    = 4,
+    parameter   IMG_WIDTH   = 16,
+    parameter   KER_WIDTH   = 16)
+   (input  wire                                         clk,
+    input  wire                                         rst,
 
-    input  wire [CFG_DWIDTH-1:0]                    cfg_data,
-    input  wire [CFG_AWIDTH-1:0]                    cfg_addr,
-    input  wire                                     cfg_valid,
+    input  wire     [CFG_DWIDTH-1:0]                    cfg_data,
+    input  wire     [CFG_AWIDTH-1:0]                    cfg_addr,
+    input  wire                                         cfg_valid,
 
-    input  wire [GROUP_NB*KER_WIDTH*DEPTH_NB-1:0]   bias_bus,
-    input  wire [GROUP_NB*KER_WIDTH*DEPTH_NB-1:0]   kernel_bus,
-    output reg                                      kernel_rdy,
+    input  wire     [GROUP_NB*KER_WIDTH*DEPTH_NB-1:0]   bias_bus,
+    input  wire     [GROUP_NB*KER_WIDTH*DEPTH_NB-1:0]   kernel_bus,
+    output logic                                        kernel_rdy,
 
-    input  wire [GROUP_NB*IMG_WIDTH-1:0]            image_bus,
-    input  wire                                     image_last,
-    input  wire                                     image_val,
-    output wire                                     image_rdy,
+    input  wire     [GROUP_NB*IMG_WIDTH-1:0]            image_bus,
+    input  wire                                         image_last,
+    input  wire                                         image_val,
+    output logic                                        image_rdy,
 
-    output reg  [IMG_WIDTH*DEPTH_NB-1:0]            result_bus,
-    output wire                                     result_val,
-    input  wire                                     result_rdy
+    output logic    [IMG_WIDTH*DEPTH_NB-1:0]            result_bus,
+    output logic                                        result_val,
+    input  wire                                         result_rdy
 );
 
 
@@ -84,58 +83,58 @@ module layers
      */
     genvar i;
 
-    reg  [3:0]                              up_state;
-    reg  [3:0]                              up_state_nx;
+    logic   [3:0]                               up_state;
+    logic   [3:0]                               up_state_nx;
 
-    reg  [5:0]                              dn_state;
-    reg  [5:0]                              dn_state_nx;
+    logic   [5:0]                               dn_state;
+    logic   [5:0]                               dn_state_nx;
 
-    (* KEEP = "TRUE" *) reg  [DEPTH_NB-1:0] mac_rst;
-    (* KEEP = "TRUE" *) reg  [DEPTH_NB-1:0] pool_rst;
+    (* KEEP = "TRUE" *) logic   [DEPTH_NB-1:0]  mac_rst;
+    (* KEEP = "TRUE" *) logic   [DEPTH_NB-1:0]  pool_rst;
 
-    reg  [7:0]                              shift;
+    logic   [7:0]                               shift;
 
-    reg                                     bypass;
-    reg  [7:0]                              pool_nb;
-    reg  [7:0]                              pool_cnt;
+    logic                                       bypass;
+    logic   [7:0]                               pool_nb;
+    logic   [7:0]                               pool_cnt;
 
-    reg                                     mac_valid_6p;
-    reg                                     mac_valid_5p;
-    reg                                     mac_valid_4p;
-    reg                                     mac_valid_3p;
-    reg                                     mac_valid_2p;
-    reg                                     mac_valid_1p;
-    reg                                     mac_valid;
+    logic                                       mac_valid_6p;
+    logic                                       mac_valid_5p;
+    logic                                       mac_valid_4p;
+    logic                                       mac_valid_3p;
+    logic                                       mac_valid_2p;
+    logic                                       mac_valid_1p;
+    logic                                       mac_valid;
 
-    reg                                     add_valid_4p;
-    reg                                     add_valid_3p;
-    reg                                     add_valid_2p;
-    reg                                     add_valid_1p;
-    reg                                     add_valid;
+    logic                                       add_valid_4p;
+    logic                                       add_valid_3p;
+    logic                                       add_valid_2p;
+    logic                                       add_valid_1p;
+    logic                                       add_valid;
 
-    reg                                     pool_valid_3p;
-    reg                                     pool_valid_2p;
-    reg                                     pool_valid_1p;
-    reg                                     pool_valid;
+    logic                                       pool_valid_3p;
+    logic                                       pool_valid_2p;
+    logic                                       pool_valid_1p;
+    logic                                       pool_valid;
 
-    reg                                     bias_valid;
+    logic                                       bias_valid;
 
-    reg                                     relu_valid_1p;
-    reg                                     relu_valid;
+    logic                                       relu_valid_1p;
+    logic                                       relu_valid;
 
-    reg                                     rescale_valid_3p;
-    reg                                     rescale_valid_2p;
-    reg                                     rescale_valid_1p;
-    reg                                     rescale_valid;
+    logic                                       rescale_valid_3p;
+    logic                                       rescale_valid_2p;
+    logic                                       rescale_valid_1p;
+    logic                                       rescale_valid;
 
-    reg  [GROUP_NB*IMG_WIDTH-1:0]           image_1p;
-    wire [DEPTH_NB*NUM_WIDTH*GROUP_NB-1:0]  mac_data;
-    reg  [DEPTH_NB*NUM_WIDTH*GROUP_NB-1:0]  hold;
-    wire [DEPTH_NB*NUM_WIDTH-1:0]           add_data;
-    wire [DEPTH_NB*NUM_WIDTH-1:0]           pool_data;
-    wire [DEPTH_NB*NUM_WIDTH-1:0]           bias_data;
-    wire [DEPTH_NB*NUM_WIDTH-1:0]           relu_data;
-    wire [DEPTH_NB*IMG_WIDTH-1:0]           rescale_data;
+    logic   [GROUP_NB*IMG_WIDTH-1:0]            image_1p;
+    logic   [DEPTH_NB*NUM_WIDTH*GROUP_NB-1:0]   mac_data;
+    logic   [DEPTH_NB*NUM_WIDTH*GROUP_NB-1:0]   hold;
+    logic   [DEPTH_NB*NUM_WIDTH-1:0]            add_data;
+    logic   [DEPTH_NB*NUM_WIDTH-1:0]            pool_data;
+    logic   [DEPTH_NB*NUM_WIDTH-1:0]            bias_data;
+    logic   [DEPTH_NB*NUM_WIDTH-1:0]            relu_data;
+    logic   [DEPTH_NB*IMG_WIDTH-1:0]            rescale_data;
 
 
 
@@ -144,7 +143,7 @@ module layers
      */
 
 
-    always @(posedge clk)
+    always_ff @(posedge clk)
         if (cfg_valid & (cfg_addr == CFG_LAYERS)) begin
             bypass  <= cfg_data[16];
             pool_nb <= cfg_data[15: 8];
@@ -152,7 +151,7 @@ module layers
         end
 
 
-    always @(posedge clk)
+    always_ff @(posedge clk)
         if (rst) begin
             up_state            <= 'b0;
             up_state[UP_RESET]  <= 1'b1;
@@ -160,7 +159,7 @@ module layers
         else up_state <= up_state_nx;
 
 
-    always @* begin : CALC_
+    always_comb begin : CALC_
         up_state_nx = 'b0;
 
         case (1'b1)
@@ -193,7 +192,7 @@ module layers
 
 
 
-    always @(posedge clk)
+    always_ff @(posedge clk)
         if (rst) begin
             dn_state            <= 'b0;
             dn_state[DN_RESET]  <= 1'b1;
@@ -201,7 +200,7 @@ module layers
         else dn_state <= dn_state_nx;
 
 
-    always @* begin : LAYERS_
+    always_comb begin : LAYERS_
         dn_state_nx = 'b0;
 
         case (1'b1)
@@ -249,16 +248,16 @@ module layers
 
 
     // register incoming data
-    always @(posedge clk)
+    always_ff @(posedge clk)
         image_1p <= image_bus;
 
 
-    always @(posedge clk)
+    always_ff @(posedge clk)
         if (rst)    kernel_rdy <= 1'b0;
         else        kernel_rdy <= image_val & image_rdy;
 
 
-    always @(posedge clk) begin
+    always_ff @(posedge clk) begin
         if (up_state[UP_RESET]) begin
             mac_valid_6p        <= 1'b0;
             mac_valid_5p        <= 1'b0;
@@ -281,7 +280,7 @@ module layers
 
 
 
-    always @(posedge clk) begin
+    always_ff @(posedge clk) begin
         if (dn_state[DN_RESET]) begin
             add_valid_4p        <= 1'b0;
             add_valid_3p        <= 1'b0;
@@ -329,13 +328,13 @@ module layers
     end
 
 
-    always @(posedge clk)
+    always_ff @(posedge clk)
         if (mac_valid) begin
             hold <= mac_data;
         end
 
 
-    always @(posedge clk) begin
+    always_ff @(posedge clk) begin
         if (dn_state[DN_RESET]) begin
             pool_cnt <= 8'b0;
         end
@@ -349,7 +348,7 @@ module layers
     end
 
 
-    always @(posedge clk)
+    always_ff @(posedge clk)
         if (rescale_valid) begin
             result_bus <= rescale_data;
         end
@@ -362,11 +361,11 @@ module layers
     generate
         for (i = 0; i < DEPTH_NB; i = i + 1) begin : OPS_
 
-            always @(posedge clk)
+            always_ff @(posedge clk)
                 mac_rst[i] <= up_state[UP_RESET];
 
 
-            always @(posedge clk)
+            always_ff @(posedge clk)
                 pool_rst[i] <= dn_state[DN_RESET];
 
 
@@ -470,30 +469,30 @@ module layers
 
 
     // extend wait time unit the past can be accessed
-    always @(posedge clk)
+    always_ff @(posedge clk)
         past_exists <= 1'b1;
 
 
     // coverage path is only valid if the module has done at least one restart
     reg  rst_done = 1'b0;
-    always @(posedge clk)
+    always_ff @(posedge clk)
         if (rst) rst_done <= 1'b1;
 
 
     reg  up_rst_done = 1'b0;
-    always @(posedge clk)
+    always_ff @(posedge clk)
         if (up_state[UP_RESET]) up_rst_done <= 1'b1;
 
 
     reg  dn_rst_done = 1'b0;
-    always @(posedge clk)
+    always_ff @(posedge clk)
         if (dn_state[DN_RESET]) dn_rst_done <= 1'b1;
 
 
     // coverage path is only valid if the module has done at least one configuration
     reg  cfg_pending = 1'b0;
     reg  cfg_done    = 1'b0;
-    always @(posedge clk)
+    always_ff @(posedge clk)
         if (cfg_valid | cfg_pending) begin
 
             cfg_done    <= 1'b0;
@@ -506,7 +505,7 @@ module layers
 
 
     // ask that the cfg data values are within valid range
-    always @(*) begin
+    always_comb begin
         // for completeness
         `ASSUME((bypass == 1'b0) || (bypass == 1'b1));
 
@@ -598,20 +597,20 @@ module layers
     endfunction
 
 
-    always @(*)
+    always_comb
         if (rst_done) begin
             assert(up_onehot());
             assert(dn_onehot());
         end
 
 
-    always @(*)
+    always_comb
         if (up_rst_done) begin
             assert(up_onehot0());
         end
 
 
-    always @(*)
+    always_comb
         if (dn_rst_done) begin
             assert(dn_onehot0());
         end
@@ -619,14 +618,14 @@ module layers
 
     // the size of the pooling area can not be larger then the expected
     // configured size
-    always @(*)
+    always_comb
         if (dn_rst_done && cfg_done) begin
             assert(pool_cnt <= pool_nb);
         end
 
 
     // configuration can not change without being sent values
-    always @(posedge clk)
+    always_ff @(posedge clk)
         if (past_exists && ($past( ~cfg_valid) || $past(cfg_addr != CFG_LAYERS))) begin
             assert($stable(bypass));
             assert($stable(pool_nb));
@@ -639,49 +638,49 @@ module layers
     //
 
     // image path holds data steady when stalled
-    always @(posedge clk)
+    always_ff @(posedge clk)
         if (past_exists && $past(image_val && ~image_rdy)) begin
             `ASSUME($stable(image_bus));
         end
 
 
     // image path will only lower valid after a transaction
-    always @(posedge clk)
+    always_ff @(posedge clk)
         if (past_exists && $past( ~rst) && $fell(image_val)) begin
             `ASSUME($past(image_rdy));
         end
 
 
     // image path will only lower last after a transaction
-    always @(posedge clk)
+    always_ff @(posedge clk)
         if (past_exists && $past( ~rst) && $fell(image_last)) begin
             `ASSUME($past(image_rdy) && $past(image_val));
         end
 
 
     // image path will only lower ready after a transaction
-    always @(posedge clk)
+    always_ff @(posedge clk)
         if (past_exists && $past( ~rst) && $fell(image_rdy)) begin
             assert($past(image_val));
         end
 
 
     // result path holds data steady when stalled
-    always @(posedge clk)
+    always_ff @(posedge clk)
         if (past_exists && $past( ~rst) && $past(result_val && ~result_rdy)) begin
             assert($stable(result_bus));
         end
 
 
     // result path will only lower valid after a transaction
-    always @(posedge clk)
+    always_ff @(posedge clk)
         if (past_exists && $past( ~rst) && $fell(result_val)) begin
             assert($past(result_rdy));
         end
 
 
     // result path will only lower ready after a transaction
-    always @(posedge clk)
+    always_ff @(posedge clk)
         if (past_exists && $past( ~rst) && $fell(result_rdy)) begin
             `ASSUME($past(result_val));
         end
@@ -693,14 +692,14 @@ module layers
 
 
     // handover condition between the convolution and the other operations
-    always @(*)
+    always_comb
         if (rst_done && cfg_done) begin
             cover(up_state[UP_CLEAR] && dn_state[DN_READY]);
         end
 
 
     // end condition with results ready to send
-    always @(*)
+    always_comb
         if (rst_done && cfg_done) begin
             cover(dn_state[DN_CLEAR] && result_rdy);
         end

@@ -15,7 +15,7 @@
 //`define VERBOSE
 
 
-`include "layers.v"
+`include "layers.sv"
 
 module layers_tb;
 

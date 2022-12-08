@@ -10,7 +10,7 @@ mode prove
 smtbmc
 
 [script]
-read -formal -DSTR_GBOX str_gbox.v
+read -formal -DSTR_GBOX str_gbox.sv
 up_4: chparam -set DATA_UP_WIDTH 4 str_gbox
 up_8: chparam -set DATA_UP_WIDTH 8 str_gbox
 dn_4: chparam -set DATA_DN_WIDTH 4 str_gbox
@@ -18,4 +18,4 @@ dn_8: chparam -set DATA_DN_WIDTH 8 str_gbox
 prep -top str_gbox
 
 [files]
-../hdl/str_gbox.v
+../hdl/str_gbox.sv

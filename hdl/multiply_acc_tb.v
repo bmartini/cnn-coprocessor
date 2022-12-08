@@ -15,7 +15,7 @@
 //`define VERBOSE
 
 
-`include "multiply_acc.v"
+`include "multiply_acc.sv"
 
 module multiply_acc_tb;
 

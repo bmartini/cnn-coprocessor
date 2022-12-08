@@ -5,8 +5,8 @@ mode prove
 smtbmc
 
 [script]
-read -formal relu.v
+read -formal relu.sv
 prep -top relu
 
 [files]
-../hdl/relu.v
+../hdl/relu.sv
