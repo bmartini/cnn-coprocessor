@@ -24,40 +24,39 @@
 `default_nettype none
 
 module cnn
-  #(parameter
-    CFG_DWIDTH      = 32,
-    CFG_AWIDTH      =  5,
+  #(parameter   CFG_DWIDTH      = 32,
+    parameter   CFG_AWIDTH      =  5,
 
-    STR_IMG_WIDTH   = 64,
-    STR_KER_WIDTH   = 64,
-    STR_RLT_WIDTH   = 64,
+    parameter   STR_IMG_WIDTH   = 64,
+    parameter   STR_KER_WIDTH   = 64,
+    parameter   STR_RLT_WIDTH   = 64,
 
-    GROUP_NB        =  4,
-    IMG_WIDTH       = 16,
-    KER_WIDTH       = 16,
-    DEPTH_NB        = 16,
+    parameter   GROUP_NB        =  4,
+    parameter   IMG_WIDTH       = 16,
+    parameter   KER_WIDTH       = 16,
+    parameter   DEPTH_NB        = 16,
 
-    IMG_AWIDTH      = 16,
-    KER_AWIDTH      = 16,
-    KER_DEPTH       = 1<<KER_AWIDTH)
+    parameter   IMG_AWIDTH      = 16,
+    parameter   KER_AWIDTH      = 16,
+    parameter   KER_DEPTH       = 1<<KER_AWIDTH)
    (input  wire                     clk,
     input  wire                     rst,
 
-    input  wire [CFG_DWIDTH-1:0]    cfg_data,
-    input  wire [CFG_AWIDTH-1:0]    cfg_addr,
-    input  wire                     cfg_valid,
+    input  wire     [CFG_DWIDTH-1:0]    cfg_data,
+    input  wire     [CFG_AWIDTH-1:0]    cfg_addr,
+    input  wire                         cfg_valid,
 
-    input  wire [STR_IMG_WIDTH-1:0] str_img_bus,
-    input  wire                     str_img_val,
-    output wire                     str_img_rdy,
+    input  wire     [STR_IMG_WIDTH-1:0] str_img_bus,
+    input  wire                         str_img_val,
+    output logic                        str_img_rdy,
 
-    input  wire [STR_KER_WIDTH-1:0] str_ker_bus,
-    input  wire                     str_ker_val,
-    output wire                     str_ker_rdy,
+    input  wire     [STR_KER_WIDTH-1:0] str_ker_bus,
+    input  wire                         str_ker_val,
+    output logic                        str_ker_rdy,
 
-    output wire [STR_KER_WIDTH-1:0] str_rlt_bus,
-    output wire                     str_rlt_val,
-    input  wire                     str_rlt_rdy
+    output logic    [STR_KER_WIDTH-1:0] str_rlt_bus,
+    output logic                        str_rlt_val,
+    input  wire                         str_rlt_rdy
 );
 
 
@@ -72,18 +71,18 @@ module cnn
      */
 
 
-    wire [GROUP_NB*KER_WIDTH*DEPTH_NB-1:0]  bias_bus;
-    wire [GROUP_NB*KER_WIDTH*DEPTH_NB-1:0]  kernel_bus;
-    wire                                    kernel_rdy;
+    logic   [GROUP_NB*KER_WIDTH*DEPTH_NB-1:0]   bias_bus;
+    logic   [GROUP_NB*KER_WIDTH*DEPTH_NB-1:0]   kernel_bus;
+    logic                                       kernel_rdy;
 
-    wire [GROUP_NB*IMG_WIDTH-1:0]           image_bus;
-    wire                                    image_last;
-    wire                                    image_val;
-    wire                                    image_rdy;
+    logic   [GROUP_NB*IMG_WIDTH-1:0]            image_bus;
+    logic                                       image_last;
+    logic                                       image_val;
+    logic                                       image_rdy;
 
-    wire [IMG_WIDTH*DEPTH_NB-1:0]           result_bus;
-    wire                                    result_val;
-    wire                                    result_rdy;
+    logic   [IMG_WIDTH*DEPTH_NB-1:0]            result_bus;
+    logic                                       result_val;
+    logic                                       result_rdy;
 
 
     /**
